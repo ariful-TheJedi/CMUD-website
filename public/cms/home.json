@@ -1,0 +1,52 @@
+{
+  "id": "08c4b718-608c-4b10-92f0-255fbe2054b4",
+  "title": "Home",
+  "slug": "home",
+  "metaTitle": "",
+  "metaDescription": "",
+  "pageData": {
+    "hero": {
+      "badge": "Admissions open — July 2026",
+      "heading": "Master medical ultrasound with hands-on training that matters.",
+      "description": "CMUD is a dedicated institute for diagnostic ultrasound and Doppler imaging. Learn from senior consultants, scan real patients daily, and graduate ready to practise. Get Free repeat Classes and unlimited practical session for 1 year.",
+      "primaryCtaLabel": "Apply Now",
+      "primaryCtaHref": "/admission",
+      "secondaryCtaLabel": "View Courses",
+      "secondaryCtaHref": "/courses",
+      "imageUrl": "",
+      "imageAlt": "CMUD instructor demonstrating ultrasound scanning",
+      "stats": [
+        {
+          "value": "1,200+",
+          "label": "Trainees"
+        },
+        {
+          "value": "12",
+          "label": "Years"
+        },
+        {
+          "value": "25+",
+          "label": "Faculty"
+        }
+      ]
+    },
+    "handsOn": {
+      "eyebrow": "Hands-on Ultrasound Training",
+      "title": "Real patients. Real protocols. Real reports.",
+      "description": "CMUD has integrated clinic and partnered with NGOs so you practise on actual cases — from routine abdominal scans to complex fetal Doppler — under expert supervision.",
+      "imageUrl": "",
+      "imageAlt": "Trainee performing an obstetric ultrasound scan",
+      "badgeValue": "120+",
+      "badgeLabel": "scans per trainee",
+      "bullets": [
+        "Small batches of 3-5 trainees per advanced course",
+        "Daily live patient scanning sessions",
+        "Structured reporting templates",
+        "Everyday Case review of own clinic patients"
+      ],
+      "ctaLabel": "More about CMUD",
+      "ctaHref": "/about"
+    }
+  },
+  "updatedAt": "2026-08-04T09:45:23.871Z"
+}

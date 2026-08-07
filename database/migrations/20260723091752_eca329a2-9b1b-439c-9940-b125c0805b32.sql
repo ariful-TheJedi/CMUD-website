@@ -1,0 +1,1 @@
+ALTER TABLE public.certificates ALTER COLUMN year_of_admission TYPE text USING year_of_admission::text;

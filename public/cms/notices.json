@@ -1,0 +1,87 @@
+{
+  "updatedAt": "2026-08-04T09:45:23.871Z",
+  "categories": [
+    {
+      "id": "c2b577d7-ab4b-4e17-a0af-55c6fa935549",
+      "name": "Notice",
+      "slug": "notice"
+    },
+    {
+      "id": "27594330-e5a3-4c11-9eef-a7b001a529c3",
+      "name": "Routine",
+      "slug": "routine"
+    },
+    {
+      "id": "cf4e443c-bdc3-4870-b342-e35fa4bf17ad",
+      "name": "Result",
+      "slug": "result"
+    },
+    {
+      "id": "b044677f-54fe-42e4-9c80-1b03350f8fed",
+      "name": "Event",
+      "slug": "event"
+    }
+  ],
+  "notices": [
+    {
+      "id": "a5ec829e-c67d-417b-9e1a-104c93dc0260",
+      "title": "Admissions open: July 2026 batch",
+      "body": "Apply now for the July intake of Basic Ultrasound, Advanced Doppler, and OB-GYN Ultrasound. Limited seats per batch to ensure quality hands-on time.",
+      "noticeDate": "2026-06-25",
+      "categoryId": "c2b577d7-ab4b-4e17-a0af-55c6fa935549",
+      "isPublished": true,
+      "sortOrder": 0,
+      "createdAt": "2026-08-04T09:45:23.871Z",
+      "updatedAt": "2026-08-04T09:45:23.871Z",
+      "attachments": []
+    },
+    {
+      "id": "67e99d63-e122-4e80-b3f2-ca01a6531de2",
+      "title": "Routine: Doppler Imaging — Batch 14",
+      "body": "Theory 7–9 AM, Hands-on 9–11 AM, Monday to Friday. Reporting workshop on Saturdays.",
+      "noticeDate": "2026-06-20",
+      "categoryId": "27594330-e5a3-4c11-9eef-a7b001a529c3",
+      "isPublished": true,
+      "sortOrder": 1,
+      "createdAt": "2026-08-04T09:45:23.871Z",
+      "updatedAt": "2026-08-04T09:45:23.871Z",
+      "attachments": []
+    },
+    {
+      "id": "fc604859-90e1-4495-b260-d05331216a2f",
+      "title": "Results published: April 2026 batch",
+      "body": "Certificates can be collected from the CMUD administrative office after June 30, 2026.",
+      "noticeDate": "2026-06-18",
+      "categoryId": "cf4e443c-bdc3-4870-b342-e35fa4bf17ad",
+      "isPublished": true,
+      "sortOrder": 2,
+      "createdAt": "2026-08-04T09:45:23.871Z",
+      "updatedAt": "2026-08-04T09:45:23.871Z",
+      "attachments": []
+    },
+    {
+      "id": "cdc2363f-3510-46f2-afe8-12e63cb2261c",
+      "title": "Workshop: Fetal Echocardiography",
+      "body": "Two-day intensive workshop with international faculty on July 12–13, 2026.",
+      "noticeDate": "2026-06-10",
+      "categoryId": "b044677f-54fe-42e4-9c80-1b03350f8fed",
+      "isPublished": true,
+      "sortOrder": 3,
+      "createdAt": "2026-08-04T09:45:23.871Z",
+      "updatedAt": "2026-08-04T09:45:23.871Z",
+      "attachments": []
+    },
+    {
+      "id": "c8cfc2f1-0b65-4330-9080-3a92dac0b9ee",
+      "title": "New MSK ultrasound batch starting",
+      "body": "Limited 12 seats. Includes live model scanning and USG-guided injection practice.",
+      "noticeDate": "2026-05-30",
+      "categoryId": "c2b577d7-ab4b-4e17-a0af-55c6fa935549",
+      "isPublished": true,
+      "sortOrder": 4,
+      "createdAt": "2026-08-04T09:45:23.871Z",
+      "updatedAt": "2026-08-04T09:45:23.871Z",
+      "attachments": []
+    }
+  ]
+}

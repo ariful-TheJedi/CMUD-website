@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.protect_course_publish() FROM PUBLIC, anon, authenticated;

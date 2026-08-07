@@ -1,0 +1,26 @@
+# Project Context: Self-hosted Postgres + Better Auth
+
+## Core Objective
+CMUD / MedLearHub runs on local/self-hosted PostgreSQL and Better Auth. Do not reintroduce Supabase clients or Auth.
+
+## Architecture
+- **Auth:** Better Auth (`src/lib/auth.ts`, `src/lib/auth-client.ts`). Server guards: `src/lib/require-auth.ts` (`requireAuth`).
+- **Database:** `DATABASE_URL` + `pg` (`src/lib/db.ts`). CMS schema: `scripts/schema-cms-local.sql`.
+- **Media:** Local `/public/media/` and `/public/attachment/` with relative paths in the DB.
+- **CMS data:** Always from Postgres via server functions — not from `public/cms/*.json` at runtime.
+
+## Guardrails
+- Do not add `@supabase/supabase-js` or `supabase.from(...)` calls.
+- Prefer local relative media paths (`/media/...`, `/attachment/...`).
+- Keep the Lovable-connected branch working; avoid force-push / history rewrite.
+
+<!-- LOVABLE:BEGIN -->
+> [!IMPORTANT]
+> This project is connected to [Lovable](https://lovable.dev). Avoid rewriting
+> published git history — force pushing, or rebasing/amending/squashing commits
+> that are already pushed — as it rewrites history on Lovable's side and the
+> user will likely lose their project history.
+>
+> Commits you push to the connected branch sync back to Lovable and show up in
+> the editor, so keep the branch in a working state.
+<!-- LOVABLE:END -->
