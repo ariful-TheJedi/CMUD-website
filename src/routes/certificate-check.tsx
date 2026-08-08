@@ -9,8 +9,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { SectionHeading } from "@/components/SectionHeading";
-import { Turnstile } from "@/components/Turnstile";
-import { TURNSTILE_BYPASS_TOKEN, isTurnstileEnabledClient } from "@/lib/turnstile";
+// PAUSED — Cloudflare Turnstile (re-enable when asked for production)
+// import { Turnstile } from "@/components/Turnstile";
+import { TURNSTILE_BYPASS_TOKEN } from "@/lib/turnstile";
 import { verifyCertificate, type VerifyCertificateResult } from "@/lib/certificates.functions";
 import { certificateCheckPage } from "@/data/certificate-check";
 
@@ -31,19 +32,15 @@ type LookupType = "certificate" | "bmdc";
 function CertificateCheckPage() {
   const [lookupType, setLookupType] = useState<LookupType>("certificate");
   const [value, setValue] = useState("");
-  const [captchaToken, setCaptchaToken] = useState(() =>
-    isTurnstileEnabledClient() ? "" : TURNSTILE_BYPASS_TOKEN,
-  );
+  // PAUSED — Turnstile; keep bypass token so submit still works
+  const [captchaToken] = useState(TURNSTILE_BYPASS_TOKEN);
   const verifyFn = useServerFn(verifyCertificate);
   const { hero, lookup: lookupCopy, messages } = certificateCheckPage;
 
   const lookup = useMutation({
     mutationFn: (input: { type: LookupType; value: string; captchaToken: string }) =>
       verifyFn({ data: input }) as Promise<VerifyCertificateResult>,
-    onSettled: () => {
-      setCaptchaToken(isTurnstileEnabledClient() ? "" : TURNSTILE_BYPASS_TOKEN);
-      if (isTurnstileEnabledClient()) window.turnstile?.reset();
-    },
+    // PAUSED — Turnstile reset skipped
   });
 
   const onSubmit = (e: React.FormEvent) => {
@@ -114,7 +111,9 @@ function CertificateCheckPage() {
                 <p className="mt-2 text-xs text-muted-foreground">{activeLookup.helper}</p>
               </div>
 
+              {/* PAUSED — Cloudflare Turnstile (re-enable for production when asked)
               <Turnstile onVerify={setCaptchaToken} onExpire={() => setCaptchaToken("")} />
+              */}
             </form>
 
             {lookup.isError ? (

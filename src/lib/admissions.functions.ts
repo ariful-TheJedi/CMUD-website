@@ -8,7 +8,8 @@ import {
 } from "@/lib/admin-guards";
 import { writeAuditLog } from "@/lib/audit";
 import { asIso, dbQuery } from "@/lib/db-helpers";
-import { verifyTurnstileToken } from "@/lib/turnstile";
+// PAUSED — Cloudflare Turnstile
+// import { verifyTurnstileToken } from "@/lib/turnstile";
 
 export type AdmissionStatus = "new" | "contacted" | "admitted" | "rejected";
 
@@ -145,7 +146,8 @@ export const submitAdmissionApplication = createServerFn({ method: "POST" })
   .inputValidator((d: z.input<typeof submitSchema>) => submitSchema.parse(d))
   .handler(async ({ data }): Promise<{ ok: true }> => {
     try {
-      await verifyTurnstileToken(data.captchaToken);
+      // PAUSED — Cloudflare Turnstile verify (re-enable for production when asked)
+      // await verifyTurnstileToken(data.captchaToken);
 
       const { rows: courses } = await dbQuery<{
         id: string;

@@ -49,6 +49,10 @@ type Props = {
   onExpire?: () => void;
 };
 
+/**
+ * Turnstile widget — PAUSED. Renders nothing; injects a bypass token so forms still submit.
+ * Re-enable by restoring isTurnstileEnabledClient() and mounting this component again.
+ */
 export function Turnstile({ onVerify, onExpire }: Props) {
   const enabled = isTurnstileEnabledClient();
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -59,10 +63,10 @@ export function Turnstile({ onVerify, onExpire }: Props) {
   onVerifyRef.current = onVerify;
   onExpireRef.current = onExpire;
 
-  // Local/dev: skip widget; still provide a token so forms can submit.
   useEffect(() => {
-    if (!enabled) onVerifyRef.current(TURNSTILE_BYPASS_TOKEN);
-  }, [enabled]);
+    // PAUSED: always provide bypass token for form submit.
+    onVerifyRef.current(TURNSTILE_BYPASS_TOKEN);
+  }, []);
 
   useEffect(() => {
     if (!enabled) return;
@@ -90,6 +94,7 @@ export function Turnstile({ onVerify, onExpire }: Props) {
     };
   }, [enabled]);
 
+  // PAUSED — do not show Cloudflare widget.
   if (!enabled) return null;
 
   return (

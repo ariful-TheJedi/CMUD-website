@@ -27,8 +27,9 @@ import {
 import { admissionPage } from "@/data/admission";
 import { listPublicCourses } from "@/lib/courses.functions";
 import { submitAdmissionApplication } from "@/lib/admissions.functions";
-import { Turnstile } from "@/components/Turnstile";
-import { TURNSTILE_BYPASS_TOKEN, isTurnstileEnabledClient } from "@/lib/turnstile";
+// PAUSED — Cloudflare Turnstile (re-enable when asked for production)
+// import { Turnstile } from "@/components/Turnstile";
+import { TURNSTILE_BYPASS_TOKEN } from "@/lib/turnstile";
 
 const coursesQueryOptions = queryOptions({
   queryKey: ["public-courses"],
@@ -75,9 +76,8 @@ function AdmissionPage() {
   const submit = useServerFn(submitAdmissionApplication);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [captchaToken, setCaptchaToken] = useState(() =>
-    isTurnstileEnabledClient() ? "" : TURNSTILE_BYPASS_TOKEN,
-  );
+  // PAUSED — Turnstile; keep bypass token so submit still works
+  const [captchaToken] = useState(TURNSTILE_BYPASS_TOKEN);
 
 
   const form = useForm<FormValues>({
@@ -127,15 +127,13 @@ function AdmissionPage() {
         description: admissionPage.success.toastDescription,
       });
       form.reset();
-      setCaptchaToken(isTurnstileEnabledClient() ? "" : TURNSTILE_BYPASS_TOKEN);
-      if (isTurnstileEnabledClient()) window.turnstile?.reset();
+      // PAUSED — Turnstile reset skipped
     } catch (err) {
       const msg = err instanceof Error ? err.message : "";
       toast.error(admissionPage.errors.submitTitle, {
         description: msg || admissionPage.errors.submitDescription,
       });
-      setCaptchaToken(isTurnstileEnabledClient() ? "" : TURNSTILE_BYPASS_TOKEN);
-      if (isTurnstileEnabledClient()) window.turnstile?.reset();
+      // PAUSED — Turnstile reset skipped
     } finally {
       setSubmitting(false);
     }
@@ -348,7 +346,9 @@ function AdmissionPage() {
                   className="hidden"
                   onChange={() => {}}
                 />
+                {/* PAUSED — Cloudflare Turnstile (re-enable for production when asked)
                 <Turnstile onVerify={setCaptchaToken} onExpire={() => setCaptchaToken("")} />
+                */}
                 {submitted ? (
                   <div className="rounded-md border border-secondary/40 bg-secondary/10 p-4 text-sm text-foreground">
                     {success.banner}
