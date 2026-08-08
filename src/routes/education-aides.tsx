@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { ImageIcon } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -10,11 +11,6 @@ import {
 } from "@/lib/education-aides.functions";
 import { educationAidesPage } from "@/data/education-aides";
 
-const sectionsQuery = queryOptions({
-  queryKey: ["public-education-aides"],
-  queryFn: () => listPublicAidSections(),
-});
-
 export const Route = createFileRoute("/education-aides")({
   head: () => ({
     meta: [
@@ -24,7 +20,11 @@ export const Route = createFileRoute("/education-aides")({
       { property: "og:description", content: educationAidesPage.meta.ogDescription },
     ],
   }),
-  loader: ({ context }) => context.queryClient.ensureQueryData(sectionsQuery),
+  loader: ({ context }) =>
+    context.queryClient.ensureQueryData({
+      queryKey: ["public-education-aides"],
+      queryFn: () => listPublicAidSections(),
+    }),
   errorComponent: ({ error }) => (
     <div className="container mx-auto px-4 py-16 text-sm text-destructive" role="alert">
       {error.message}
@@ -117,7 +117,11 @@ function AutoSlider({ slides, offset = 0 }: { slides: AidSlide[]; offset?: numbe
 }
 
 function EducationAidesPage() {
-  const { data: sections } = useSuspenseQuery(sectionsQuery);
+  const listSections = useServerFn(listPublicAidSections);
+  const { data: sections } = useSuspenseQuery({
+    queryKey: ["public-education-aides"],
+    queryFn: () => listSections(),
+  });
   const { hero, emptyState } = educationAidesPage;
 
   return (

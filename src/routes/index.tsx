@@ -28,12 +28,10 @@ import { FacultyPortrait } from "@/components/FacultyPortrait";
 import { SectionHeading } from "@/components/SectionHeading";
 import { courseCategories } from "@/data/courses";
 import { homePage } from "@/data/home";
-import {
-  getPublicCourses,
-  getPublicFaculty,
-  getPublicNotices,
-  getPublicTestimonials,
-} from "@/lib/public-content";
+import { listPublicCourses } from "@/lib/courses.functions";
+import { listPublicFaculty } from "@/lib/faculty.functions";
+import { listPublicNotices } from "@/lib/notices.functions";
+import { listPublicTestimonials } from "@/lib/testimonials.functions";
 import { getHomePageContent } from "@/lib/page-content.functions";
 import { defaultHomeContent } from "@/lib/home-content";
 
@@ -53,22 +51,22 @@ const categoryIcons: Record<string, LucideIcon> = {
 
 const coursesQueryOptions = queryOptions({
   queryKey: ["public-courses"],
-  queryFn: () => getPublicCourses(),
+  queryFn: () => listPublicCourses(),
 });
 
 const facultyQueryOptions = queryOptions({
   queryKey: ["public-faculty"],
-  queryFn: () => getPublicFaculty(),
+  queryFn: () => listPublicFaculty(),
 });
 
 const noticesQueryOptions = queryOptions({
   queryKey: ["public-notices"],
-  queryFn: () => getPublicNotices(),
+  queryFn: () => listPublicNotices(),
 });
 
 const testimonialsQueryOptions = queryOptions({
   queryKey: ["public-testimonials"],
-  queryFn: () => getPublicTestimonials(),
+  queryFn: () => listPublicTestimonials(),
 });
 
 const homeContentQueryOptions = queryOptions({
@@ -105,25 +103,22 @@ export const Route = createFileRoute("/")({
 });
 
 function HomePage() {
-  const { data: coursesRes } = useSuspenseQuery(coursesQueryOptions);
-  const { data: facultyRes } = useSuspenseQuery(facultyQueryOptions);
-  const { data: noticesRes } = useSuspenseQuery(noticesQueryOptions);
-  const { data: testimonialsRes } = useSuspenseQuery(testimonialsQueryOptions);
+  const { data: courses } = useSuspenseQuery(coursesQueryOptions);
+  const { data: faculty } = useSuspenseQuery(facultyQueryOptions);
+  const { data: noticesList } = useSuspenseQuery(noticesQueryOptions);
+  const { data: testimonials } = useSuspenseQuery(testimonialsQueryOptions);
   const { data: pageRecord } = useSuspenseQuery(homeContentQueryOptions);
 
-  // CMS-managed sections (hero + hands-on)
+  // CMS-managed sections (hero + hands-on) from Postgres page_content
   const content = pageRecord?.pageData ?? defaultHomeContent;
   const hero = content.hero;
   const hands = content.handsOn;
   const heroImg = hero.imageUrl || homePage.media.heroFallback;
   const handsImg = hands.imageUrl || homePage.media.handsOnFallback;
 
-  // Dynamic lists (Supabase / fallbacks)
-  const faculty = facultyRes.data;
-  const courses = coursesRes.data;
+  // Dynamic lists from local Postgres via listPublic* server functions
   const featured = courses.filter((c) => c.featured);
-  const testimonials = testimonialsRes.data;
-  const latestNotices = noticesRes.data.slice(0, homePage.notices.limit);
+  const latestNotices = noticesList.slice(0, homePage.notices.limit);
 
   const {
     whyCmud,
@@ -353,12 +348,12 @@ function HomePage() {
         </div>
         <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {faculty.slice(0, facultyPreview.limit).map((f) => (
-            <Card key={f.name} className="border-border/70">
+            <Card key={f.id} className="border-border/70">
               <CardContent className="flex gap-4 p-6">
                 <FacultyPortrait
                   name={f.name}
                   initials={f.initials}
-                  photo={f.photo}
+                  photo={f.photoUrl || f.photo}
                   className="h-24"
                 />
 

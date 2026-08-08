@@ -1,15 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { getPublicNotices } from "@/lib/public-content";
+import { listPublicNotices } from "@/lib/notices.functions";
 import { noticesPage } from "@/data/notices";
-
-const noticesQueryOptions = queryOptions({
-  queryKey: ["public-notices"],
-  queryFn: () => getPublicNotices(),
-});
 
 export const Route = createFileRoute("/notices")({
   head: () => ({
@@ -20,13 +16,20 @@ export const Route = createFileRoute("/notices")({
       { property: "og:description", content: noticesPage.meta.ogDescription },
     ],
   }),
-  loader: ({ context }) => context.queryClient.ensureQueryData(noticesQueryOptions),
+  loader: ({ context }) =>
+    context.queryClient.ensureQueryData({
+      queryKey: ["public-notices"],
+      queryFn: () => listPublicNotices(),
+    }),
   component: NoticesPage,
 });
 
 function NoticesPage() {
-  const { data: res } = useSuspenseQuery(noticesQueryOptions);
-  const notices = res.data;
+  const listNotices = useServerFn(listPublicNotices);
+  const { data: notices } = useSuspenseQuery({
+    queryKey: ["public-notices"],
+    queryFn: () => listNotices(),
+  });
   const { hero, emptyState } = noticesPage;
 
   return (

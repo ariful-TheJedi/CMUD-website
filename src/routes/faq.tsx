@@ -1,18 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { getPublicFaqs } from "@/lib/public-content";
+import { listPublicFaqs } from "@/lib/faqs.functions";
 import { faqPage } from "@/data/faqs";
-
-const faqsQueryOptions = queryOptions({
-  queryKey: ["public-faqs"],
-  queryFn: () => getPublicFaqs(),
-});
 
 export const Route = createFileRoute("/faq")({
   head: () => ({
@@ -23,13 +19,20 @@ export const Route = createFileRoute("/faq")({
       { property: "og:description", content: faqPage.meta.ogDescription },
     ],
   }),
-  loader: ({ context }) => context.queryClient.ensureQueryData(faqsQueryOptions),
+  loader: ({ context }) =>
+    context.queryClient.ensureQueryData({
+      queryKey: ["public-faqs"],
+      queryFn: () => listPublicFaqs(),
+    }),
   component: FaqPage,
 });
 
 function FaqPage() {
-  const { data: res } = useSuspenseQuery(faqsQueryOptions);
-  const faqs = res.data;
+  const listFaqs = useServerFn(listPublicFaqs);
+  const { data: faqs } = useSuspenseQuery({
+    queryKey: ["public-faqs"],
+    queryFn: () => listFaqs(),
+  });
   const { hero, emptyState } = faqPage;
   return (
     <>

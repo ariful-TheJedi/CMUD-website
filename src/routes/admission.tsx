@@ -25,14 +25,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { admissionPage } from "@/data/admission";
-import { getPublicCourses } from "@/lib/public-content";
+import { listPublicCourses } from "@/lib/courses.functions";
 import { submitAdmissionApplication } from "@/lib/admissions.functions";
 import { Turnstile } from "@/components/Turnstile";
 import { TURNSTILE_BYPASS_TOKEN, isTurnstileEnabledClient } from "@/lib/turnstile";
 
 const coursesQueryOptions = queryOptions({
   queryKey: ["public-courses"],
-  queryFn: () => getPublicCourses(),
+  queryFn: () => listPublicCourses(),
 });
 
 const admissionSearchSchema = z.object({
@@ -71,8 +71,7 @@ type FormValues = z.infer<typeof schema>;
 
 function AdmissionPage() {
   const { course } = Route.useSearch();
-  const { data: coursesRes } = useSuspenseQuery(coursesQueryOptions);
-  const courses = coursesRes.data;
+  const { data: courses } = useSuspenseQuery(coursesQueryOptions);
   const submit = useServerFn(submitAdmissionApplication);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);

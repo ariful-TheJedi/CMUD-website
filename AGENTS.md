@@ -11,7 +11,7 @@ Current Infrastructure (as of migration):
 - No Supabase runtime dependency. Do not reintroduce `@supabase/supabase-js` or Supabase Auth clients.
 
 2. Architecture notes
-- Dynamic CMS data lives in Postgres (not `public/cms/*.json` at runtime). JSON under `public/cms/` is seed input only (`npm run seed:cms`).
+- Dynamic CMS data lives in Postgres (not `public/cms/*.json` at runtime). Seed from `src/data/*` via `npm run seed:cms`. Stale entity JSON under `public/cms/` was removed; home media still uses `public/media/home/`.
 - Schema apply: `npm run db:schema` → `scripts/schema-cms-local.sql`.
 - Auth tables: `npm run auth:migrate`. Seed admin: `npm run auth:seed-admin`.
 - RBAC: `"user".role` + `user_content_permissions` (not legacy Supabase `user_roles` / RLS).

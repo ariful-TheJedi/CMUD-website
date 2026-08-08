@@ -249,9 +249,9 @@ function HomePageContentAdmin() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Home Page Content</h1>
           <p className="text-sm text-muted-foreground">
-            Edit the hero section and the Hands-on Ultrasound Training section. Content is saved to{" "}
-            <code className="text-xs">public/cms/home.json</code>; images go to{" "}
-            <code className="text-xs">public/media/home/</code> (works without Supabase Storage).
+            Edit the hero section and the Hands-on Ultrasound Training section. Content is saved to
+            the local Postgres <code className="text-xs">page_content</code> table; images go to{" "}
+            <code className="text-xs">public/media/home/</code>.
           </p>
         </div>
         <Button disabled={ro || save.isPending} onClick={() => save.mutate(form)}>

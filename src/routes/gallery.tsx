@@ -1,13 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
-import { getPublicGallery } from "@/lib/public-content";
-import type { PublicAlbum } from "@/lib/gallery.functions";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { listPublicAlbums, type PublicAlbum } from "@/lib/gallery.functions";
 import { galleryPage } from "@/data/gallery";
-
-const albumsQuery = queryOptions({
-  queryKey: ["public-gallery"],
-  queryFn: () => getPublicGallery(),
-});
 
 export const Route = createFileRoute("/gallery")({
   head: () => ({
@@ -18,7 +13,11 @@ export const Route = createFileRoute("/gallery")({
       { property: "og:description", content: galleryPage.meta.ogDescription },
     ],
   }),
-  loader: ({ context }) => context.queryClient.ensureQueryData(albumsQuery),
+  loader: ({ context }) =>
+    context.queryClient.ensureQueryData({
+      queryKey: ["public-gallery"],
+      queryFn: () => listPublicAlbums(),
+    }),
   errorComponent: ({ error }) => (
     <div className="container mx-auto px-4 py-16 text-sm text-destructive" role="alert">
       {error.message}
@@ -29,8 +28,11 @@ export const Route = createFileRoute("/gallery")({
 });
 
 function GalleryPage() {
-  const { data: res } = useSuspenseQuery(albumsQuery);
-  const albums = res.data;
+  const listAlbums = useServerFn(listPublicAlbums);
+  const { data: albums } = useSuspenseQuery({
+    queryKey: ["public-gallery"],
+    queryFn: () => listAlbums(),
+  });
   const { hero } = galleryPage;
 
   return (

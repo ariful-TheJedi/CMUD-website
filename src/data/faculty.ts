@@ -1,3 +1,7 @@
+/**
+ * Seed / page-copy only.
+ * Live faculty list is loaded from Postgres via `listPublicFaculty` — do not import `faculty` on public pages.
+ */
 export type Instructor = {
   name: string;
   title: string;

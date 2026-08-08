@@ -2,14 +2,14 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowRight, CheckCircle2, Clock, GraduationCap, ImageIcon, Monitor } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { getPublicCourseBySlug } from "@/lib/public-content";
+import { getPublicCourseBySlug } from "@/lib/courses.functions";
 import { courseDetailPage } from "@/data/courses";
 
 export const Route = createFileRoute("/courses/$slug")({
   loader: async ({ params }) => {
-    const res = await getPublicCourseBySlug(params.slug);
-    if (!res.data) throw notFound();
-    return { course: res.data };
+    const course = await getPublicCourseBySlug({ data: { slug: params.slug } });
+    if (!course) throw notFound();
+    return { course };
   },
   head: ({ loaderData }) => {
     const c = loaderData?.course;

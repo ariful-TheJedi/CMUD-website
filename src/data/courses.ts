@@ -1,3 +1,7 @@
+/**
+ * Course types + seed/page copy.
+ * Live course lists load from Postgres via `listPublicCourses` / `getPublicCourseBySlug`.
+ */
 export type CourseMode = "Online" | "Onsite" | "Hybrid" | "Hybrid, Onsite";
 
 export type Course = {

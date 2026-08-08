@@ -1,16 +1,12 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { CourseCard } from "@/components/CourseCard";
-import { getPublicCourses } from "@/lib/public-content";
+import { listPublicCourses } from "@/lib/courses.functions";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { coursesPage } from "@/data/courses";
-
-const coursesQueryOptions = queryOptions({
-  queryKey: ["public-courses"],
-  queryFn: () => getPublicCourses(),
-});
 
 export const Route = createFileRoute("/courses/")({
   head: () => ({
@@ -21,7 +17,11 @@ export const Route = createFileRoute("/courses/")({
       { property: "og:description", content: coursesPage.meta.ogDescription },
     ],
   }),
-  loader: ({ context }) => context.queryClient.ensureQueryData(coursesQueryOptions),
+  loader: ({ context }) =>
+    context.queryClient.ensureQueryData({
+      queryKey: ["public-courses"],
+      queryFn: () => listPublicCourses(),
+    }),
   component: CoursesPage,
 });
 
@@ -29,8 +29,11 @@ type Filter = (typeof coursesPage.filters)[number];
 
 function CoursesPage() {
   const [active, setActive] = useState<Filter>("All");
-  const { data: res } = useSuspenseQuery(coursesQueryOptions);
-  const courses = res.data;
+  const listCourses = useServerFn(listPublicCourses);
+  const { data: courses } = useSuspenseQuery({
+    queryKey: ["public-courses"],
+    queryFn: () => listCourses(),
+  });
   const visible = active === "All" ? courses : courses.filter((c) => c.category === active);
   const { hero, filters, filterLabel } = coursesPage;
 

@@ -4,8 +4,6 @@ import { assertSectionView, assertSectionUpdate } from "@/lib/admin-guards";
 import { writeAuditLog } from "@/lib/audit";
 import { pool } from "@/lib/db";
 import { dbQuery } from "@/lib/db-helpers";
-import type { Instructor } from "@/data/faculty";
-
 export type FacultyStatus = "draft" | "published" | "archived";
 
 export type AdminFacultyRow = {
@@ -22,6 +20,25 @@ export type AdminFacultyRow = {
   altText: string;
   isPublished: boolean;
   status: FacultyStatus;
+  sortOrder: number;
+};
+
+/** Public faculty shape — same as admin minus phone / publish flags. */
+export type PublicFaculty = {
+  id: string;
+  name: string;
+  title: string;
+  credentials: string;
+  specialty: string;
+  shortBio: string;
+  fullBio: string;
+  /** Combined bio for cards: fullBio || shortBio */
+  bio: string;
+  initials: string;
+  photoUrl: string;
+  /** Alias of photoUrl for FacultyPortrait */
+  photo?: string;
+  altText: string;
   sortOrder: number;
 };
 
@@ -107,19 +124,27 @@ function normalizeFaculty(r: FacultyDbRow): AdminFacultyRow {
   };
 }
 
-function toPublic(r: AdminFacultyRow): Instructor {
+function toPublic(r: AdminFacultyRow): PublicFaculty {
+  const bio = r.fullBio || r.shortBio || "";
   return {
+    id: r.id,
     name: r.name,
     title: r.title,
     credentials: r.credentials,
-    bio: r.fullBio || r.shortBio || "",
+    specialty: r.specialty,
+    shortBio: r.shortBio,
+    fullBio: r.fullBio,
+    bio,
     initials: r.initials,
+    photoUrl: r.photoUrl,
     photo: r.photoUrl || undefined,
+    altText: r.altText,
+    sortOrder: r.sortOrder,
   };
 }
 
 export const listPublicFaculty = createServerFn({ method: "GET" }).handler(
-  async (): Promise<Instructor[]> => {
+  async (): Promise<PublicFaculty[]> => {
     const { rows } = await dbQuery<FacultyDbRow>(
       "listPublicFaculty",
       `SELECT ${FACULTY_PUBLIC_SELECT}

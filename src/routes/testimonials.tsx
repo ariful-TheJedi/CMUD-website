@@ -1,15 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { Quote } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
-import { getPublicTestimonials } from "@/lib/public-content";
+import { listPublicTestimonials } from "@/lib/testimonials.functions";
 import { testimonialsPage } from "@/data/testimonials";
-
-const testimonialsQueryOptions = queryOptions({
-  queryKey: ["public-testimonials"],
-  queryFn: () => getPublicTestimonials(),
-});
 
 export const Route = createFileRoute("/testimonials")({
   head: () => ({
@@ -20,13 +16,20 @@ export const Route = createFileRoute("/testimonials")({
       { property: "og:description", content: testimonialsPage.meta.ogDescription },
     ],
   }),
-  loader: ({ context }) => context.queryClient.ensureQueryData(testimonialsQueryOptions),
+  loader: ({ context }) =>
+    context.queryClient.ensureQueryData({
+      queryKey: ["public-testimonials"],
+      queryFn: () => listPublicTestimonials(),
+    }),
   component: TestimonialsPage,
 });
 
 function TestimonialsPage() {
-  const { data: res } = useSuspenseQuery(testimonialsQueryOptions);
-  const testimonials = res.data;
+  const listTestimonials = useServerFn(listPublicTestimonials);
+  const { data: testimonials } = useSuspenseQuery({
+    queryKey: ["public-testimonials"],
+    queryFn: () => listTestimonials(),
+  });
   const { hero } = testimonialsPage;
   return (
     <>

@@ -1,3 +1,4 @@
+/** Seed / legacy display copy only — live gallery albums come from Postgres `listPublicAlbums`. */
 export const galleryItems = [
   { title: "Hands-on scanning lab", caption: "Trainees practising abdominal protocols" },
   { title: "Doppler workshop", caption: "Live carotid Doppler demonstration" },

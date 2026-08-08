@@ -5,20 +5,34 @@ import { pool } from "@/lib/db";
 /**
  * Better Auth server (Phase 2/3).
  * Tables: npm run auth:migrate
- * Dev origin: BETTER_AUTH_URL or http://localhost:8080
+ * Set BETTER_AUTH_URL to the exact URL users open in the browser
+ * (e.g. http://192.168.0.113:3000). Optional: BETTER_AUTH_TRUSTED_ORIGINS
+ * as a comma-separated list of extra origins.
  */
-const baseURL = process.env.BETTER_AUTH_URL ?? "http://localhost:8080";
+function normalizeOrigin(url: string): string {
+  return url.trim().replace(/\/+$/, "");
+}
+
+const baseURL = normalizeOrigin(process.env.BETTER_AUTH_URL ?? "http://localhost:8080");
+
+const extraOrigins = (process.env.BETTER_AUTH_TRUSTED_ORIGINS ?? "")
+  .split(",")
+  .map((o) => normalizeOrigin(o))
+  .filter(Boolean);
 
 export const auth = betterAuth({
   database: pool,
   baseURL,
   secret: process.env.BETTER_AUTH_SECRET,
   trustedOrigins: [
-    baseURL,
-    "http://localhost:8080",
-    "http://127.0.0.1:8080",
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
+    ...new Set([
+      baseURL,
+      "http://localhost:8080",
+      "http://127.0.0.1:8080",
+      "http://localhost:3000",
+      "http://127.0.0.1:3000",
+      ...extraOrigins,
+    ]),
   ],
   emailAndPassword: {
     enabled: true,
