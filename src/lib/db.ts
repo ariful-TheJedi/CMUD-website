@@ -1,12 +1,15 @@
 import { Pool } from "pg";
+import { getAppEnv } from "@/lib/env";
 
-if (!process.env.DATABASE_URL) {
-  throw new Error("Missing DATABASE_URL. Add it to .env for local Postgres.");
-}
+const { databaseUrl } = getAppEnv();
 
-/** Shared Postgres pool for Better Auth + CMS (Phase 3). */
+/** Shared Postgres pool for Better Auth + CMS. */
 export const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: databaseUrl,
+});
+
+pool.on("error", (err) => {
+  console.error("[db] Unexpected Postgres pool error:", err);
 });
 
 export type DbClient = Pool;

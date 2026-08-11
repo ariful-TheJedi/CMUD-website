@@ -5,9 +5,12 @@ CMUD / MedLearHub runs on local/self-hosted PostgreSQL and Better Auth. Do not r
 
 ## Architecture
 - **Auth:** Better Auth (`src/lib/auth.ts`, `src/lib/auth-client.ts`). Server guards: `src/lib/require-auth.ts` (`requireAuth`).
+- **Env:** `src/lib/env.ts` — requires `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`; optional `BETTER_AUTH_TRUSTED_ORIGINS`.
 - **Database:** `DATABASE_URL` + `pg` (`src/lib/db.ts`). CMS schema: `scripts/schema-cms-local.sql`.
 - **Media:** Local `/public/media/` and `/public/attachment/` with relative paths in the DB.
 - **CMS data:** Always from Postgres via server functions — not from `public/cms/*.json` at runtime.
+- **Zod:** Pinned to `4.4.3` (Better Auth `.meta()` compatibility). Use `overrides` — do not downgrade to Zod 3.
+- **Deploy:** Nitro preset `node-server` only (`vite.config.ts`). Start with `npm start` / PM2 (`ecosystem.config.cjs`). Do not use Cloudflare/Wrangler for this self-host path.
 
 ## Guardrails
 - Do not add `@supabase/supabase-js` or `supabase.from(...)` calls.

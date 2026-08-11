@@ -2,27 +2,39 @@
 
 Role: You are acting as a co-developer assisting with a Lovable full-stack application migration.
 
-Core Goal: Keep the app deployable to a self-hosted server (local/self-hosted PostgreSQL + Better Auth).
+Core Goal: Keep the app deployable to a self-hosted Linux/Windows Node server (PostgreSQL + Better Auth + Nitro `node-server`).
 
 Current Infrastructure (as of migration):
 - Auth: Better Auth (cookie sessions). Admin middleware: `src/lib/require-auth.ts`.
+- Env: `src/lib/env.ts` (loads `.env` if present; requires `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`).
 - Database: local/self-hosted PostgreSQL via `DATABASE_URL` and `pg` (`src/lib/db.ts`).
 - File storage: local `/public/media/` and `/public/attachment/` (relative paths in DB).
 - No Supabase runtime dependency. Do not reintroduce `@supabase/supabase-js` or Supabase Auth clients.
+- Zod is pinned to **4.4.3** (`package.json` + `overrides`) for Better Auth compatibility (`.meta()` API).
 
 2. Architecture notes
-- Dynamic CMS data lives in Postgres (not `public/cms/*.json` at runtime). Seed from `src/data/*` via `npm run seed:cms`. Stale entity JSON under `public/cms/` was removed; home media still uses `public/media/home/`.
+- Dynamic CMS data lives in Postgres only (courses, faculty, gallery, notices, FAQs, testimonials, home `page_content`).
+- Seed from `src/data/*` via `npm run seed:cms`. Do **not** fetch `public/cms/*.json` at runtime.
+- Home images upload to `public/media/home/`; content saves to Postgres (`page-content.functions.ts`).
 - Schema apply: `npm run db:schema` → `scripts/schema-cms-local.sql`.
 - Auth tables: `npm run auth:migrate`. Seed admin: `npm run auth:seed-admin`.
-- RBAC: `"user".role` + `user_content_permissions` (not legacy Supabase `user_roles` / RLS).
+- RBAC: `"user".role` + `user_content_permissions`.
 
-3. Password / invites
+3. Build & run (self-hosted Node — not Cloudflare)
+- Build: `npm run build` → Nitro preset **`node-server`** → `.output/server/index.mjs`
+- Start: `npm start` (or `npm run preview`) → `scripts/start-prod.mjs` binds **HOST=0.0.0.0** / **PORT=3000** by default
+- PM2: `pm2 start ecosystem.config.cjs`
+- Preflight: `npm run check:env`
+- Set `BETTER_AUTH_URL` to the exact browser origin (e.g. `http://192.168.0.113:3000`). Add LAN extras via `BETTER_AUTH_TRUSTED_ORIGINS`.
+
+4. Password / invites
 - Admins create users with a password and can set passwords from Users.
 - Self-service forgot-password email is not wired yet (needs SMTP + Better Auth email).
 
-4. Guardrails
+5. Guardrails
 - Prefer local relative media paths (`/media/...`, `/attachment/...`).
 - Do not fetch dynamic entities from `public/cms/*.json` in production UI code.
+- Do not switch Nitro to `cloudflare-module` / Wrangler for this self-hosted deploy path.
 - Keep the connected Lovable git branch in a working state; do not force-push or rewrite published history.
 
 <!-- LOVABLE:BEGIN -->

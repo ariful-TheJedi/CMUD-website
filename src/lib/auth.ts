@@ -1,39 +1,24 @@
 import { betterAuth } from "better-auth";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
 import { pool } from "@/lib/db";
+import { getAppEnv } from "@/lib/env";
 
 /**
- * Better Auth server (Phase 2/3).
+ * Better Auth server (self-hosted).
  * Tables: npm run auth:migrate
- * Set BETTER_AUTH_URL to the exact URL users open in the browser
- * (e.g. http://192.168.0.113:3000). Optional: BETTER_AUTH_TRUSTED_ORIGINS
- * as a comma-separated list of extra origins.
+ *
+ * Required env:
+ *   BETTER_AUTH_SECRET, BETTER_AUTH_URL (exact browser origin, no trailing slash)
+ * Optional:
+ *   BETTER_AUTH_TRUSTED_ORIGINS — comma-separated extra origins (LAN IPs, etc.)
  */
-function normalizeOrigin(url: string): string {
-  return url.trim().replace(/\/+$/, "");
-}
-
-const baseURL = normalizeOrigin(process.env.BETTER_AUTH_URL ?? "http://localhost:8080");
-
-const extraOrigins = (process.env.BETTER_AUTH_TRUSTED_ORIGINS ?? "")
-  .split(",")
-  .map((o) => normalizeOrigin(o))
-  .filter(Boolean);
+const { betterAuthSecret, betterAuthUrl, trustedOrigins } = getAppEnv();
 
 export const auth = betterAuth({
   database: pool,
-  baseURL,
-  secret: process.env.BETTER_AUTH_SECRET,
-  trustedOrigins: [
-    ...new Set([
-      baseURL,
-      "http://localhost:8080",
-      "http://127.0.0.1:8080",
-      "http://localhost:3000",
-      "http://127.0.0.1:3000",
-      ...extraOrigins,
-    ]),
-  ],
+  baseURL: betterAuthUrl,
+  secret: betterAuthSecret,
+  trustedOrigins,
   emailAndPassword: {
     enabled: true,
     // Keep admin session intact when creating users via API; clients still sign in explicitly.
