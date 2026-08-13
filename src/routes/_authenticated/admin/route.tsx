@@ -16,7 +16,14 @@ export const Route = createFileRoute("/_authenticated/admin")({
     try {
       info = await getCurrentUser({});
     } catch {
-      throw redirect({ to: "/admin/login", search: { redirect: location.href } });
+      throw redirect({
+        to: "/admin/login",
+        search: {
+          redirect: `${location.pathname}${location.searchStr || ""}`.startsWith("/admin")
+            ? `${location.pathname}${location.searchStr || ""}`
+            : "/admin/dashboard",
+        },
+      });
     }
     if (!info.hasAdminAccess) {
       try {

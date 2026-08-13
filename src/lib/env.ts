@@ -67,12 +67,22 @@ const DEFAULT_LOCAL_ORIGINS = [
  * Also adds the same hostname on common ports to reduce "Invalid origin" on VMs.
  */
 export function buildTrustedOrigins(baseURL: string): string[] {
-  const extras = optionalEnv("BETTER_AUTH_TRUSTED_ORIGINS")
+  const rawExtras = optionalEnv("BETTER_AUTH_TRUSTED_ORIGINS");
+  const extras = rawExtras
     .split(",")
-    .map((o) => normalizeOrigin(o))
+    .map((o) => o.trim())
     .filter(Boolean);
 
-  const origins = new Set<string>([...DEFAULT_LOCAL_ORIGINS, normalizeOrigin(baseURL), ...extras]);
+  const origins = new Set<string>([...DEFAULT_LOCAL_ORIGINS, normalizeOrigin(baseURL)]);
+
+  for (const extra of extras) {
+    // Better Auth supports wildcard patterns (e.g. "*" or "http://192.168.*:*")
+    if (extra === "*" || extra.includes("*") || extra.includes("?")) {
+      origins.add(extra);
+      continue;
+    }
+    origins.add(normalizeOrigin(extra));
+  }
 
   try {
     const u = new URL(baseURL);

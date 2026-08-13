@@ -17,7 +17,7 @@ Current Infrastructure (as of migration):
 - Seed from `src/data/*` via `npm run seed:cms`. Do **not** fetch `public/cms/*.json` at runtime.
 - Home images upload to `public/media/home/`; content saves to Postgres (`page-content.functions.ts`).
 - Schema apply: `npm run db:schema` → `scripts/schema-cms-local.sql`.
-- Auth tables: `npm run auth:migrate`. Seed admin: `npm run auth:seed-admin`.
+- Auth tables: `npm run auth:migrate`. First admin: set `SEED_ADMIN_EMAIL` + `SEED_ADMIN_PASSWORD` in `.env`, then `npm run auth:seed-admin` (never hardcode credentials in source).
 - RBAC: `"user".role` + `user_content_permissions`.
 
 3. Build & run (self-hosted Node — not Cloudflare)

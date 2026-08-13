@@ -58,5 +58,6 @@ if (!existsSync(serverEntry)) {
 console.info(
   `[start] Node server → http://${process.env.HOST}:${process.env.PORT} (BETTER_AUTH_URL=${process.env.BETTER_AUTH_URL})`,
 );
+console.info(`[start] Loading ${serverEntry}`);
 
 await import(pathToFileURL(serverEntry).href);

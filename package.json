@@ -7,8 +7,10 @@
     "dev": "vite dev",
     "build": "vite build",
     "build:dev": "vite build --mode development",
-    "preview": "node ./scripts/start-prod.mjs",
     "start": "node ./scripts/start-prod.mjs",
+    "preview": "node ./scripts/start-prod.mjs",
+    "serve": "node ./scripts/start-prod.mjs",
+    "prod": "npm run build && npm start",
     "lint": "eslint .",
     "format": "prettier --write .",
     "db:schema": "tsx --env-file=.env scripts/apply-cms-schema.ts",
@@ -16,7 +18,9 @@
     "seed:cms": "tsx --env-file=.env scripts/seed-from-json.ts",
     "auth:migrate": "node --env-file=.env ./node_modules/@better-auth/cli/dist/index.mjs migrate --config ./src/lib/auth.ts --yes",
     "auth:seed-admin": "tsx --env-file=.env scripts/seed-admin.ts",
-    "check:env": "tsx scripts/check-env.ts"
+    "check:env": "tsx scripts/check-env.ts",
+    "ensure:start": "node ./scripts/ensure-start-scripts.mjs",
+    "postbuild": "node ./scripts/print-start-help.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

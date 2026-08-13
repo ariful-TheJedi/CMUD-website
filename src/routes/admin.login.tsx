@@ -13,7 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useServerFn } from "@tanstack/react-start";
 
 const searchSchema = z.object({
-  redirect: z.string().optional(),
+  redirect: z.string().optional().catch(undefined),
 });
 
 const STAFF_ROLES = new Set(["administrator", "staff", "web_manager", "viewer"]);
@@ -32,8 +32,18 @@ export const Route = createFileRoute("/admin/login")({
 
 function sanitizeRedirect(value: string | undefined): string {
   if (!value) return "/admin/dashboard";
-  if (!value.startsWith("/admin") || value.startsWith("//")) return "/admin/dashboard";
-  return value;
+  // Accept path-only redirects under /admin
+  if (value.startsWith("/admin") && !value.startsWith("//")) return value;
+  // If a full URL was passed (older redirects), keep only the path when it is /admin/*
+  try {
+    const path = new URL(value, "http://local").pathname;
+    if (path.startsWith("/admin") && !path.startsWith("//")) {
+      return path + (new URL(value, "http://local").search || "");
+    }
+  } catch {
+    /* ignore */
+  }
+  return "/admin/dashboard";
 }
 
 function LoginPage() {
@@ -69,10 +79,23 @@ function LoginPage() {
     if (loading) return;
     setLoading(true);
 
-    const { error } = await authClient.signIn.email({ email, password });
+    const trimmedEmail = email.trim();
+    const trimmedPassword = password;
+    if (!trimmedEmail || !trimmedPassword) {
+      setLoading(false);
+      toast.error("Enter email and password.");
+      return;
+    }
+
+    const { error } = await authClient.signIn.email({
+      email: trimmedEmail,
+      password: trimmedPassword,
+    });
     if (error) {
       setLoading(false);
-      toast.error(error.message || "Invalid email or password.");
+      const detail = [error.message, error.code].filter(Boolean).join(" — ");
+      console.error("[admin/login] signIn failed:", error);
+      toast.error(detail || "Invalid email or password.");
       return;
     }
 
@@ -106,9 +129,7 @@ function LoginPage() {
       <Card className="w-full">
         <CardHeader>
           <CardTitle>CMUD / MedLearn Hub</CardTitle>
-          <CardDescription>
-            Staff sign in. Local admin: <code className="text-xs">admin@local.dev</code>
-          </CardDescription>
+          <CardDescription>Staff sign in for the CMUD admin dashboard.</CardDescription>
         </CardHeader>
         <CardContent>
           <form className="space-y-4" onSubmit={handleSignIn}>
@@ -121,7 +142,7 @@ function LoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@local.dev"
+                placeholder="you@example.com"
               />
             </div>
             <div className="space-y-2">

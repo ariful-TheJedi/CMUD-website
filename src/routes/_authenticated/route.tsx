@@ -6,9 +6,11 @@ export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ location }) => {
     const session = await getAuthSession();
     if (!session?.user) {
+      // Path-only redirect (not full URL) — avoids auth/search "Invalid input" / callback issues on VPS
+      const redirectTo = `${location.pathname}${location.searchStr || ""}`;
       throw redirect({
         to: "/admin/login",
-        search: { redirect: location.href },
+        search: { redirect: redirectTo.startsWith("/admin") ? redirectTo : "/admin/dashboard" },
       });
     }
     return { user: session.user };
