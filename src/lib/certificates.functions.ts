@@ -4,8 +4,7 @@ import { requireAuth } from "@/lib/require-auth";
 import { assertSectionView, assertSectionUpdate } from "@/lib/admin-guards";
 import { writeAuditLog } from "@/lib/audit";
 import { dbQuery } from "@/lib/db-helpers";
-// PAUSED — Cloudflare Turnstile
-// import { verifyTurnstileToken } from "@/lib/turnstile";
+import { verifyTurnstileToken } from "@/lib/turnstile";
 
 export type CertificateRow = {
   id: string;
@@ -135,8 +134,11 @@ export const verifyCertificate = createServerFn({ method: "POST" })
     }
     if (!checkRateLimit(ipKey)) return { valid: false };
 
-    // PAUSED — Cloudflare Turnstile verify (re-enable for production when asked)
-    // await verifyTurnstileToken(data.captchaToken);
+    try {
+      await verifyTurnstileToken(data.captchaToken);
+    } catch {
+      throw new Error("Captcha verification failed");
+    }
 
     try {
       const column =

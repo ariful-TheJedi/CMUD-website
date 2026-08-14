@@ -4,7 +4,10 @@ import {
   isTurnstileEnabledClient,
 } from "@/lib/turnstile";
 
-export const TURNSTILE_SITE_KEY = "0x4AAAAAAD-YwSGmywvZHGgk";
+/** Public site key from env (VITE_TURNSTILE_SITE_KEY). Never hardcode per-environment keys. */
+export function getTurnstileSiteKey(): string {
+  return String(import.meta.env.VITE_TURNSTILE_SITE_KEY ?? "").trim();
+}
 
 const SCRIPT_SRC = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
 
@@ -49,14 +52,13 @@ type Props = {
   onExpire?: () => void;
 };
 
-/**
- * Turnstile widget — PAUSED. Renders nothing; injects a bypass token so forms still submit.
- * Re-enable by restoring isTurnstileEnabledClient() and mounting this component again.
- */
+/** Cloudflare Turnstile widget. Hidden when VITE_TURNSTILE_ENABLED is not true. */
 export function Turnstile({ onVerify, onExpire }: Props) {
   const enabled = isTurnstileEnabledClient();
+  const siteKey = getTurnstileSiteKey();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [errorCode, setErrorCode] = useState<string | null>(null);
+  const [configError, setConfigError] = useState<string | null>(null);
   const widgetIdRef = useRef<string | null>(null);
   const onVerifyRef = useRef(onVerify);
   const onExpireRef = useRef(onExpire);
@@ -64,18 +66,22 @@ export function Turnstile({ onVerify, onExpire }: Props) {
   onExpireRef.current = onExpire;
 
   useEffect(() => {
-    // PAUSED: always provide bypass token for form submit.
-    onVerifyRef.current(TURNSTILE_BYPASS_TOKEN);
-  }, []);
+    if (!enabled) onVerifyRef.current(TURNSTILE_BYPASS_TOKEN);
+  }, [enabled]);
 
   useEffect(() => {
     if (!enabled) return;
+    if (!siteKey) {
+      setConfigError("Missing VITE_TURNSTILE_SITE_KEY in .env (rebuild required).");
+      return;
+    }
+    setConfigError(null);
     let cancelled = false;
     loadScript().then(() => {
       if (cancelled || !containerRef.current || !window.turnstile) return;
       if (widgetIdRef.current) return;
       widgetIdRef.current = window.turnstile.render(containerRef.current, {
-        sitekey: TURNSTILE_SITE_KEY,
+        sitekey: siteKey,
         theme: "auto",
         callback: (token) => onVerifyRef.current(token),
         "expired-callback": () => onExpireRef.current?.(),
@@ -92,14 +98,14 @@ export function Turnstile({ onVerify, onExpire }: Props) {
         widgetIdRef.current = null;
       }
     };
-  }, [enabled]);
+  }, [enabled, siteKey]);
 
-  // PAUSED — do not show Cloudflare widget.
   if (!enabled) return null;
 
   return (
     <div className="space-y-2">
       <div ref={containerRef} className="min-h-[65px]" />
+      {configError ? <p className="text-sm text-destructive">{configError}</p> : null}
       {errorCode ? (
         <p className="text-sm text-destructive">
           Security check could not load (error {errorCode}). This usually means this site&apos;s
