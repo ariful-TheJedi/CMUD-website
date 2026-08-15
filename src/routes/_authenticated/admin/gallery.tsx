@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ImageOff, Pencil, Plus, Trash2, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { AdminMediaImage } from "@/components/admin/AdminMediaImage";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
@@ -249,11 +250,10 @@ function GalleryAdminPage() {
                         {a.images.map((img) => (
                           <tr key={img.id} className="border-b last:border-0">
                             <td className="py-2 pr-3">
-                              <img
+                              <AdminMediaImage
                                 src={img.url}
                                 alt={img.altText}
                                 className="h-14 w-20 rounded object-cover"
-                                loading="lazy"
                               />
                             </td>
                             <td className="py-2 pr-3 align-top">
@@ -530,7 +530,7 @@ function ImageEditForm({
       }}
       className="space-y-4"
     >
-      <img
+      <AdminMediaImage
         src={image.url}
         alt={altText}
         className="max-h-56 w-full rounded-md border border-border object-contain"

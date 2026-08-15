@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AdminMediaImage, useObjectUrl } from "@/components/admin/AdminMediaImage";
 import { useCanWrite } from "@/hooks/use-can-write";
 import { defaultHomeContent, type HomePageContent } from "@/lib/home-content";
 import { media } from "@/lib/media";
@@ -55,6 +56,8 @@ function ImageField({
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [pickedFile, setPickedFile] = useState<File | null>(null);
+  const localPreviewSrc = useObjectUrl(pickedFile);
   const uploadFn = useServerFn(uploadHomePageImage);
   const deleteFn = useServerFn(deleteHomePageImage);
 
@@ -69,6 +72,7 @@ function ImageField({
       toast.error("Image must be under 5MB");
       return;
     }
+    setPickedFile(file);
     setUploading(true);
     try {
       const buffer = await file.arrayBuffer();
@@ -91,6 +95,7 @@ function ImageField({
       onChange(result.url);
       toast.success("Image saved to public/media/home");
     } catch (e) {
+      setPickedFile(null);
       toast.error(e instanceof Error ? e.message : "Upload failed");
     } finally {
       setUploading(false);
@@ -101,6 +106,7 @@ function ImageField({
   const handleClear = async () => {
     if (!value) {
       onChange("");
+      setPickedFile(null);
       return;
     }
     setDeleting(true);
@@ -110,6 +116,7 @@ function ImageField({
         toast.success("Image removed from public/media/home");
       }
       onChange("");
+      setPickedFile(null);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Delete failed");
     } finally {
@@ -121,7 +128,10 @@ function ImageField({
     <Field label={label}>
       <Input
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => {
+          setPickedFile(null);
+          onChange(e.target.value);
+        }}
         placeholder="Paste image URL or upload below (blank = built-in image)"
         disabled={disabled}
       />
@@ -166,8 +176,9 @@ function ImageField({
         <p className="mb-2 text-xs font-medium text-muted-foreground">
           Currently shown on the site {value ? "(custom upload)" : "(built-in default image)"}
         </p>
-        <img
+        <AdminMediaImage
           src={value || fallbackSrc}
+          localPreviewSrc={localPreviewSrc}
           alt={`Current ${label.toLowerCase()} used on the home page`}
           className="h-40 w-auto rounded-md border border-border object-cover"
         />

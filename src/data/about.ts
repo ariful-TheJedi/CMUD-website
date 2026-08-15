@@ -15,7 +15,7 @@ export const aboutPage = {
   story: {
     eyebrow: "Our Story",
     title: "Founded around a simple belief: ultrasound is learnt at the bedside.",
-    image: "/media/home/hands-on-training.jpg",
+    image: "/media/about/story.jpg",
     imageAlt: "CMUD scanning lab",
     paragraphs: [
       "CMUD began as a small weekend scanning workshop run by senior radiologists who were frustrated with theory-heavy courses. Over a decade later, we have grown into a full college with structured programs from foundational to advanced level.",

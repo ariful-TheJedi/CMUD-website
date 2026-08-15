@@ -1,9 +1,35 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { ArrowRight, CheckCircle2, Clock, GraduationCap, ImageIcon, Monitor } from "lucide-react";
+import {
+  ArrowRight,
+  BookOpen,
+  CheckCircle2,
+  Clock,
+  GraduationCap,
+  ImageIcon,
+  Monitor,
+  Target,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getPublicCourseBySlug } from "@/lib/courses.functions";
-import { courseDetailPage } from "@/data/courses";
+import { courseDetailPage, DEFAULT_COURSE_WHATS_INCLUDED } from "@/data/courses";
+
+function ListBullet({
+  children,
+  icon: Icon,
+}: {
+  children: React.ReactNode;
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+}) {
+  return (
+    <li className="flex items-start gap-2 text-sm leading-6 text-foreground">
+      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center text-secondary">
+        <Icon className="h-4 w-4" strokeWidth={2} />
+      </span>
+      <span className="min-w-0 flex-1 pt-px">{children}</span>
+    </li>
+  );
+}
 
 export const Route = createFileRoute("/courses/$slug")({
   loader: async ({ params }) => {
@@ -48,6 +74,10 @@ function CourseDetailPage() {
   const { course } = Route.useLoaderData();
   const savings = course.fee - course.discountFee;
   const copy = courseDetailPage;
+  const whatsIncluded =
+    course.whatsIncluded?.length > 0
+      ? course.whatsIncluded
+      : DEFAULT_COURSE_WHATS_INCLUDED;
 
   return (
     <>
@@ -125,10 +155,9 @@ function CourseDetailPage() {
           <h2 className="font-serif text-2xl font-bold">{copy.sections.syllabus}</h2>
           <ul className="mt-5 space-y-3">
             {course.syllabus.map((s: string) => (
-              <li key={s} className="flex items-start gap-3 text-sm">
-                <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-secondary" />
-                <span>{s}</span>
-              </li>
+              <ListBullet key={s} icon={BookOpen}>
+                {s}
+              </ListBullet>
             ))}
           </ul>
         </div>
@@ -137,12 +166,24 @@ function CourseDetailPage() {
           <h2 className="font-serif text-2xl font-bold">{copy.sections.outcomes}</h2>
           <ul className="mt-5 space-y-3">
             {course.outcomes.map((o: string) => (
-              <li key={o} className="flex items-start gap-3 text-sm">
-                <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-secondary" />
-                <span>{o}</span>
-              </li>
+              <ListBullet key={o} icon={Target}>
+                {o}
+              </ListBullet>
             ))}
           </ul>
+
+          {whatsIncluded.length > 0 ? (
+            <div className="mt-10">
+              <h2 className="font-serif text-2xl font-bold">{copy.sections.whatsIncluded}</h2>
+              <ul className="mt-5 space-y-3">
+                {whatsIncluded.map((item) => (
+                  <ListBullet key={item} icon={CheckCircle2}>
+                    {item}
+                  </ListBullet>
+                ))}
+              </ul>
+            </div>
+          ) : null}
 
           <div className="mt-10 rounded-xl bg-surface p-6">
             <h3 className="font-serif text-lg font-bold">{copy.sections.eligibility}</h3>

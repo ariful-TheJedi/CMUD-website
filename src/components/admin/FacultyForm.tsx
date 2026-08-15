@@ -19,6 +19,7 @@ import {
   type FacultyInput,
   type FacultyStatus,
 } from "@/lib/faculty.functions";
+import { AdminMediaImage, useObjectUrl } from "@/components/admin/AdminMediaImage";
 
 const STATUSES: FacultyStatus[] = ["draft", "published", "archived"];
 
@@ -96,6 +97,8 @@ export function FacultyForm({
     status: normalizeStatus(seed.status),
     sortOrder: Number(seed.sortOrder) || 0,
   }));
+  const [pickedPhoto, setPickedPhoto] = useState<File | null>(null);
+  const photoPreview = useObjectUrl(pickedPhoto);
 
   const set = <K extends keyof FacultyInput>(k: K, v: FacultyInput[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
@@ -243,20 +246,25 @@ export function FacultyForm({
         {!readOnly && (
           <Input
             value={form.photoUrl}
-            onChange={(e) => set("photoUrl", e.target.value)}
+            onChange={(e) => {
+              setPickedPhoto(null);
+              set("photoUrl", e.target.value);
+            }}
             placeholder="Paste image URL or upload below"
           />
         )}
         {!readOnly && (
           <PhotoUploader
             onUploaded={(url) => set("photoUrl", url)}
+            onPickedFile={setPickedPhoto}
             currentName={form.name}
             previousUrl={form.photoUrl}
           />
         )}
-        {form.photoUrl ? (
-          <img
+        {form.photoUrl || photoPreview ? (
+          <AdminMediaImage
             src={form.photoUrl}
+            localPreviewSrc={photoPreview}
             alt={form.altText || "Faculty photo preview"}
             className="mt-2 h-32 w-auto rounded-md border border-border object-cover object-top"
           />
@@ -306,10 +314,12 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 function PhotoUploader({
   onUploaded,
+  onPickedFile,
   currentName,
   previousUrl,
 }: {
   onUploaded: (url: string) => void;
+  onPickedFile?: (file: File | null) => void;
   currentName: string;
   previousUrl?: string;
 }) {
@@ -326,6 +336,7 @@ function PhotoUploader({
       toast.error("Image must be under 5MB");
       return;
     }
+    onPickedFile?.(file);
     setUploading(true);
     try {
       const buffer = await file.arrayBuffer();
@@ -345,6 +356,7 @@ function PhotoUploader({
       onUploaded(url);
       toast.success("Image uploaded");
     } catch (e) {
+      onPickedFile?.(null);
       toast.error(e instanceof Error ? e.message : "Upload failed");
     } finally {
       setUploading(false);

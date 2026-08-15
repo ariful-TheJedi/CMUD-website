@@ -55,6 +55,7 @@ CREATE TABLE IF NOT EXISTS courses (
   discount_fee INTEGER NOT NULL DEFAULT 0,
   syllabus TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
   outcomes TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+  whats_included TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
   featured BOOLEAN NOT NULL DEFAULT false,
   is_published BOOLEAN NOT NULL DEFAULT false,
   status content_status NOT NULL DEFAULT 'draft',
@@ -71,6 +72,9 @@ CREATE TABLE IF NOT EXISTS courses (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Additive for existing DBs (CREATE TABLE IF NOT EXISTS does not add new columns)
+ALTER TABLE courses ADD COLUMN IF NOT EXISTS whats_included TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[];
 
 -- ---------- gallery ----------
 CREATE TABLE IF NOT EXISTS gallery_albums (

@@ -24,6 +24,7 @@ export type AdminCourseRow = {
   discountFee: number;
   syllabus: string[];
   outcomes: string[];
+  whatsIncluded: string[];
   featured: boolean;
   isPublished: boolean;
   status: CourseStatus;
@@ -50,6 +51,7 @@ type CourseDbRow = {
   discountFee: number | string;
   syllabus: unknown;
   outcomes: unknown;
+  whatsIncluded: unknown;
   featured: boolean;
   isPublished: boolean;
   status: string;
@@ -73,6 +75,7 @@ const COURSE_SELECT = `
   discount_fee AS "discountFee",
   COALESCE(syllabus, ARRAY[]::text[]) AS syllabus,
   COALESCE(outcomes, ARRAY[]::text[]) AS outcomes,
+  COALESCE(whats_included, ARRAY[]::text[]) AS "whatsIncluded",
   featured,
   is_published AS "isPublished",
   status::text AS status,
@@ -108,6 +111,7 @@ function normalizeCourse(r: CourseDbRow): AdminCourseRow {
     discountFee: Number(r.discountFee) || 0,
     syllabus: parseStringArray(r.syllabus),
     outcomes: parseStringArray(r.outcomes),
+    whatsIncluded: parseStringArray(r.whatsIncluded),
     featured: Boolean(r.featured),
     isPublished: Boolean(r.isPublished),
     status: (r.status as CourseStatus) ?? "draft",
@@ -132,6 +136,7 @@ function toPublic(r: AdminCourseRow): Course {
     discountFee: r.discountFee,
     syllabus: r.syllabus,
     outcomes: r.outcomes,
+    whatsIncluded: r.whatsIncluded,
     featured: r.featured,
     imageUrl: r.imageUrl,
   };
@@ -229,6 +234,7 @@ async function upsertCourseAdminImpl(
     const isPublished = status === "published";
     const syllabus = parseStringArray(data.syllabus);
     const outcomes = parseStringArray(data.outcomes);
+    const whatsIncluded = parseStringArray(data.whatsIncluded);
     const fee = Number(data.fee) || 0;
     const discountFee = Number(data.discountFee) || 0;
     const sortOrder = Number(data.sortOrder) || 0;
@@ -245,6 +251,7 @@ async function upsertCourseAdminImpl(
       discountFee,
       syllabus,
       outcomes,
+      whatsIncluded,
       Boolean(data.featured),
       status,
       isPublished,
@@ -261,10 +268,11 @@ async function upsertCourseAdminImpl(
         `UPDATE courses SET
            slug=$1, name=$2, category=$3, duration=$4, mode=$5, eligibility=$6,
            short_description=$7, description=$8, fee=$9, discount_fee=$10,
-           syllabus=$11::text[], outcomes=$12::text[], featured=$13, status=$14::content_status,
-           is_published=$15, sort_order=$16, image_url=$17, seo_title=$18,
-           seo_description=$19, updated_by=$20, updated_at=now()
-         WHERE id=$21
+           syllabus=$11::text[], outcomes=$12::text[], whats_included=$13::text[],
+           featured=$14, status=$15::content_status,
+           is_published=$16, sort_order=$17, image_url=$18, seo_title=$19,
+           seo_description=$20, updated_by=$21, updated_at=now()
+         WHERE id=$22
          RETURNING ${COURSE_SELECT}`,
         [...vals, data.id],
       );
@@ -289,10 +297,10 @@ async function upsertCourseAdminImpl(
       "upsertCourseAdmin.insert",
       `INSERT INTO courses (
          slug, name, category, duration, mode, eligibility, short_description, description,
-         fee, discount_fee, syllabus, outcomes, featured, status, is_published, sort_order,
+         fee, discount_fee, syllabus, outcomes, whats_included, featured, status, is_published, sort_order,
          image_url, seo_title, seo_description, created_by, updated_by
        ) VALUES (
-         $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::text[],$12::text[],$13,$14::content_status,$15,$16,$17,$18,$19,$20,$20
+         $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::text[],$12::text[],$13::text[],$14,$15::content_status,$16,$17,$18,$19,$20,$21,$21
        )
        RETURNING ${COURSE_SELECT}`,
       vals,

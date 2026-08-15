@@ -20,6 +20,8 @@ import {
   type CourseInput,
   type CourseStatus,
 } from "@/lib/courses.functions";
+import { DEFAULT_COURSE_WHATS_INCLUDED } from "@/data/courses";
+import { AdminMediaImage, useObjectUrl } from "@/components/admin/AdminMediaImage";
 
 const MODES = ["Online", "Onsite", "Hybrid", "Hybrid, Onsite"] as const;
 const CATEGORIES = ["Foundation", "Advanced", "Specialty", "Diploma / Masters"] as const;
@@ -69,6 +71,7 @@ export function emptyCourseForm(): CourseInput {
     discountFee: 0,
     syllabus: [],
     outcomes: [],
+    whatsIncluded: [...DEFAULT_COURSE_WHATS_INCLUDED],
     featured: false,
     status: "draft",
     sortOrder: 0,
@@ -93,6 +96,10 @@ export function courseInputFromRow(row: AdminCourseRow): CourseInput {
     discountFee: Number(row.discountFee) || 0,
     syllabus: Array.isArray(row.syllabus) ? row.syllabus : [],
     outcomes: Array.isArray(row.outcomes) ? row.outcomes : [],
+    whatsIncluded:
+      Array.isArray(row.whatsIncluded) && row.whatsIncluded.length > 0
+        ? row.whatsIncluded
+        : [...DEFAULT_COURSE_WHATS_INCLUDED],
     featured: Boolean(row.featured),
     status: normalizeStatus(row.status),
     sortOrder: Number(row.sortOrder) || 0,
@@ -130,7 +137,12 @@ export function CourseForm({
   const [outcomesText, setOutcomesText] = useState<string>(() =>
     (seed.outcomes ?? []).join("\n"),
   );
+  const [whatsIncludedText, setWhatsIncludedText] = useState<string>(() =>
+    (seed.whatsIncluded ?? []).join("\n"),
+  );
   const [slugTouched, setSlugTouched] = useState<boolean>(() => !!seed.slug);
+  const [pickedCover, setPickedCover] = useState<File | null>(null);
+  const coverPreview = useObjectUrl(pickedCover);
 
   const set = <K extends keyof CourseInput>(k: K, v: CourseInput[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
@@ -166,6 +178,7 @@ export function CourseForm({
       slug: form.slug.trim().toLowerCase(),
       syllabus: toLines(syllabusText),
       outcomes: toLines(outcomesText),
+      whatsIncluded: toLines(whatsIncludedText),
       fee: Number(form.fee) || 0,
       discountFee: Number(form.discountFee) || 0,
       sortOrder: Number(form.sortOrder) || 0,
@@ -285,17 +298,22 @@ export function CourseForm({
       <Field label="Cover image">
         <Input
           value={form.imageUrl}
-          onChange={(e) => set("imageUrl", e.target.value)}
+          onChange={(e) => {
+            setPickedCover(null);
+            set("imageUrl", e.target.value);
+          }}
           placeholder="Paste image URL or upload below"
         />
         <ImageUploader
           onUploaded={(url) => set("imageUrl", url)}
+          onPickedFile={setPickedCover}
           currentSlug={form.slug}
           previousUrl={form.imageUrl}
         />
-        {form.imageUrl ? (
-          <img
+        {form.imageUrl || coverPreview ? (
+          <AdminMediaImage
             src={form.imageUrl}
+            localPreviewSrc={coverPreview}
             alt="Course cover preview"
             className="mt-2 h-32 w-auto rounded-md border border-border object-cover"
           />
@@ -322,6 +340,14 @@ export function CourseForm({
       </Field>
       <Field label="Learning outcomes (one item per line)">
         <Textarea value={outcomesText} onChange={(e) => setOutcomesText(e.target.value)} rows={4} />
+      </Field>
+      <Field label="What's included in the course (one item per line)">
+        <Textarea
+          value={whatsIncludedText}
+          onChange={(e) => setWhatsIncludedText(e.target.value)}
+          rows={5}
+          placeholder="Hands-on scanning practice&#10;Certificate of completion&#10;..."
+        />
       </Field>
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -367,10 +393,12 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 function ImageUploader({
   onUploaded,
+  onPickedFile,
   currentSlug,
   previousUrl,
 }: {
   onUploaded: (url: string) => void;
+  onPickedFile?: (file: File | null) => void;
   currentSlug: string;
   previousUrl?: string;
 }) {
@@ -387,6 +415,7 @@ function ImageUploader({
       toast.error("Image must be under 5MB");
       return;
     }
+    onPickedFile?.(file);
     setUploading(true);
     try {
       const buffer = await file.arrayBuffer();
@@ -406,6 +435,7 @@ function ImageUploader({
       onUploaded(url);
       toast.success("Image uploaded");
     } catch (e) {
+      onPickedFile?.(null);
       toast.error(e instanceof Error ? e.message : "Upload failed");
     } finally {
       setUploading(false);

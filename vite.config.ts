@@ -4,11 +4,13 @@
 //     componentTagger (dev-only), VITE_* env injection, @ path alias, React/TanStack dedupe,
 //     error logger plugins, and sandbox detection (port/host/strictPort).
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+import { serveFreshUploadsPlugin } from "./vite-plugins/serve-fresh-uploads";
 
 // Force self-hosted Node for CLI / CI even if a cloud preset env leaks in.
 process.env.NITRO_PRESET = "node-server";
 
 export default defineConfig({
+  plugins: [serveFreshUploadsPlugin()],
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     server: { entry: "server" },

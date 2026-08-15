@@ -17,11 +17,24 @@ export type Course = {
   description: string;
   syllabus: string[];
   outcomes: string[];
+  /** Items shown under “What’s included in the course” on the detail page. */
+  whatsIncluded: string[];
   featured?: boolean;
   imageUrl?: string;
 };
 
-export const courses: Course[] = [
+/** Default CMS seed for courses that do not set a custom includes list. */
+export const DEFAULT_COURSE_WHATS_INCLUDED: string[] = [
+  "Hands-on scanning practice sessions",
+  "Live demonstrations with experienced faculty",
+  "Printed / digital study materials & protocols",
+  "Certificate of completion",
+  "Batch mentoring & case discussion support",
+];
+
+type CourseSeed = Omit<Course, "whatsIncluded"> & { whatsIncluded?: string[] };
+
+const courseSeeds: CourseSeed[] = [
   {
     slug: "basic-ultrasound",
     name: "Certificate in Medical Ultrasound",
@@ -470,6 +483,14 @@ export const courses: Course[] = [
   },
 ];
 
+export const courses: Course[] = courseSeeds.map((c) => ({
+  ...c,
+  whatsIncluded:
+    c.whatsIncluded && c.whatsIncluded.length > 0
+      ? c.whatsIncluded
+      : DEFAULT_COURSE_WHATS_INCLUDED,
+}));
+
 export const courseCategories = [
   { name: "Foundation", description: "Start your ultrasound journey" },
   { name: "Advanced", description: "Deepen your diagnostic skill" },
@@ -509,6 +530,7 @@ export const courseDetailPage = {
   sections: {
     syllabus: "Syllabus",
     outcomes: "Learning outcomes",
+    whatsIncluded: "What's included in the course",
     eligibility: "Eligibility",
   },
   notFound: {

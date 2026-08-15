@@ -28,6 +28,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { AdminMediaImage, useObjectUrl } from "@/components/admin/AdminMediaImage";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
@@ -318,6 +319,8 @@ function TestimonialForm({
   const [form, setForm] = useState<TestimonialInput>(() =>
     initial ? { ...initial, photoUrl: initial.photoUrl ?? "" } : emptyForm(),
   );
+  const [pickedPhoto, setPickedPhoto] = useState<File | null>(null);
+  const photoPreview = useObjectUrl(pickedPhoto);
 
   const set = <K extends keyof TestimonialInput>(k: K, v: TestimonialInput[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
@@ -365,17 +368,22 @@ function TestimonialForm({
       <Field label="Photo">
         <Input
           value={form.photoUrl}
-          onChange={(e) => set("photoUrl", e.target.value)}
+          onChange={(e) => {
+            setPickedPhoto(null);
+            set("photoUrl", e.target.value);
+          }}
           placeholder="Paste image URL or upload below"
         />
         <PhotoUploader
           onUploaded={(url) => set("photoUrl", url)}
+          onPickedFile={setPickedPhoto}
           currentName={form.name}
           previousUrl={form.photoUrl}
         />
-        {form.photoUrl ? (
-          <img
+        {form.photoUrl || photoPreview ? (
+          <AdminMediaImage
             src={form.photoUrl}
+            localPreviewSrc={photoPreview}
             alt={form.name || "Person photo preview"}
             className="mt-2 h-24 w-24 rounded-full border border-border object-cover object-top"
           />
@@ -407,10 +415,12 @@ function TestimonialForm({
 
 function PhotoUploader({
   onUploaded,
+  onPickedFile,
   currentName,
   previousUrl,
 }: {
   onUploaded: (url: string) => void;
+  onPickedFile?: (file: File | null) => void;
   currentName: string;
   previousUrl?: string;
 }) {
@@ -427,6 +437,7 @@ function PhotoUploader({
       toast.error("Image must be under 5MB");
       return;
     }
+    onPickedFile?.(file);
     setUploading(true);
     try {
       const buffer = await file.arrayBuffer();
@@ -446,6 +457,7 @@ function PhotoUploader({
       onUploaded(url);
       toast.success("Photo uploaded");
     } catch (e) {
+      onPickedFile?.(null);
       toast.error(e instanceof Error ? e.message : "Upload failed");
     } finally {
       setUploading(false);
