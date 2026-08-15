@@ -22,7 +22,7 @@ export const admissionPage = {
     { value: "jan-2027", label: "January 2027" },
   ],
   placeholders: {
-    fullName: "Dr. Ramesh Sharma",
+    fullName: "Dr Kawser Mahmood",
     email: "you@example.com",
     phone: "+88017823XXXXX",
     qualification: "MBBS / MD / Other",

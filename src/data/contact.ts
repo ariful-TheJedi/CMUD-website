@@ -39,7 +39,7 @@ export const contactPage = {
       title: "Email",
       lines: [
         { label: "General", value: "info@cmudusg.com", href: "mailto:info@cmudusg.com" },
-        { label: "Website", value: "www.cmudusg.com", href: "https://www.cmudusg.com" },
+        { label: "secondary", value: "cmudoffice@gmail.com", href: "mailto:cmudoffice@gmail.com" },
       ],
     },
     {

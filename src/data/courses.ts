@@ -528,7 +528,8 @@ export const courseDetailPage = {
   applyLabel: "Apply for this course",
   seatsNote: "Limited seats per batch. Speak to admissions for instalment options.",
   sections: {
-    syllabus: "Syllabus",
+    syllabus: "Syllabus / Module",
+    syllabusWithCount: (count: number) => `Syllabus / Module (${count})`,
     outcomes: "Learning outcomes",
     whatsIncluded: "What's included in the course",
     eligibility: "Eligibility",

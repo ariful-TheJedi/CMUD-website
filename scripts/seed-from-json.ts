@@ -5,7 +5,7 @@
  */
 import { randomUUID } from "node:crypto";
 import { courses } from "../src/data/courses";
-import { faculty } from "../src/data/faculty";
+import { facultySeed as faculty } from "./seed-data/faculty";
 import { faqs } from "../src/data/faqs";
 import { galleryItems } from "../src/data/gallery";
 import { notices } from "../src/data/notices";

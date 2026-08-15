@@ -335,8 +335,37 @@ export function CourseForm({
         />
       </Field>
 
-      <Field label="Syllabus (one item per line)">
-        <Textarea value={syllabusText} onChange={(e) => setSyllabusText(e.target.value)} rows={5} />
+      <Field label="Syllabus / Module (one module per line)">
+        <Textarea
+          value={syllabusText}
+          onChange={(e) => setSyllabusText(e.target.value)}
+          rows={6}
+          placeholder={"Ultrasound physics & instrumentation\nAbdominal sonography\nPelvic & obstetric scanning"}
+        />
+        <p className="text-xs text-muted-foreground">
+          Each line is one module. The site shows them as numbered items under{" "}
+          <strong>Syllabus / Module (count)</strong>. Do not type the module number
+          in the line — it is added automatically.
+        </p>
+        {syllabusText
+          .split("\n")
+          .map((s) => s.trim())
+          .filter(Boolean).length > 0 ? (
+          <ol className="mt-2 space-y-1 rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+            {syllabusText
+              .split("\n")
+              .map((s) => s.trim())
+              .filter(Boolean)
+              .map((line, i) => (
+                <li key={`${i}-${line}`} className="flex items-start gap-2">
+                  <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded bg-secondary text-[10px] font-bold text-secondary-foreground">
+                    {i + 1}
+                  </span>
+                  <span>{line}</span>
+                </li>
+              ))}
+          </ol>
+        ) : null}
       </Field>
       <Field label="Learning outcomes (one item per line)">
         <Textarea value={outcomesText} onChange={(e) => setOutcomesText(e.target.value)} rows={4} />

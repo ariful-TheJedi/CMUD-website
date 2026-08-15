@@ -20,7 +20,7 @@ export const homePage = {
       {
         icon: "hand" as const,
         title: "Hands-on Scanning",
-        text: "2+ hours of daily live scanning with real patients in every program.",
+        text: "Daily your mentor will train you  hand in hand with a probe and real patients",
       },
       {
         icon: "users" as const,
@@ -30,19 +30,19 @@ export const homePage = {
       {
         icon: "award" as const,
         title: "Recognised Certification",
-        text: "Structured assessment and CMUD certificate on completion.",
+        text: "Certificate is recognised by DHI and WES",
       },
       {
         icon: "microscope" as const,
         title: "Modern Equipment",
-        text: "High-end ultrasound and Doppler machines for training.",
+        text: "High-end Philips, Toshiba, Mindray, SIUI machines with TVS, echo, 3D/4D transducer probes.",
       },
     ],
   },
 
   featuredCourses: {
     eyebrow: "Featured Courses",
-    title: "Programs starting this batch",
+    title: "Programs starting this month",
     description: "Limited seats per batch to ensure consistent hands-on time.",
     ctaLabel: "Browse all courses",
     ctaTo: "/courses" as const,

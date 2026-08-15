@@ -2,7 +2,15 @@
 -- Applied via: npm run db:schema
 -- Safe to re-run (IF NOT EXISTS).
 
-CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+-- gen_random_uuid() is built into Postgres 13+ (no extension required).
+-- pgcrypto is optional; some aaPanel / slim installs do not ship it.
+DO $$
+BEGIN
+  CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE NOTICE 'pgcrypto extension not available — continuing with built-in gen_random_uuid()';
+END $$;
 
 DO $$ BEGIN
   CREATE TYPE content_status AS ENUM ('draft', 'published', 'archived');

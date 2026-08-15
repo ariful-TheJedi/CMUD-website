@@ -1,8 +1,7 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import {
   ArrowRight,
-  BookOpen,
-  CheckCircle2,
+  BadgeCheck,
   Clock,
   GraduationCap,
   ImageIcon,
@@ -29,6 +28,33 @@ function ListBullet({
       <span className="min-w-0 flex-1 pt-px">{children}</span>
     </li>
   );
+}
+
+function ModuleBullet({
+  index,
+  children,
+}: {
+  index: number;
+  children: React.ReactNode;
+}) {
+  return (
+    <li className="flex items-start gap-3 text-sm leading-6 text-foreground">
+      <span
+        className="mt-0.5 flex h-7 min-w-7 shrink-0 items-center justify-center rounded-md bg-secondary px-1.5 text-xs font-bold tabular-nums text-secondary-foreground"
+        aria-label={`Module ${index}`}
+      >
+        {index}
+      </span>
+      <span className="min-w-0 flex-1 pt-0.5">{children}</span>
+    </li>
+  );
+}
+
+/** Strip leading "Module N" labels so CMS text + UI numbering never double up. */
+function stripModulePrefix(text: string): string {
+  return text
+    .replace(/^\s*module\s*\d+\s*[:.\-)–—]?\s*/i, "")
+    .trim();
 }
 
 export const Route = createFileRoute("/courses/$slug")({
@@ -152,14 +178,22 @@ function CourseDetailPage() {
 
       <section className="container mx-auto grid gap-12 px-4 py-16 lg:grid-cols-2">
         <div>
-          <h2 className="font-serif text-2xl font-bold">{copy.sections.syllabus}</h2>
-          <ul className="mt-5 space-y-3">
-            {course.syllabus.map((s: string) => (
-              <ListBullet key={s} icon={BookOpen}>
-                {s}
-              </ListBullet>
-            ))}
-          </ul>
+          <h2 className="font-serif text-2xl font-bold">
+            {copy.sections.syllabusWithCount(course.syllabus.length)}
+          </h2>
+          {course.syllabus.length > 0 ? (
+            <ul className="mt-5 space-y-3">
+              {course.syllabus.map((s: string, i: number) => (
+                <ModuleBullet key={`${i}-${s}`} index={i + 1}>
+                  {stripModulePrefix(s) || s}
+                </ModuleBullet>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-5 text-sm text-muted-foreground">
+              Modules for this course will be listed here soon.
+            </p>
+          )}
         </div>
 
         <div>
@@ -177,7 +211,7 @@ function CourseDetailPage() {
               <h2 className="font-serif text-2xl font-bold">{copy.sections.whatsIncluded}</h2>
               <ul className="mt-5 space-y-3">
                 {whatsIncluded.map((item) => (
-                  <ListBullet key={item} icon={CheckCircle2}>
+                  <ListBullet key={item} icon={BadgeCheck}>
                     {item}
                   </ListBullet>
                 ))}

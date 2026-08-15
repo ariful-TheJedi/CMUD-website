@@ -8,9 +8,9 @@ export const aboutPage = {
   },
   hero: {
     eyebrow: "About CMUD",
-    title: "A college built by clinicians for clinicians.",
+    title: "A institute built by doctors for doctors.",
     description:
-      "Since 2014, CMUD has trained over 1,200 doctors and sonographers in diagnostic ultrasound and Doppler imaging — combining rigorous theory with daily, supervised scanning.",
+      "Since 2014, CMUD has trained over 1,200 doctors of MBBS and higher Degrees, in diagnostic ultrasound and Doppler imaging — combining rigorous theory with daily, supervised scanning.",
   },
   story: {
     eyebrow: "Our Story",
@@ -18,8 +18,8 @@ export const aboutPage = {
     image: "/media/about/story.jpg",
     imageAlt: "CMUD scanning lab",
     paragraphs: [
-      "CMUD began as a small weekend scanning workshop run by senior radiologists who were frustrated with theory-heavy courses. Over a decade later, we have grown into a full college with structured programs from foundational to advanced level.",
-      "We still keep our batches small, our equipment current, and our faculty deeply involved in patient care — so every graduate leaves us ready to scan independently.",
+      "CMUD was established by Cardiologist Prof Dr Mohammad Shahidullah, Radiologist Dr Rezaul Kabir, Dr Zahidur Rahman Shumon, and Doctor Tanvir Mahmood who felt that every year hundreds of MBBS doctors serve as primary care physicians in rural areas of Bangladesh without any exposure to medical ultrasound.",
+      "We still keep our batches small, our equipment current, and our faculty deeply involved in patient care — so every MBBS doctor leaves us ready to scan independently.",
     ],
   },
   guides: {

@@ -94,9 +94,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content: "Hands-on professional training in medical ultrasound and Doppler imaging.",
       },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:image", content: "/media/shared/cmud-logo.webp" },
+      { name: "twitter:card", content: "summary" },
+      { name: "twitter:image", content: "/media/shared/cmud-logo.webp" },
     ],
     links: [
+      { rel: "icon", href: "/favicon.png", type: "image/png" },
       { rel: "stylesheet", href: appCss },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
