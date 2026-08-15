@@ -1,12 +1,12 @@
 /**
  * Generic local attachment helpers — write/delete files under
- * `public/attachment/<folder>/`. Server-only.
+ * `public/attachment/<folder>/`.
+ * Always targets the permanent project-root `public/` (never `.output/public`).
+ * Server-only.
  */
 import { mkdir, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
-
-const ROOT = process.cwd();
-const ATTACHMENT_ROOT = path.join(ROOT, "public", "attachment");
+import { getAttachmentDir } from "@/lib/project-paths.server";
 
 const ALLOWED_EXT = new Set([
   "pdf",
@@ -29,7 +29,7 @@ const ALLOWED_EXT = new Set([
 ]);
 
 function attachmentDir(folder: string) {
-  return path.join(ATTACHMENT_ROOT, folder);
+  return getAttachmentDir(folder);
 }
 
 /** Resolve `/attachment/<folder>/file` to a disk path; null if unsafe. */

@@ -14,6 +14,8 @@ module.exports = {
       name: "medlearhub",
       script: "scripts/start-prod.mjs",
       interpreter: "node",
+      // Must be the app root (folder with package.json + permanent public/), not .output
+      cwd: __dirname,
       instances: 1,
       exec_mode: "fork",
       watch: false,
@@ -23,6 +25,8 @@ module.exports = {
         HOST: "0.0.0.0",
         PORT: "3000",
         NITRO_PRESET: "node-server",
+        // Pin uploads to permanent public/ (set automatically by start-prod.mjs too)
+        // PROJECT_ROOT: "/www/wwwroot/your-app",
         // Prefer a project `.env` for secrets; override here only if needed:
         // DATABASE_URL: "postgresql://...",
         // BETTER_AUTH_SECRET: "...",

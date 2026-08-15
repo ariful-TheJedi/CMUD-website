@@ -34,6 +34,10 @@ function loadEnvFileIfPresent(filePath = path.resolve(process.cwd(), ".env")) {
 
 loadEnvFileIfPresent();
 
+// Pin project root for uploads so Nitro never writes into wipeable `.output/public`.
+// Upload helpers resolve `[PROJECT_ROOT]/public/{media,attachment}/`.
+process.env.PROJECT_ROOT ||= process.cwd();
+
 process.env.HOST ||= process.env.NITRO_HOST || "0.0.0.0";
 process.env.PORT ||= process.env.NITRO_PORT || "3000";
 process.env.NITRO_PRESET ||= "node-server";

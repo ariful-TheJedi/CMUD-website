@@ -3,15 +3,18 @@
  * Home page *content* is stored in Postgres `page_content` (see page-content.functions.ts).
  * Do not read/write `public/cms/*.json` at runtime.
  *
+ * Always targets the permanent project-root `public/` (never `.output/public`).
  * Server-only: do not import from client components.
  */
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-
-const ROOT = process.cwd();
-const MEDIA_DIR = path.join(ROOT, "public", "media", "home");
+import { getMediaDir } from "@/lib/project-paths.server";
 
 const ALLOWED_EXT = new Set(["jpg", "jpeg", "png", "webp", "gif", "svg"]);
+
+function homeMediaDir() {
+  return getMediaDir("home");
+}
 
 /** Only allow deleting CMS uploads we created under /media/home/ (not built-in defaults). */
 export function resolveHomeMediaDiskPath(publicUrl: string): string | null {
@@ -24,7 +27,7 @@ export function resolveHomeMediaDiskPath(publicUrl: string): string | null {
     const name = path.basename(pathname);
     if (!name || name === "." || name === ".." || name.includes("..")) return null;
     if (!/^(hero|hands-on)-\d+\.[a-z0-9]+$/i.test(name)) return null;
-    return path.join(MEDIA_DIR, name);
+    return path.join(homeMediaDir(), name);
   } catch {
     return null;
   }
@@ -62,12 +65,13 @@ export async function saveHomeMediaToPublic(opts: {
   if (bytes.byteLength === 0) throw new Error("Empty file");
   if (bytes.byteLength > 5 * 1024 * 1024) throw new Error("Image must be under 5MB");
 
-  await mkdir(MEDIA_DIR, { recursive: true });
+  const mediaDir = homeMediaDir();
+  await mkdir(mediaDir, { recursive: true });
 
   const stamp = Date.now();
   const safeSlot = opts.slot === "hero" ? "hero" : "hands-on";
   const diskName = `${safeSlot}-${stamp}.${ext === "jpeg" ? "jpg" : ext}`;
-  await writeFile(path.join(MEDIA_DIR, diskName), bytes);
+  await writeFile(path.join(mediaDir, diskName), bytes);
 
   if (opts.previousUrl) {
     await deleteHomeMediaFromPublic(opts.previousUrl);

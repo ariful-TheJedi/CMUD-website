@@ -1,16 +1,16 @@
 /**
  * Generic local media helpers — write/delete files under `public/media/<folder>/`.
+ * Always targets the permanent project-root `public/` (never `.output/public`).
  * Server-only: do not import from client components.
  */
 import { mkdir, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { getMediaDir } from "@/lib/project-paths.server";
 
-const ROOT = process.cwd();
-const MEDIA_ROOT = path.join(ROOT, "public", "media");
 const ALLOWED_EXT = new Set(["jpg", "jpeg", "png", "webp", "gif", "svg"]);
 
 function mediaDir(folder: string) {
-  return path.join(MEDIA_ROOT, folder);
+  return getMediaDir(folder);
 }
 
 /** Resolve a `/media/<folder>/file` URL to a disk path; null if unsafe / not local. */
