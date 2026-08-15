@@ -306,7 +306,8 @@ function HomePage() {
               return (
                 <Link
                   key={cat.name}
-                  to="/courses"
+                  to="/courses/category/$slug"
+                  params={{ slug: cat.slug }}
                   className="group relative flex h-full flex-col rounded-xl border border-border bg-card p-6 transition-all duration-200 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[var(--shadow-elegant)]"
                 >
                   <div className="flex items-start justify-between gap-3">

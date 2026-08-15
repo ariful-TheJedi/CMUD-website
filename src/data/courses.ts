@@ -492,11 +492,26 @@ export const courses: Course[] = courseSeeds.map((c) => ({
 }));
 
 export const courseCategories = [
-  { name: "Foundation", description: "Start your ultrasound journey" },
-  { name: "Advanced", description: "Deepen your diagnostic skill" },
-  { name: "Specialty", description: "Focused, organ-system training" },
-  { name: "Diploma / Masters", description: "Long-form diploma & post-graduate programs" },
-];
+  { name: "Foundation", slug: "foundation", description: "Start your ultrasound journey" },
+  { name: "Advanced", slug: "advanced", description: "Deepen your diagnostic skill" },
+  { name: "Specialty", slug: "specialty", description: "Focused, organ-system training" },
+  {
+    name: "Diploma / Masters",
+    slug: "diploma-masters",
+    description: "Long-form diploma & post-graduate programs",
+  },
+] as const;
+
+export type CourseCategoryName = (typeof courseCategories)[number]["name"];
+export type CourseCategorySlug = (typeof courseCategories)[number]["slug"];
+
+export function getCategoryBySlug(slug: string) {
+  return courseCategories.find((c) => c.slug === slug);
+}
+
+export function getCategorySlug(name: string) {
+  return courseCategories.find((c) => c.name === name)?.slug;
+}
 
 export const coursesPage = {
   meta: {
