@@ -3,7 +3,6 @@ import {
   ArrowRight,
   BadgeCheck,
   Clock,
-  GraduationCap,
   ImageIcon,
   Monitor,
   Target,
@@ -123,9 +122,6 @@ function CourseDetailPage() {
               </span>
               <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5">
                 <Monitor className="h-4 w-4" /> {course.mode}
-              </span>
-              <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5">
-                <GraduationCap className="h-4 w-4" /> {course.eligibility}
               </span>
             </div>
           </div>
