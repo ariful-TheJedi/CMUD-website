@@ -6,11 +6,16 @@ import {
   ImageIcon,
   Monitor,
   Target,
+  UserCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getPublicCourseBySlug } from "@/lib/courses.functions";
-import { courseDetailPage, DEFAULT_COURSE_WHATS_INCLUDED } from "@/data/courses";
+import {
+  courseDetailPage,
+  DEFAULT_COURSE_WHATS_INCLUDED,
+  eligibilityBullets,
+} from "@/data/courses";
 import { assetUrl } from "@/lib/assets";
 
 function ListBullet({
@@ -161,11 +166,11 @@ function CourseDetailPage() {
             <img
               src={assetUrl(course.imageUrl)}
               alt={`${course.name} cover`}
-              className="aspect-[16/6] w-full object-cover"
+              className="aspect-[4/3] w-full object-cover object-center sm:aspect-[16/6]"
               loading="lazy"
             />
           ) : (
-            <div className="flex aspect-[16/6] w-full flex-col items-center justify-center gap-2 text-muted-foreground">
+            <div className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-2 text-muted-foreground sm:aspect-[16/6]">
               <ImageIcon className="h-10 w-10" />
               <p className="text-sm">{copy.imagePlaceholder}</p>
             </div>
@@ -218,7 +223,17 @@ function CourseDetailPage() {
 
           <div className="mt-10 rounded-xl bg-surface p-6">
             <h3 className="font-serif text-lg font-bold">{copy.sections.eligibility}</h3>
-            <p className="mt-2 text-sm text-muted-foreground">{course.eligibility}</p>
+            {eligibilityBullets(course.eligibility).length > 0 ? (
+              <ul className="mt-4 space-y-3">
+                {eligibilityBullets(course.eligibility).map((item) => (
+                  <ListBullet key={item} icon={UserCheck}>
+                    {item}
+                  </ListBullet>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-2 text-sm text-muted-foreground">Not specified.</p>
+            )}
           </div>
         </div>
       </section>

@@ -4,9 +4,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Course } from "@/data/courses";
+import { eligibilityBullets } from "@/data/courses";
 
 export function CourseCard({ course }: { course: Course }) {
   const savings = course.fee - course.discountFee;
+  const eligibilityPreview = eligibilityBullets(course.eligibility);
   return (
     <Card className="group flex h-full flex-col overflow-hidden border-border/70 transition-all hover:-translate-y-1 hover:shadow-[var(--shadow-elegant)]">
       <CardHeader className="space-y-3 pb-3">
@@ -31,7 +33,15 @@ export function CourseCard({ course }: { course: Course }) {
           </div>
           <div className="col-span-2 flex items-start gap-1.5 text-muted-foreground">
             <GraduationCap className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-            <span className="line-clamp-2">{course.eligibility}</span>
+            {eligibilityPreview.length > 0 ? (
+              <ul className="line-clamp-2 list-disc space-y-0.5 pl-4">
+                {eligibilityPreview.slice(0, 3).map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            ) : (
+              <span className="line-clamp-2">—</span>
+            )}
           </div>
         </div>
         <div className="mt-auto flex items-baseline gap-2 border-t border-border pt-3">

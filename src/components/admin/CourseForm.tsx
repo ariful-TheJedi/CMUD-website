@@ -20,11 +20,11 @@ import {
   type CourseInput,
   type CourseStatus,
 } from "@/lib/courses.functions";
-import { DEFAULT_COURSE_WHATS_INCLUDED } from "@/data/courses";
+import { DEFAULT_COURSE_WHATS_INCLUDED, eligibilityBullets, eligibilityToCmsString, normalizeCourseMode } from "@/data/courses";
 import { AdminMediaImage, useObjectUrl } from "@/components/admin/AdminMediaImage";
 import { toStoragePath } from "@/lib/assets";
 
-const MODES = ["Online", "Onsite", "Hybrid", "Hybrid, Onsite"] as const;
+const MODES = ["Online", "Offline", "Online/Offline/Both"] as const;
 const CATEGORIES = ["Foundation", "Advanced", "Specialty", "Diploma / Masters"] as const;
 const STATUSES: CourseStatus[] = ["draft", "published", "archived"];
 
@@ -39,10 +39,7 @@ export function slugify(input: string): string {
 }
 
 function normalizeMode(mode: string | null | undefined): string {
-  const raw = (mode ?? "").trim();
-  if (!raw) return "Onsite";
-  const hit = MODES.find((m) => m.toLowerCase() === raw.toLowerCase());
-  return hit ?? "Onsite";
+  return normalizeCourseMode(mode);
 }
 
 function normalizeCategory(category: string | null | undefined): string {
@@ -64,7 +61,7 @@ export function emptyCourseForm(): CourseInput {
     name: "",
     category: "Foundation",
     duration: "",
-    mode: "Onsite",
+    mode: "Offline",
     eligibility: "",
     shortDescription: "",
     description: "",
@@ -141,6 +138,9 @@ export function CourseForm({
   const [whatsIncludedText, setWhatsIncludedText] = useState<string>(() =>
     (seed.whatsIncluded ?? []).join("\n"),
   );
+  const [eligibilityText, setEligibilityText] = useState<string>(() =>
+    eligibilityToCmsString(seed.eligibility),
+  );
   const [slugTouched, setSlugTouched] = useState<boolean>(() => !!seed.slug);
   const [pickedCover, setPickedCover] = useState<File | null>(null);
   const coverPreview = useObjectUrl(pickedCover);
@@ -180,6 +180,7 @@ export function CourseForm({
       syllabus: toLines(syllabusText),
       outcomes: toLines(outcomesText),
       whatsIncluded: toLines(whatsIncludedText),
+      eligibility: eligibilityToCmsString(eligibilityText),
       fee: Number(form.fee) || 0,
       discountFee: Number(form.discountFee) || 0,
       sortOrder: Number(form.sortOrder) || 0,
@@ -246,9 +247,6 @@ export function CourseForm({
             onChange={(e) => set("duration", e.target.value)}
             placeholder="e.g. 3 Months"
           />
-        </Field>
-        <Field label="Eligibility">
-          <Input value={form.eligibility} onChange={(e) => set("eligibility", e.target.value)} />
         </Field>
         <Field label="Full fee (BDT)">
           <Input
@@ -334,6 +332,27 @@ export function CourseForm({
           onChange={(e) => set("description", e.target.value)}
           rows={4}
         />
+      </Field>
+
+      <Field label="Eligibility (one requirement per line)">
+        <Textarea
+          value={eligibilityText}
+          onChange={(e) => setEligibilityText(e.target.value)}
+          rows={6}
+          placeholder={"MBBS / BDS graduates\nFinal-year medical students\nPostgraduate trainees"}
+          className="min-h-[9rem]"
+        />
+        <p className="text-xs text-muted-foreground">
+          Each line is one eligibility requirement. The site shows them as bullets — same pattern as
+          Syllabus / Module.
+        </p>
+        {eligibilityBullets(eligibilityText).length > 0 ? (
+          <ul className="mt-2 list-disc space-y-1 rounded-md border border-border bg-muted/40 p-3 pl-6 text-xs text-muted-foreground">
+            {eligibilityBullets(eligibilityText).map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+        ) : null}
       </Field>
 
       <Field label="Syllabus / Module (one module per line)">

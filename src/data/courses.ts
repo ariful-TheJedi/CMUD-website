@@ -2,7 +2,7 @@
  * Course types + seed/page copy.
  * Live course lists load from Postgres via `listPublicCourses` / `getPublicCourseBySlug`.
  */
-export type CourseMode = "Online" | "Onsite" | "Hybrid" | "Hybrid, Onsite";
+export type CourseMode = "Online" | "Offline" | "Online/Offline/Both";
 
 export type Course = {
   slug: string;
@@ -12,6 +12,7 @@ export type Course = {
   fee: number;
   discountFee: number;
   mode: CourseMode;
+  /** One criterion per line in CMS (legacy comma / slash lists still supported). */
   eligibility: string;
   shortDescription: string;
   description: string;
@@ -22,6 +23,46 @@ export type Course = {
   featured?: boolean;
   imageUrl?: string;
 };
+
+/** Split eligibility into bullets. Prefer one item per line; also accept commas or " / ". */
+export function eligibilityBullets(eligibility: string | null | undefined): string[] {
+  const raw = (eligibility ?? "").trim();
+  if (!raw) return [];
+  if (/\r?\n/.test(raw)) {
+    return raw
+      .split(/\r?\n/)
+      .map((s) => s.replace(/^[-•*]\s*/, "").trim())
+      .filter(Boolean);
+  }
+  return raw
+    .split(/,|\s*\/\s*/)
+    .map((s) => s.replace(/^[-•*]\s*/, "").trim())
+    .filter(Boolean);
+}
+
+/** Normalize for CMS storage: one requirement per line. */
+export function eligibilityToCmsString(eligibility: string | null | undefined): string {
+  return eligibilityBullets(eligibility).join("\n");
+}
+
+/** Map any stored mode (including legacy Onsite/Hybrid/Both) to Online | Offline | Online/Offline/Both. */
+export function normalizeCourseMode(mode: string | null | undefined): CourseMode {
+  const raw = (mode ?? "").trim().toLowerCase();
+  if (!raw) return "Offline";
+  if (raw === "online") return "Online";
+  if (raw === "offline" || raw === "onsite") return "Offline";
+  if (
+    raw === "online/offline/both" ||
+    raw === "offline/online/both" ||
+    raw === "both" ||
+    raw === "hybrid" ||
+    raw.includes("hybrid") ||
+    raw.includes("both")
+  ) {
+    return "Online/Offline/Both";
+  }
+  return "Offline";
+}
 
 /** Default CMS seed for courses that do not set a custom includes list. */
 export const DEFAULT_COURSE_WHATS_INCLUDED: string[] = [
@@ -42,7 +83,7 @@ const courseSeeds: CourseSeed[] = [
     duration: "3 Months",
     fee: 20000,
     discountFee: 15000,
-    mode: "Hybrid, Onsite",
+    mode: "Online/Offline/Both",
     eligibility: "MBBS / BDS / Final-year medical students",
     shortDescription:
       "Foundational training covering ultrasound physics, knobology, and abdominal scanning.",
@@ -69,7 +110,7 @@ const courseSeeds: CourseSeed[] = [
     duration: "4 Months",
     fee: 85000,
     discountFee: 70000,
-    mode: "Onsite",
+    mode: "Offline",
     eligibility: "Completion of Basic Ultrasound or equivalent experience",
     shortDescription:
       "Master vascular, cardiac, and obstetric Doppler with daily scanning sessions.",
@@ -96,7 +137,7 @@ const courseSeeds: CourseSeed[] = [
     duration: "2 Months",
     fee: 55000,
     discountFee: 42000,
-    mode: "Hybrid, Onsite",
+    mode: "Online/Offline/Both",
     eligibility: "MBBS / MD / Postgraduate trainees",
     shortDescription: "Trimester-wise obstetric scanning and complete gynae imaging protocol.",
     description:
@@ -122,7 +163,7 @@ const courseSeeds: CourseSeed[] = [
     duration: "6 Weeks",
     fee: 40000,
     discountFee: 32000,
-    mode: "Hybrid, Onsite",
+    mode: "Online/Offline/Both",
     eligibility: "MBBS / Physiotherapists / Sports physicians",
     shortDescription: "Joint-by-joint scanning protocol with live model demonstrations.",
     description:
@@ -147,7 +188,7 @@ const courseSeeds: CourseSeed[] = [
     duration: "3 Months",
     fee: 75000,
     discountFee: 60000,
-    mode: "Onsite",
+    mode: "Offline",
     eligibility: "MBBS / Cardiology trainees",
     shortDescription: "2D, M-mode and Doppler echocardiography with daily cardiac case practice.",
     description:
@@ -172,7 +213,7 @@ const courseSeeds: CourseSeed[] = [
     duration: "4 Weeks",
     fee: 30000,
     discountFee: 24000,
-    mode: "Onsite",
+    mode: "Offline",
     eligibility: "Emergency physicians, ICU & critical-care doctors",
     shortDescription: "Point-of-care ultrasound for ER, ICU and acute-care decisions.",
     description:
@@ -197,7 +238,7 @@ const courseSeeds: CourseSeed[] = [
     duration: "8 Weeks",
     fee: 35000,
     discountFee: 30000,
-    mode: "Onsite",
+    mode: "Offline",
     eligibility: "MBBS / MD / Cardiology & internal medicine trainees",
     shortDescription:
       "Comprehensive echocardiography training — standard views, chamber quantification, valves and Doppler hemodynamics.",
@@ -223,7 +264,7 @@ const courseSeeds: CourseSeed[] = [
     duration: "8 Weeks",
     fee: 40000,
     discountFee: 35000,
-    mode: "Hybrid, Onsite",
+    mode: "Online/Offline/Both",
     eligibility: "MBBS / Physiotherapists / Sports & rehab physicians",
     shortDescription:
       "Advanced joint-by-joint MSK scanning with live model practice and image-guided injection technique.",
@@ -249,7 +290,7 @@ const courseSeeds: CourseSeed[] = [
     duration: "8 Weeks",
     fee: 35000,
     discountFee: 30000,
-    mode: "Onsite",
+    mode: "Offline",
     eligibility: "MBBS / Paediatricians / Radiology trainees",
     shortDescription:
       "Focused paediatric sonography — neonatal cranial, abdominal, hip and chest scanning protocols.",
@@ -275,7 +316,7 @@ const courseSeeds: CourseSeed[] = [
     duration: "4 Weeks",
     fee: 30000,
     discountFee: 25000,
-    mode: "Onsite",
+    mode: "Offline",
     eligibility: "MBBS / Practising clinicians with basic ultrasound exposure",
     shortDescription:
       "Focused organ-specific scanning — thyroid, breast, scrotum and small parts imaging.",
@@ -301,7 +342,7 @@ const courseSeeds: CourseSeed[] = [
     duration: "8 Weeks",
     fee: 40000,
     discountFee: 35000,
-    mode: "Onsite",
+    mode: "Offline",
     eligibility: "MBBS / Obstetricians / Radiologists with basic obstetric scanning experience",
     shortDescription:
       "Systematic anomaly scanning — fetal organ surveys, soft markers and structured anomaly reporting.",
@@ -327,7 +368,7 @@ const courseSeeds: CourseSeed[] = [
     duration: "6 Weeks",
     fee: 35000,
     discountFee: 35000,
-    mode: "Onsite",
+    mode: "Offline",
     eligibility: "MBBS / Obstetricians / Sonologists",
     shortDescription:
       "Trimester-wise pregnancy scanning with daily hands-on practice on live patients.",
@@ -353,7 +394,7 @@ const courseSeeds: CourseSeed[] = [
     duration: "4 Weeks",
     fee: 35000,
     discountFee: 25000,
-    mode: "Hybrid, Onsite",
+    mode: "Online/Offline/Both",
     eligibility: "MBBS / Gynaecologists / Sonologists",
     shortDescription:
       "Specialised TVS training — early pregnancy, gynaecological pelvis and infertility workup.",
@@ -379,7 +420,7 @@ const courseSeeds: CourseSeed[] = [
     duration: "12–18 Months",
     fee: 160000,
     discountFee: 150000,
-    mode: "Hybrid, Onsite",
+    mode: "Online/Offline/Both",
     eligibility: "MBBS or equivalent medical graduate, or DMU-completed professionals",
     shortDescription:
       "Advanced-level ultrasound training in Cardiac, 3D/4D, Vascular and Musculoskeletal imaging.",
@@ -406,7 +447,7 @@ const courseSeeds: CourseSeed[] = [
     duration: "12 Months",
     fee: 110000,
     discountFee: 90000,
-    mode: "Onsite",
+    mode: "Offline",
     eligibility: "MBBS / BDS doctors, medical officers, CCD-completed physicians",
     shortDescription:
       "Comprehensive diploma taking MBBS doctors from basic to advanced ultrasound scanning and reporting.",
@@ -435,7 +476,7 @@ const courseSeeds: CourseSeed[] = [
     duration: "12 Months",
     fee: 75000,
     discountFee: 75000,
-    mode: "Hybrid, Onsite",
+    mode: "Online/Offline/Both",
     eligibility: "MBBS / BDS graduates and obstetric practitioners",
     shortDescription:
       "Structured diploma in obstetric and gynaecological practice with focused sonography training.",
@@ -461,7 +502,7 @@ const courseSeeds: CourseSeed[] = [
     duration: "12 Months",
     fee: 80000,
     discountFee: 80000,
-    mode: "Onsite",
+    mode: "Offline",
     eligibility: "MBBS / BDS graduates and medical officers",
     shortDescription:
       "Post-graduate diploma covering the full spectrum of diagnostic ultrasound with daily hands-on practice.",

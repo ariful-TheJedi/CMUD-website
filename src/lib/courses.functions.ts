@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireAuth } from "@/lib/require-auth";
 import type { Course, CourseMode } from "@/data/courses";
+import { eligibilityToCmsString, normalizeCourseMode } from "@/data/courses";
 import {
   assertSectionView,
   assertSectionUpdate,
@@ -87,14 +88,7 @@ const COURSE_SELECT = `
 `;
 
 function toPublicMode(mode: string): CourseMode {
-  const m = (mode ?? "").trim();
-  const lower = m.toLowerCase();
-  if (lower === "online") return "Online";
-  if (lower === "onsite") return "Onsite";
-  if (lower === "hybrid") return "Hybrid";
-  if (m === "Hybrid, Onsite" || lower === "hybrid, onsite") return "Hybrid, Onsite";
-  if (m === "Online" || m === "Onsite" || m === "Hybrid") return m;
-  return (m || "Onsite") as CourseMode;
+  return normalizeCourseMode(mode);
 }
 
 function normalizeCourse(r: CourseDbRow): AdminCourseRow {
@@ -244,8 +238,8 @@ async function upsertCourseAdminImpl(
       data.name.trim(),
       data.category,
       data.duration ?? "",
-      data.mode,
-      data.eligibility ?? "",
+      normalizeCourseMode(data.mode),
+      eligibilityToCmsString(data.eligibility ?? ""),
       data.shortDescription ?? "",
       data.description ?? "",
       fee,
