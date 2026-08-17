@@ -44,6 +44,7 @@ import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authen
 import { Route as AuthenticatedAdminTestimonialsRouteImport } from './routes/_authenticated/admin/testimonials'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin/users'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as CoursesCategorySlugRouteImport } from './routes/courses.category.$slug'
 import { Route as AuthenticatedAdminCoursesNewRouteImport } from './routes/_authenticated/admin/courses.new'
 import { Route as AuthenticatedAdminFacultyNewRouteImport } from './routes/_authenticated/admin/faculty.new'
 import { Route as AuthenticatedAdminCoursesIdEditRouteImport } from './routes/_authenticated/admin/courses.$id.edit'
@@ -236,6 +237,11 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CoursesCategorySlugRoute = CoursesCategorySlugRouteImport.update({
+  id: '/courses/category/$slug',
+  path: '/courses/category/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAdminCoursesNewRoute =
   AuthenticatedAdminCoursesNewRouteImport.update({
     id: '/new',
@@ -295,6 +301,7 @@ export interface FileRoutesByFullPath {
   '/admin/testimonials': typeof AuthenticatedAdminTestimonialsRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/courses/category/$slug': typeof CoursesCategorySlugRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/admin/courses/new': typeof AuthenticatedAdminCoursesNewRoute
   '/admin/faculty/new': typeof AuthenticatedAdminFacultyNewRoute
@@ -334,6 +341,7 @@ export interface FileRoutesByTo {
   '/admin/testimonials': typeof AuthenticatedAdminTestimonialsRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/courses/category/$slug': typeof CoursesCategorySlugRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/admin/courses/new': typeof AuthenticatedAdminCoursesNewRoute
   '/admin/faculty/new': typeof AuthenticatedAdminFacultyNewRoute
@@ -376,6 +384,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/testimonials': typeof AuthenticatedAdminTestimonialsRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/courses/category/$slug': typeof CoursesCategorySlugRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/admin/courses/new': typeof AuthenticatedAdminCoursesNewRoute
   '/_authenticated/admin/faculty/new': typeof AuthenticatedAdminFacultyNewRoute
@@ -418,6 +427,7 @@ export interface FileRouteTypes {
     | '/admin/testimonials'
     | '/admin/users'
     | '/api/auth/$'
+    | '/courses/category/$slug'
     | '/admin/'
     | '/admin/courses/new'
     | '/admin/faculty/new'
@@ -457,6 +467,7 @@ export interface FileRouteTypes {
     | '/admin/testimonials'
     | '/admin/users'
     | '/api/auth/$'
+    | '/courses/category/$slug'
     | '/admin'
     | '/admin/courses/new'
     | '/admin/faculty/new'
@@ -498,6 +509,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/testimonials'
     | '/_authenticated/admin/users'
     | '/api/auth/$'
+    | '/courses/category/$slug'
     | '/_authenticated/admin/'
     | '/_authenticated/admin/courses/new'
     | '/_authenticated/admin/faculty/new'
@@ -524,6 +536,7 @@ export interface RootRouteChildren {
   CoursesSlugRoute: typeof CoursesSlugRoute
   CoursesIndexRoute: typeof CoursesIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  CoursesCategorySlugRoute: typeof CoursesCategorySlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -773,6 +786,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/courses/category/$slug': {
+      id: '/courses/category/$slug'
+      path: '/courses/category/$slug'
+      fullPath: '/courses/category/$slug'
+      preLoaderRoute: typeof CoursesCategorySlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/admin/courses/new': {
       id: '/_authenticated/admin/courses/new'
       path: '/new'
@@ -912,6 +932,7 @@ const rootRouteChildren: RootRouteChildren = {
   CoursesSlugRoute: CoursesSlugRoute,
   CoursesIndexRoute: CoursesIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  CoursesCategorySlugRoute: CoursesCategorySlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
