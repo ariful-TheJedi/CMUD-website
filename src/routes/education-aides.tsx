@@ -10,6 +10,7 @@ import {
   type PublicAidSection,
 } from "@/lib/education-aides.functions";
 import { educationAidesPage } from "@/data/education-aides";
+import { assetUrl } from "@/lib/assets";
 
 export const Route = createFileRoute("/education-aides")({
   head: () => ({
@@ -78,7 +79,7 @@ function AutoSlider({ slides, offset = 0 }: { slides: AidSlide[]; offset?: numbe
           >
             {s.imageUrl ? (
               <img
-                src={s.imageUrl}
+                src={assetUrl(s.imageUrl)}
                 alt={s.caption}
                 className="h-full w-full object-cover"
                 loading="lazy"

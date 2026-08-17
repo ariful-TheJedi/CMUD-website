@@ -14,7 +14,7 @@ module.exports = {
       name: "medlearhub",
       script: "scripts/start-prod.mjs",
       interpreter: "node",
-      // Must be the app root (folder with package.json + permanent public/), not .output
+      // Must be the app root (folder with package.json), not .output
       cwd: __dirname,
       instances: 1,
       exec_mode: "fork",
@@ -25,8 +25,10 @@ module.exports = {
         HOST: "0.0.0.0",
         PORT: "3000",
         NITRO_PRESET: "node-server",
-        // Pin uploads to permanent public/ (set automatically by start-prod.mjs too)
+        // Prefer `.env` for secrets + ASSETS_ROOT / VITE_ASSETS_PREFIX.
         // PROJECT_ROOT: "/www/wwwroot/your-app",
+        // ASSETS_ROOT: "/www/wwwroot/cmud-assets",
+        // VITE_ASSETS_PREFIX is baked in at build time — set it in .env before `npm run build`.
         // Prefer a project `.env` for secrets; override here only if needed:
         // DATABASE_URL: "postgresql://...",
         // BETTER_AUTH_SECRET: "...",

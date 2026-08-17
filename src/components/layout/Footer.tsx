@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Mail, Phone, MapPin } from "lucide-react";
 import { contactPage } from "@/data/contact";
+import { assetUrl } from "@/lib/assets";
 
 export function Footer() {
   return (
@@ -9,7 +10,7 @@ export function Footer() {
         <div>
           <div className="flex items-center gap-2 font-serif text-xl font-bold">
             <img
-              src={contactPage.footer.logo}
+              src={assetUrl(contactPage.footer.logo)}
               alt="CMUD"
               className="h-[38px] w-auto object-contain"
               width="128"

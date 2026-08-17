@@ -1,11 +1,12 @@
 /**
  * Generic local attachment helpers — write/delete files under
- * `public/attachment/<folder>/`.
- * Always targets the permanent project-root `public/` (never `.output/public`).
+ * ASSETS_ROOT/attachment/<folder>/.
+ * Always targets the permanent assets root (never `.output/public`).
  * Server-only.
  */
 import { mkdir, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { toStoragePath } from "@/lib/assets";
 import { getAttachmentDir } from "@/lib/project-paths.server";
 
 const ALLOWED_EXT = new Set([
@@ -40,9 +41,7 @@ export function resolvePublicAttachmentDiskPath(
 ): string | null {
   if (!publicUrl) return null;
   try {
-    const pathname = publicUrl.startsWith("http")
-      ? new URL(publicUrl).pathname
-      : publicUrl.split("?")[0];
+    const pathname = toStoragePath(publicUrl);
     const prefix = `/attachment/${folder}/`;
     if (!pathname.startsWith(prefix)) return null;
     const name = path.basename(pathname);

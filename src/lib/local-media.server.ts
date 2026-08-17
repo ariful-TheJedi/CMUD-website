@@ -1,10 +1,11 @@
 /**
- * Generic local media helpers — write/delete files under `public/media/<folder>/`.
- * Always targets the permanent project-root `public/` (never `.output/public`).
+ * Generic local media helpers — write/delete files under ASSETS_ROOT/media/<folder>/.
+ * Always targets the permanent assets root (never `.output/public`).
  * Server-only: do not import from client components.
  */
 import { mkdir, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { toStoragePath } from "@/lib/assets";
 import { getMediaDir } from "@/lib/project-paths.server";
 
 const ALLOWED_EXT = new Set(["jpg", "jpeg", "png", "webp", "gif", "svg"]);
@@ -22,9 +23,7 @@ export function resolvePublicMediaDiskPath(
 ): string | null {
   if (!publicUrl) return null;
   try {
-    const pathname = publicUrl.startsWith("http")
-      ? new URL(publicUrl).pathname
-      : publicUrl.split("?")[0];
+    const pathname = toStoragePath(publicUrl);
     const prefix = `/media/${folder}/`;
     if (!pathname.startsWith(prefix)) return null;
     const name = path.basename(pathname);
@@ -87,5 +86,6 @@ export async function savePublicMediaFile(opts: {
     await deletePublicMediaFile(opts.previousUrl, opts.folder, opts.deletableNamePattern);
   }
 
+  // Always return unprefixed storage path for the CMS / DB.
   return `/media/${opts.folder}/${diskName}`;
 }

@@ -7,6 +7,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { assetUrl } from "@/lib/assets";
 import {
   Dialog,
   DialogContent,
@@ -167,7 +168,7 @@ function FacultyAdminPage() {
                       <TableCell>
                         {f.photoUrl ? (
                           <img
-                            src={f.photoUrl}
+                            src={assetUrl(f.photoUrl)}
                             alt={f.altText || f.name}
                             className="h-12 w-9 rounded object-cover object-top"
                             loading="lazy"

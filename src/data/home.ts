@@ -5,7 +5,7 @@
  */
 
 export const homePage = {
-  /** Image fallbacks when CMS hero / hands-on imageUrl is empty */
+  /** Image fallbacks when CMS hero / hands-on imageUrl is empty (raw CMS paths). */
   media: {
     heroFallback: "/media/home/hero-ultrasound.jpg",
     handsOnFallback: "/media/home/hands-on-training.jpg",

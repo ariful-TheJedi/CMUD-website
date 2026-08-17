@@ -3,6 +3,7 @@ import { requireAuth } from "@/lib/require-auth";
 import { assertSectionView, assertSectionUpdate } from "@/lib/admin-guards";
 import { asIso, dbQuery, parseJsonArray } from "@/lib/db-helpers";
 import { pool } from "@/lib/db";
+import { toStoragePath } from "@/lib/assets";
 
 export type AidSlide = {
   id: string;
@@ -72,7 +73,7 @@ const SECTION_LIST_SQL = `
 function normalizeSection(row: SectionJoinedRow, includeAdmin: boolean): PublicAidSection | AdminAidSection {
   const slides = parseJsonArray<AidSlide>(row.slides).map((s) => ({
     id: s.id,
-    imageUrl: s.imageUrl ?? "",
+    imageUrl: toStoragePath(s.imageUrl ?? ""),
     caption: s.caption ?? "",
     sortOrder: Number(s.sortOrder) || 0,
   }));
@@ -176,7 +177,7 @@ export const addAidSlideAdmin = createServerFn({ method: "POST" })
       `INSERT INTO education_aid_slides (section_id, image_url, caption, sort_order)
        VALUES ($1, $2, $3, $4)
        RETURNING id`,
-      [data.sectionId, data.imageUrl, data.caption ?? "", data.sortOrder ?? 0],
+      [data.sectionId, toStoragePath(data.imageUrl), data.caption ?? "", data.sortOrder ?? 0],
     );
     return { id: rows[0].id };
   });
@@ -223,7 +224,7 @@ export const deleteAidSlideAdmin = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-/** Upload slide into `public/media/education-aides/`; path stored in DB. */
+/** Upload slide into ASSETS_ROOT/media/education-aides/; path stored in DB. */
 export const uploadAidSlideImage = createServerFn({ method: "POST" })
   .middleware([requireAuth])
   .inputValidator(

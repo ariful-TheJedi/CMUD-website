@@ -3,6 +3,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { listPublicAlbums, type PublicAlbum } from "@/lib/gallery.functions";
 import { galleryPage } from "@/data/gallery";
+import { assetUrl } from "@/lib/assets";
 
 export const Route = createFileRoute("/gallery")({
   head: () => ({
@@ -83,7 +84,7 @@ function AlbumBlock({ album }: { album: PublicAlbum }) {
               className="overflow-hidden rounded-2xl border border-border bg-surface shadow-sm"
             >
               <img
-                src={img.url}
+                src={assetUrl(img.url)}
                 alt={img.altText || album.title}
                 className="aspect-[4/3] w-full object-cover"
                 loading="lazy"

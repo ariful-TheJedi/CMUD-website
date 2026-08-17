@@ -4,6 +4,7 @@ import { assertSectionView, assertSectionUpdate } from "@/lib/admin-guards";
 import { writeAuditLog } from "@/lib/audit";
 import { dbQuery } from "@/lib/db-helpers";
 import { pool } from "@/lib/db";
+import { toStoragePath } from "@/lib/assets";
 
 export type PublicTestimonial = {
   id: string;
@@ -61,7 +62,7 @@ function toPublic(r: TestimonialDbRow): PublicTestimonial {
     role: r.role,
     quote: r.quote,
     initials: r.initials,
-    photoUrl: r.photoUrl ?? "",
+    photoUrl: toStoragePath(r.photoUrl ?? ""),
   };
 }
 
@@ -72,7 +73,7 @@ function toAdmin(r: TestimonialDbRow): AdminTestimonialRow {
     role: r.role,
     quote: r.quote,
     initials: r.initials,
-    photoUrl: r.photoUrl ?? "",
+    photoUrl: toStoragePath(r.photoUrl ?? ""),
     isPublished: Boolean(r.isPublished),
     sortOrder: Number(r.sortOrder) || 0,
   };
@@ -114,7 +115,7 @@ export const upsertTestimonialAdmin = createServerFn({ method: "POST" })
     await ensurePhotoColumn();
     const isPublished = data.isPublished;
     const status = isPublished ? "published" : "draft";
-    const photoUrl = (data.photoUrl ?? "").trim();
+    const photoUrl = toStoragePath(data.photoUrl ?? "");
 
     if (data.id) {
       const { rows: prevRows } = await dbQuery<{ photoUrl: string | null }>(
@@ -222,7 +223,7 @@ export const deleteTestimonialAdmin = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-/** Upload testimonial photo into `public/media/testimonials/`. */
+/** Upload testimonial photo into ASSETS_ROOT/media/testimonials/. */
 export const uploadTestimonialPhoto = createServerFn({ method: "POST" })
   .middleware([requireAuth])
   .inputValidator(

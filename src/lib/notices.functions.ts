@@ -4,6 +4,7 @@ import { assertSectionView, assertSectionUpdate } from "@/lib/admin-guards";
 import { writeAuditLog } from "@/lib/audit";
 import { asIso, dbQuery, parseJsonArray } from "@/lib/db-helpers";
 import { pool } from "@/lib/db";
+import { toStoragePath } from "@/lib/assets";
 
 export type NoticeCategory = {
   id: string;
@@ -102,7 +103,7 @@ function normalizeNotice(row: NoticeJoinedRow, includeAdmin: boolean): PublicNot
       : null;
   const attachments = parseJsonArray<NoticeAttachment>(row.attachments).map((a) => ({
     id: a.id,
-    fileUrl: a.fileUrl ?? "",
+    fileUrl: toStoragePath(a.fileUrl ?? ""),
     fileName: a.fileName ?? "",
     displayName: a.displayName ?? null,
     sortOrder: Number(a.sortOrder) || 0,
@@ -274,7 +275,7 @@ export const upsertNoticeAdmin = createServerFn({ method: "POST" })
         );
         values.push(
           noticeId,
-          a.fileUrl,
+          toStoragePath(a.fileUrl),
           a.fileName,
           a.displayName?.trim() || a.fileName || "",
           a.sortOrder ?? idx,
@@ -287,12 +288,13 @@ export const upsertNoticeAdmin = createServerFn({ method: "POST" })
       );
     }
 
-    const keep = new Set(data.attachments.map((a) => a.fileUrl));
+    const keep = new Set(data.attachments.map((a) => toStoragePath(a.fileUrl)));
     const { deletePublicAttachmentFile } = await import("@/lib/local-attachment.server");
     for (const url of previousUrls) {
-      if (!keep.has(url)) {
+      const normalized = toStoragePath(url);
+      if (!keep.has(normalized)) {
         await deletePublicAttachmentFile(
-          url,
+          normalized,
           NOTICE_ATTACHMENT_FOLDER,
           NOTICE_ATTACHMENT_UPLOAD_NAME,
         );
@@ -360,7 +362,7 @@ export const deleteNoticeAdmin = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-/** Upload notice attachment into `public/attachment/notice-attachment/`; path stored in DB. */
+/** Upload notice attachment into ASSETS_ROOT/attachment/notice-attachment/; path stored in DB. */
 export const uploadNoticeAttachment = createServerFn({ method: "POST" })
   .middleware([requireAuth])
   .inputValidator(

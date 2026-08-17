@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { assetUrl } from "@/lib/assets";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -15,7 +16,7 @@ type Props = {
  * 2. Retries the remote `/media` URL a few times if the first paint 404s
  */
 export function AdminMediaImage({ src, alt, className, localPreviewSrc }: Props) {
-  const remote = src?.trim() || "";
+  const remote = assetUrl(src?.trim() || "");
   const local = localPreviewSrc?.trim() || "";
   const [attempt, setAttempt] = useState(0);
   const [failedRemote, setFailedRemote] = useState(false);

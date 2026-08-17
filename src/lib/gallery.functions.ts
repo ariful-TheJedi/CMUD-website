@@ -4,6 +4,7 @@ import { assertSectionView, assertSectionUpdate } from "@/lib/admin-guards";
 import { writeAuditLog } from "@/lib/audit";
 import { asIso, dbQuery, parseJsonArray } from "@/lib/db-helpers";
 import { pool } from "@/lib/db";
+import { toStoragePath } from "@/lib/assets";
 
 export type GalleryImage = {
   id: string;
@@ -87,7 +88,7 @@ const ALBUM_LIST_SQL = `
 function normalizeAlbum(row: AlbumJoinedRow, includePublished: boolean): PublicAlbum | AdminAlbum {
   const images = parseJsonArray<GalleryImage>(row.images).map((img) => ({
     id: img.id,
-    url: img.url ?? "",
+    url: toStoragePath(img.url ?? ""),
     caption: img.caption ?? "",
     altText: img.altText ?? "",
     sortOrder: Number(img.sortOrder) || 0,
@@ -227,7 +228,7 @@ export const addAlbumImageAdmin = createServerFn({ method: "POST" })
       `INSERT INTO gallery_images (album_id, url, caption, alt_text, sort_order)
        VALUES ($1, $2, $3, $4, $5)
        RETURNING id`,
-      [data.albumId, data.url, data.caption ?? "", data.altText ?? "", data.sortOrder ?? 0],
+      [data.albumId, toStoragePath(data.url), data.caption ?? "", data.altText ?? "", data.sortOrder ?? 0],
     );
     const row = rows[0];
     await writeAuditLog(context, {
@@ -279,7 +280,7 @@ export const deleteAlbumImageAdmin = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-/** Upload gallery image into `public/media/gallery/`; path stored in DB. */
+/** Upload gallery image into ASSETS_ROOT/media/gallery/; path stored in DB. */
 export const uploadGalleryImage = createServerFn({ method: "POST" })
   .middleware([requireAuth])
   .inputValidator(

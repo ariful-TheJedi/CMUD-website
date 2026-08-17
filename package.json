@@ -15,6 +15,7 @@
     "format": "prettier --write .",
     "db:schema": "tsx --env-file=.env scripts/apply-cms-schema.ts",
     "db:migrate-whats-included": "tsx --env-file=.env scripts/migrate-course-whats-included.ts",
+    "assets:migrate-public": "node scripts/migrate-public-to-assets.mjs",
     "db:fix-user-refs": "tsx --env-file=.env scripts/fix-user-ref-columns.ts",
     "seed:cms": "tsx --env-file=.env scripts/seed-from-json.ts",
     "auth:migrate": "node --env-file=.env ./node_modules/@better-auth/cli/dist/index.mjs migrate --config ./src/lib/auth.ts --yes",

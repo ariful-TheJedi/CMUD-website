@@ -124,7 +124,7 @@ export const updateHomePageContent = createServerFn({ method: "POST" })
     return toRecord(row);
   });
 
-/** Upload a home CMS image into `public/media/home/` (no Supabase Storage). */
+/** Upload a home CMS image into ASSETS_ROOT/media/home/ (unprefixed path returned for DB). */
 export const uploadHomePageImage = createServerFn({ method: "POST" })
   .middleware([requireAuth])
   .inputValidator(
@@ -143,7 +143,7 @@ export const uploadHomePageImage = createServerFn({ method: "POST" })
     return { url };
   });
 
-/** Delete a previously uploaded home CMS image from `public/media/home/`. */
+/** Delete a previously uploaded home CMS image from ASSETS_ROOT/media/home/. */
 export const deleteHomePageImage = createServerFn({ method: "POST" })
   .middleware([requireAuth])
   .inputValidator((input: { url: string }) => input)

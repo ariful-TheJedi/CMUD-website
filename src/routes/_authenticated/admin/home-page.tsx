@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AdminMediaImage, useObjectUrl } from "@/components/admin/AdminMediaImage";
 import { useCanWrite } from "@/hooks/use-can-write";
+import { isLocalMediaUrl, toStoragePath } from "@/lib/assets";
 import { defaultHomeContent, type HomePageContent } from "@/lib/home-content";
 import { media } from "@/lib/media";
 import {
@@ -61,7 +62,7 @@ function ImageField({
   const uploadFn = useServerFn(uploadHomePageImage);
   const deleteFn = useServerFn(deleteHomePageImage);
 
-  const isLocalMedia = (url: string) => url.startsWith("/media/home/");
+  const isLocalMedia = (url: string) => isLocalMediaUrl(url, "home");
 
   const handleFile = async (file: File) => {
     if (!file.type.startsWith("image/")) {
@@ -89,11 +90,11 @@ function ImageField({
           fileName: file.name,
           contentType: file.type || "image/jpeg",
           base64,
-          previousUrl: isLocalMedia(value) ? value : undefined,
+          previousUrl: isLocalMedia(value) ? toStoragePath(value) : undefined,
         },
       });
-      onChange(result.url);
-      toast.success("Image saved to public/media/home");
+      onChange(toStoragePath(result.url));
+      toast.success("Image saved to assets media/home");
     } catch (e) {
       setPickedFile(null);
       toast.error(e instanceof Error ? e.message : "Upload failed");
@@ -112,8 +113,8 @@ function ImageField({
     setDeleting(true);
     try {
       if (isLocalMedia(value)) {
-        await deleteFn({ data: { url: value } });
-        toast.success("Image removed from public/media/home");
+        await deleteFn({ data: { url: toStoragePath(value) } });
+        toast.success("Image removed from assets media/home");
       }
       onChange("");
       setPickedFile(null);
@@ -130,7 +131,7 @@ function ImageField({
         value={value}
         onChange={(e) => {
           setPickedFile(null);
-          onChange(e.target.value);
+          onChange(toStoragePath(e.target.value) || e.target.value.trim());
         }}
         placeholder="Paste image URL or upload below (blank = built-in image)"
         disabled={disabled}
@@ -169,8 +170,9 @@ function ImageField({
         ) : null}
       </div>
       <p className="mt-1 text-xs text-muted-foreground">
-        Uploads are stored in <code className="text-[11px]">public/media/home/</code>. Clear deletes
-        the file from that folder.
+        Uploads go to <code className="text-[11px]">ASSETS_ROOT/media/home/</code> (DB stores{" "}
+        <code className="text-[11px]">/media/home/...</code>). Clear deletes the file from that
+        folder.
       </p>
       <div className="mt-3 rounded-md border border-border bg-muted/30 p-3">
         <p className="mb-2 text-xs font-medium text-muted-foreground">
@@ -262,7 +264,7 @@ function HomePageContentAdmin() {
           <p className="text-sm text-muted-foreground">
             Edit the hero section and the Hands-on Ultrasound Training section. Content is saved to
             the local Postgres <code className="text-xs">page_content</code> table; images go to{" "}
-            <code className="text-xs">public/media/home/</code>.
+            <code className="text-xs">ASSETS_ROOT/media/home/</code>.
           </p>
         </div>
         <Button disabled={ro || save.isPending} onClick={() => save.mutate(form)}>

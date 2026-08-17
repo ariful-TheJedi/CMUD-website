@@ -8,6 +8,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { assetUrl, toStoragePath } from "@/lib/assets";
 import {
   Dialog,
   DialogContent,
@@ -198,7 +199,7 @@ function NoticesAdminPage() {
                             {n.attachments.map((a) => (
                               <a
                                 key={a.id ?? a.fileUrl}
-                                href={a.fileUrl}
+                                href={assetUrl(a.fileUrl)}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="inline-flex items-center gap-1 rounded-md border border-border bg-muted/40 px-2 py-1 text-xs text-primary hover:underline"
@@ -429,7 +430,7 @@ function NoticeForm({
           },
         });
         uploaded.push({
-          fileUrl: url,
+          fileUrl: toStoragePath(url) || url,
           fileName,
           displayName: fileName.replace(/\.[^.]+$/, "") || fileName,
           sortOrder: 0,
@@ -552,7 +553,7 @@ function NoticeForm({
                     </button>
                   </div>
                   <a
-                    href={a.fileUrl}
+                    href={assetUrl(a.fileUrl)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex min-w-0 flex-1 items-center gap-2 truncate text-sm text-primary hover:underline"

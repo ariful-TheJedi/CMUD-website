@@ -1,10 +1,9 @@
 /**
- * Resolve the permanent project root / public upload dirs.
+ * Resolve project root and the permanent assets directory.
  *
- * Nitro production runs from `.output/server/`. If cwd is `.output` (or under it),
- * `process.cwd()/public` points at the wipeable build tree. Uploads must always
- * land in `[project-root]/public/{media,attachment}/`, which Nginx serves and
- * which survives `npm run build`.
+ * Uploads / static media must NOT live under wipeable `.output/public`.
+ * Prefer an external folder (e.g. sibling `cmud-assets`) via ASSETS_ROOT so
+ * `npm run build` never requires re-uploading media.
  *
  * Server-only — do not import from client components.
  */
@@ -21,7 +20,6 @@ function isInsideOutputDir(dir: string): boolean {
 
 function looksLikeProjectRoot(dir: string): boolean {
   if (!existsSync(path.join(dir, MARKER_PKG))) return false;
-  // Prefer roots that are not inside the Nitro build output.
   if (isInsideOutputDir(dir)) return false;
   return true;
 }
@@ -37,24 +35,16 @@ function walkUpForProjectRoot(start: string): string | null {
   return null;
 }
 
-function rootFromEnv(): string | null {
-  const raw =
-    process.env.PROJECT_ROOT?.trim() ||
-    process.env.UPLOAD_PUBLIC_ROOT?.trim() ||
-    "";
+function projectRootFromEnv(): string | null {
+  const raw = process.env.PROJECT_ROOT?.trim() || "";
   if (!raw) return null;
   const resolved = path.resolve(raw);
   if (!existsSync(resolved)) return null;
-  // If env points at public/, use its parent as project root.
-  if (path.basename(resolved) === "public" && existsSync(path.join(path.dirname(resolved), MARKER_PKG))) {
-    return path.dirname(resolved);
-  }
   return resolved;
 }
 
 function rootFromImportMeta(): string | null {
   try {
-    // Bundled Nitro chunks live under `.output/server/...` — walk up past `.output`.
     const here = path.dirname(fileURLToPath(import.meta.url));
     return walkUpForProjectRoot(here);
   } catch {
@@ -62,64 +52,98 @@ function rootFromImportMeta(): string | null {
   }
 }
 
-let cachedRoot: string | null = null;
+let cachedProjectRoot: string | null = null;
+let cachedAssetsRoot: string | null = null;
 
 /**
- * Absolute path to the app project root (the folder that contains `package.json`
- * and the permanent `public/` directory — never `.output`).
+ * Absolute path to the app project root (folder with `package.json` — never `.output`).
  */
 export function getProjectRoot(): string {
-  if (cachedRoot) return cachedRoot;
+  if (cachedProjectRoot) return cachedProjectRoot;
 
-  const fromEnv = rootFromEnv();
+  const fromEnv = projectRootFromEnv();
   if (fromEnv) {
-    cachedRoot = fromEnv;
-    return cachedRoot;
+    cachedProjectRoot = fromEnv;
+    return cachedProjectRoot;
   }
 
   const fromMeta = rootFromImportMeta();
   if (fromMeta) {
-    cachedRoot = fromMeta;
-    return cachedRoot;
+    cachedProjectRoot = fromMeta;
+    return cachedProjectRoot;
   }
 
   const fromCwd = walkUpForProjectRoot(process.cwd());
   if (fromCwd) {
-    cachedRoot = fromCwd;
-    return cachedRoot;
+    cachedProjectRoot = fromCwd;
+    return cachedProjectRoot;
   }
 
-  // Last resort: if cwd is inside `.output`, use the parent of `.output`.
   const cwd = path.resolve(process.cwd());
   const outputIdx = cwd.replace(/\\/g, "/").lastIndexOf("/.output");
   if (outputIdx >= 0) {
-    cachedRoot = cwd.slice(0, outputIdx) || path.dirname(cwd);
-    return cachedRoot;
+    cachedProjectRoot = cwd.slice(0, outputIdx) || path.dirname(cwd);
+    return cachedProjectRoot;
   }
 
-  cachedRoot = cwd;
-  return cachedRoot;
+  cachedProjectRoot = cwd;
+  return cachedProjectRoot;
 }
 
-/** Permanent `[project-root]/public` (survives Nitro rebuilds). */
+/**
+ * Absolute filesystem root for media / attachments (the real "public" content).
+ *
+ * Resolution order:
+ * 1. `ASSETS_ROOT` or `PUBLIC_ASSETS_DIR` (external folder, e.g. `/www/wwwroot/cmud-assets`)
+ * 2. `UPLOAD_PUBLIC_ROOT` if it points at a `public` dir or assets dir
+ * 3. Fallback: `[project-root]/public`
+ */
+export function getAssetsRoot(): string {
+  if (cachedAssetsRoot) return cachedAssetsRoot;
+
+  const fromEnv =
+    process.env.ASSETS_ROOT?.trim() ||
+    process.env.PUBLIC_ASSETS_DIR?.trim() ||
+    process.env.UPLOAD_PUBLIC_ROOT?.trim() ||
+    "";
+
+  if (fromEnv) {
+    const resolved = path.resolve(fromEnv);
+    mkdirSync(resolved, { recursive: true });
+    // Both CMS image and notice attachment trees live under the same external root.
+    mkdirSync(path.join(resolved, "media"), { recursive: true });
+    mkdirSync(path.join(resolved, "attachment"), { recursive: true });
+    cachedAssetsRoot = resolved;
+    return cachedAssetsRoot;
+  }
+
+  const fallback = path.join(getProjectRoot(), "public");
+  mkdirSync(fallback, { recursive: true });
+  mkdirSync(path.join(fallback, "media"), { recursive: true });
+  mkdirSync(path.join(fallback, "attachment"), { recursive: true });
+  cachedAssetsRoot = fallback;
+  return cachedAssetsRoot;
+}
+
+/** @deprecated Prefer getAssetsRoot() — kept for older call sites. */
 export function getPublicDir(): string {
-  return path.join(getProjectRoot(), "public");
+  return getAssetsRoot();
 }
 
-/** `[project-root]/public/media` or a subfolder. Ensures the directory exists. */
+/** `[assets-root]/media` or a subfolder. Ensures the directory exists. */
 export function getMediaDir(folder?: string): string {
   const dir = folder
-    ? path.join(getPublicDir(), "media", folder)
-    : path.join(getPublicDir(), "media");
+    ? path.join(getAssetsRoot(), "media", folder)
+    : path.join(getAssetsRoot(), "media");
   mkdirSync(dir, { recursive: true });
   return dir;
 }
 
-/** `[project-root]/public/attachment` or a subfolder. Ensures the directory exists. */
+/** `[assets-root]/attachment` or a subfolder. Ensures the directory exists. */
 export function getAttachmentDir(folder?: string): string {
   const dir = folder
-    ? path.join(getPublicDir(), "attachment", folder)
-    : path.join(getPublicDir(), "attachment");
+    ? path.join(getAssetsRoot(), "attachment", folder)
+    : path.join(getAssetsRoot(), "attachment");
   mkdirSync(dir, { recursive: true });
   return dir;
 }

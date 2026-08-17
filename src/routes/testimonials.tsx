@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { listPublicTestimonials } from "@/lib/testimonials.functions";
 import { testimonialsPage } from "@/data/testimonials";
+import { assetUrl } from "@/lib/assets";
 
 export const Route = createFileRoute("/testimonials")({
   head: () => ({
@@ -53,7 +54,7 @@ function TestimonialsPage() {
                 <p className="mt-3 text-base leading-relaxed">{t.quote}</p>
                 <div className="mt-5 flex items-center gap-3">
                   <Avatar className="h-10 w-10">
-                    {t.photoUrl ? <AvatarImage src={t.photoUrl} alt={t.name} /> : null}
+                    {t.photoUrl ? <AvatarImage src={assetUrl(t.photoUrl)} alt={t.name} /> : null}
                     <AvatarFallback className="bg-primary text-primary-foreground">
                       {t.initials}
                     </AvatarFallback>

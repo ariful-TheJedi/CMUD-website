@@ -1,4 +1,5 @@
 import { UserRound } from "lucide-react";
+import { assetUrl } from "@/lib/assets";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -14,6 +15,7 @@ type Props = {
  * monogram placeholder when no photo is available.
  */
 export function FacultyPortrait({ name, initials, photo, className }: Props) {
+  const src = assetUrl(photo);
   return (
     <div
       className={cn(
@@ -21,9 +23,9 @@ export function FacultyPortrait({ name, initials, photo, className }: Props) {
         className,
       )}
     >
-      {photo ? (
+      {src ? (
         <img
-          src={photo}
+          src={src}
           alt={name}
           className="h-full w-full object-cover object-top"
           loading="lazy"

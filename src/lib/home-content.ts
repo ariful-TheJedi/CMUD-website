@@ -3,6 +3,7 @@
  * `public.page_content.page_data` (slug = "home").
  * Browser-safe: no server-only imports.
  */
+import { toStoragePath } from "@/lib/assets";
 
 export type HeroStat = { value: string; label: string };
 
@@ -112,7 +113,7 @@ export function normalizeHomeContent(raw: unknown): HomePageContent {
       primaryCtaHref: str(hero.primaryCtaHref, d.hero.primaryCtaHref),
       secondaryCtaLabel: str(hero.secondaryCtaLabel, d.hero.secondaryCtaLabel),
       secondaryCtaHref: str(hero.secondaryCtaHref, d.hero.secondaryCtaHref),
-      imageUrl: typeof hero.imageUrl === "string" ? hero.imageUrl : "",
+      imageUrl: toStoragePath(typeof hero.imageUrl === "string" ? hero.imageUrl : ""),
       imageAlt: str(hero.imageAlt, d.hero.imageAlt),
       stats,
     },
@@ -120,7 +121,7 @@ export function normalizeHomeContent(raw: unknown): HomePageContent {
       eyebrow: str(handsOn.eyebrow, d.handsOn.eyebrow),
       title: str(handsOn.title, d.handsOn.title),
       description: str(handsOn.description, d.handsOn.description),
-      imageUrl: typeof handsOn.imageUrl === "string" ? handsOn.imageUrl : "",
+      imageUrl: toStoragePath(typeof handsOn.imageUrl === "string" ? handsOn.imageUrl : ""),
       imageAlt: str(handsOn.imageAlt, d.handsOn.imageAlt),
       badgeValue: str(handsOn.badgeValue, d.handsOn.badgeValue),
       badgeLabel: str(handsOn.badgeLabel, d.handsOn.badgeLabel),

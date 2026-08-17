@@ -16,6 +16,8 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Header } from "../components/layout/Header";
 import { Footer } from "../components/layout/Footer";
 import { Toaster } from "../components/ui/sonner";
+import { assetUrl, getAssetsPrefixBootstrap } from "@/lib/assets";
+import { sharedMedia } from "@/data/shared";
 
 function NotFoundComponent() {
   return (
@@ -94,12 +96,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content: "Hands-on professional training in medical ultrasound and Doppler imaging.",
       },
       { property: "og:type", content: "website" },
-      { property: "og:image", content: "/media/shared/cmud-logo.webp" },
+      { property: "og:image", content: assetUrl("/media/shared/cmud-logo.webp") },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:image", content: "/media/shared/cmud-logo.webp" },
+      { name: "twitter:image", content: assetUrl("/media/shared/cmud-logo.webp") },
     ],
     links: [
-      { rel: "icon", href: "/favicon.png", type: "image/png" },
+      { rel: "icon", href: sharedMedia.favicon, type: "image/png" },
       { rel: "stylesheet", href: appCss },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
@@ -116,9 +118,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 });
 
 function RootShell({ children }: { children: ReactNode }) {
+  const { script } = getAssetsPrefixBootstrap();
   return (
     <html lang="en">
       <head>
+        <script dangerouslySetInnerHTML={{ __html: script }} />
         <HeadContent />
       </head>
       <body>

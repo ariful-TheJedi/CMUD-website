@@ -8,14 +8,14 @@ Current Infrastructure (as of migration):
 - Auth: Better Auth (cookie sessions). Admin middleware: `src/lib/require-auth.ts`.
 - Env: `src/lib/env.ts` (loads `.env` if present; requires `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`).
 - Database: local/self-hosted PostgreSQL via `DATABASE_URL` and `pg` (`src/lib/db.ts`).
-- File storage: local `/public/media/` and `/public/attachment/` (relative paths in DB).
+- File storage: external `ASSETS_ROOT` (e.g. `cmud-assets/media/` + `cmud-assets/attachment/`). DB stores unprefixed `/media/...` and `/attachment/...`; browser uses `VITE_ASSETS_PREFIX`.
 - No Supabase runtime dependency. Do not reintroduce `@supabase/supabase-js` or Supabase Auth clients.
 - Zod is pinned to **4.4.3** (`package.json` + `overrides`) for Better Auth compatibility (`.meta()` API).
 
 2. Architecture notes
 - Dynamic CMS data lives in Postgres only (courses, faculty, gallery, notices, FAQs, testimonials, home `page_content`).
 - Seed from `src/data/*` via `npm run seed:cms`. Do **not** fetch `public/cms/*.json` at runtime.
-- Home images upload to `public/media/home/`; content saves to Postgres (`page-content.functions.ts`).
+- Home images upload to `ASSETS_ROOT/media/home/`; content saves to Postgres (`page-content.functions.ts`).
 - Schema apply: `npm run db:schema` → `scripts/schema-cms-local.sql`.
 - Auth tables: `npm run auth:migrate`. First admin: set `SEED_ADMIN_EMAIL` + `SEED_ADMIN_PASSWORD` in `.env`, then `npm run auth:seed-admin` (never hardcode credentials in source).
 - RBAC: `"user".role` + `user_content_permissions`.

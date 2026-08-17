@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getPublicCourseBySlug } from "@/lib/courses.functions";
 import { courseDetailPage, DEFAULT_COURSE_WHATS_INCLUDED } from "@/data/courses";
+import { assetUrl } from "@/lib/assets";
 
 function ListBullet({
   children,
@@ -158,7 +159,7 @@ function CourseDetailPage() {
         <div className="overflow-hidden rounded-2xl border border-border bg-muted">
           {course.imageUrl ? (
             <img
-              src={course.imageUrl}
+              src={assetUrl(course.imageUrl)}
               alt={`${course.name} cover`}
               className="aspect-[16/6] w-full object-cover"
               loading="lazy"

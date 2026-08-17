@@ -7,6 +7,7 @@ import {
 } from "@/lib/admin-guards";
 import { writeAuditLog } from "@/lib/audit";
 import { dbQuery, parseStringArray } from "@/lib/db-helpers";
+import { toStoragePath } from "@/lib/assets";
 
 export type CourseStatus = "draft" | "published" | "archived";
 
@@ -116,7 +117,7 @@ function normalizeCourse(r: CourseDbRow): AdminCourseRow {
     isPublished: Boolean(r.isPublished),
     status: (r.status as CourseStatus) ?? "draft",
     sortOrder: Number(r.sortOrder) || 0,
-    imageUrl: r.imageUrl ?? "",
+    imageUrl: toStoragePath(r.imageUrl ?? ""),
     seoTitle: r.seoTitle ?? "",
     seoDescription: r.seoDescription ?? "",
   };
@@ -256,7 +257,7 @@ async function upsertCourseAdminImpl(
       status,
       isPublished,
       sortOrder,
-      data.imageUrl ?? "",
+      toStoragePath(data.imageUrl ?? ""),
       data.seoTitle ?? "",
       data.seoDescription ?? "",
       context.userId,

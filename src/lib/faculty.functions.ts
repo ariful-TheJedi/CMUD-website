@@ -4,6 +4,7 @@ import { assertSectionView, assertSectionUpdate } from "@/lib/admin-guards";
 import { writeAuditLog } from "@/lib/audit";
 import { pool } from "@/lib/db";
 import { dbQuery } from "@/lib/db-helpers";
+import { toStoragePath } from "@/lib/assets";
 export type FacultyStatus = "draft" | "published" | "archived";
 
 export type AdminFacultyRow = {
@@ -116,7 +117,7 @@ function normalizeFaculty(r: FacultyDbRow): AdminFacultyRow {
     shortBio: r.shortBio ?? "",
     fullBio: r.fullBio ?? "",
     initials: r.initials ?? "",
-    photoUrl: r.photoUrl ?? "",
+    photoUrl: toStoragePath(r.photoUrl ?? ""),
     altText: r.altText ?? "",
     isPublished: Boolean(r.isPublished),
     status: (r.status as FacultyStatus) ?? "draft",
@@ -218,7 +219,7 @@ async function upsertFacultyAdminImpl(
     data.fullBio ?? "",
     data.fullBio || data.shortBio || "",
     data.initials ?? "",
-    data.photoUrl ?? "",
+    toStoragePath(data.photoUrl ?? ""),
     data.altText ?? "",
     status,
     isPublished,

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { listPublicNotices } from "@/lib/notices.functions";
 import { noticesPage } from "@/data/notices";
+import { assetUrl } from "@/lib/assets";
 
 export const Route = createFileRoute("/notices")({
   head: () => ({
@@ -79,7 +80,7 @@ function NoticesPage() {
                           {n.attachments.map((a) => (
                             <a
                               key={a.id ?? a.fileUrl}
-                              href={a.fileUrl}
+                              href={assetUrl(a.fileUrl)}
                               target="_blank"
                               rel="noopener noreferrer"
                               download={a.fileName}

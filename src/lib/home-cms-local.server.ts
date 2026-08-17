@@ -1,13 +1,13 @@
 /**
- * Local filesystem helpers for home-page image uploads under `public/media/home/`.
+ * Local filesystem helpers for home-page image uploads under ASSETS_ROOT/media/home/.
  * Home page *content* is stored in Postgres `page_content` (see page-content.functions.ts).
- * Do not read/write `public/cms/*.json` at runtime.
  *
- * Always targets the permanent project-root `public/` (never `.output/public`).
+ * Always targets the permanent assets root (never `.output/public`).
  * Server-only: do not import from client components.
  */
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { toStoragePath } from "@/lib/assets";
 import { getMediaDir } from "@/lib/project-paths.server";
 
 const ALLOWED_EXT = new Set(["jpg", "jpeg", "png", "webp", "gif", "svg"]);
@@ -20,9 +20,7 @@ function homeMediaDir() {
 export function resolveHomeMediaDiskPath(publicUrl: string): string | null {
   if (!publicUrl) return null;
   try {
-    const pathname = publicUrl.startsWith("http")
-      ? new URL(publicUrl).pathname
-      : publicUrl.split("?")[0];
+    const pathname = toStoragePath(publicUrl);
     if (!pathname.startsWith("/media/home/")) return null;
     const name = path.basename(pathname);
     if (!name || name === "." || name === ".." || name.includes("..")) return null;

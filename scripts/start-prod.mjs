@@ -34,9 +34,12 @@ function loadEnvFileIfPresent(filePath = path.resolve(process.cwd(), ".env")) {
 
 loadEnvFileIfPresent();
 
-// Pin project root for uploads so Nitro never writes into wipeable `.output/public`.
-// Upload helpers resolve `[PROJECT_ROOT]/public/{media,attachment}/`.
+// Pin project root. Media/attachments use ASSETS_ROOT when set (external cmud-assets).
 process.env.PROJECT_ROOT ||= process.cwd();
+process.env.ASSETS_PREFIX ||= process.env.VITE_ASSETS_PREFIX || "";
+if (!process.env.ASSETS_PREFIX && process.env.VITE_ASSETS_PREFIX) {
+  process.env.ASSETS_PREFIX = process.env.VITE_ASSETS_PREFIX;
+}
 
 process.env.HOST ||= process.env.NITRO_HOST || "0.0.0.0";
 process.env.PORT ||= process.env.NITRO_PORT || "3000";
@@ -50,6 +53,11 @@ if (missing.length) {
   );
   process.exit(1);
 }
+
+const assetsRoot =
+  process.env.ASSETS_ROOT || process.env.PUBLIC_ASSETS_DIR || "(default: PROJECT_ROOT/public)";
+const assetsPrefix = process.env.VITE_ASSETS_PREFIX || process.env.ASSETS_PREFIX || "(none)";
+console.info(`[start] Assets root=${assetsRoot} prefix=${assetsPrefix}`);
 
 const serverEntry = path.resolve(process.cwd(), ".output/server/index.mjs");
 if (!existsSync(serverEntry)) {

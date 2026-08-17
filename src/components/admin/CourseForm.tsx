@@ -22,6 +22,7 @@ import {
 } from "@/lib/courses.functions";
 import { DEFAULT_COURSE_WHATS_INCLUDED } from "@/data/courses";
 import { AdminMediaImage, useObjectUrl } from "@/components/admin/AdminMediaImage";
+import { toStoragePath } from "@/lib/assets";
 
 const MODES = ["Online", "Onsite", "Hybrid", "Hybrid, Onsite"] as const;
 const CATEGORIES = ["Foundation", "Advanced", "Specialty", "Diploma / Masters"] as const;
@@ -300,12 +301,12 @@ export function CourseForm({
           value={form.imageUrl}
           onChange={(e) => {
             setPickedCover(null);
-            set("imageUrl", e.target.value);
+            set("imageUrl", toStoragePath(e.target.value) || e.target.value.trim());
           }}
           placeholder="Paste image URL or upload below"
         />
         <ImageUploader
-          onUploaded={(url) => set("imageUrl", url)}
+          onUploaded={(url) => set("imageUrl", toStoragePath(url))}
           onPickedFile={setPickedCover}
           currentSlug={form.slug}
           previousUrl={form.imageUrl}

@@ -7,6 +7,7 @@ import { Pencil, Plus, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { assetUrl, toStoragePath } from "@/lib/assets";
 import {
   Dialog,
   DialogContent,
@@ -151,7 +152,7 @@ function TestimonialsAdminPage() {
                   <TableRow key={t.id}>
                     <TableCell>
                       <Avatar className="h-9 w-9">
-                        {t.photoUrl ? <AvatarImage src={t.photoUrl} alt={t.name} /> : null}
+                        {t.photoUrl ? <AvatarImage src={assetUrl(t.photoUrl)} alt={t.name} /> : null}
                         <AvatarFallback className="bg-primary text-xs text-primary-foreground">
                           {t.initials || "?"}
                         </AvatarFallback>
@@ -370,12 +371,12 @@ function TestimonialForm({
           value={form.photoUrl}
           onChange={(e) => {
             setPickedPhoto(null);
-            set("photoUrl", e.target.value);
+            set("photoUrl", toStoragePath(e.target.value) || e.target.value.trim());
           }}
           placeholder="Paste image URL or upload below"
         />
         <PhotoUploader
-          onUploaded={(url) => set("photoUrl", url)}
+          onUploaded={(url) => set("photoUrl", toStoragePath(url))}
           onPickedFile={setPickedPhoto}
           currentName={form.name}
           previousUrl={form.photoUrl}

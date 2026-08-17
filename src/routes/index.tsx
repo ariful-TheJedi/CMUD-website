@@ -28,6 +28,7 @@ import { FacultyPortrait } from "@/components/FacultyPortrait";
 import { SectionHeading } from "@/components/SectionHeading";
 import { courseCategories } from "@/data/courses";
 import { homePage } from "@/data/home";
+import { assetUrl } from "@/lib/assets";
 import { listPublicCourses } from "@/lib/courses.functions";
 import { listPublicFaculty } from "@/lib/faculty.functions";
 import { listPublicNotices } from "@/lib/notices.functions";
@@ -113,8 +114,8 @@ function HomePage() {
   const content = pageRecord?.pageData ?? defaultHomeContent;
   const hero = content.hero;
   const hands = content.handsOn;
-  const heroImg = hero.imageUrl || homePage.media.heroFallback;
-  const handsImg = hands.imageUrl || homePage.media.handsOnFallback;
+  const heroImg = assetUrl(hero.imageUrl || "/media/home/hero-ultrasound.jpg");
+  const handsImg = assetUrl(hands.imageUrl || "/media/home/hands-on-training.jpg");
 
   // Dynamic lists from local Postgres via listPublic* server functions
   const featured = courses.filter((c) => c.featured);
@@ -370,7 +371,7 @@ function HomePage() {
                             {n.attachments.map((a) => (
                               <a
                                 key={a.id ?? a.fileUrl}
-                                href={a.fileUrl}
+                                href={assetUrl(a.fileUrl)}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 download={a.fileName}
@@ -407,7 +408,7 @@ function HomePage() {
                 <p className="mt-3 text-base leading-relaxed">{t.quote}</p>
                 <div className="mt-5 flex items-center gap-3">
                   <Avatar className="h-10 w-10">
-                    {t.photoUrl ? <AvatarImage src={t.photoUrl} alt={t.name} /> : null}
+                    {t.photoUrl ? <AvatarImage src={assetUrl(t.photoUrl)} alt={t.name} /> : null}
                     <AvatarFallback className="bg-primary text-primary-foreground">
                       {t.initials}
                     </AvatarFallback>

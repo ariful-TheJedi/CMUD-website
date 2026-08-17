@@ -20,6 +20,7 @@ import {
   type FacultyStatus,
 } from "@/lib/faculty.functions";
 import { AdminMediaImage, useObjectUrl } from "@/components/admin/AdminMediaImage";
+import { toStoragePath } from "@/lib/assets";
 
 const STATUSES: FacultyStatus[] = ["draft", "published", "archived"];
 
@@ -248,14 +249,14 @@ export function FacultyForm({
             value={form.photoUrl}
             onChange={(e) => {
               setPickedPhoto(null);
-              set("photoUrl", e.target.value);
+              set("photoUrl", toStoragePath(e.target.value) || e.target.value.trim());
             }}
             placeholder="Paste image URL or upload below"
           />
         )}
         {!readOnly && (
           <PhotoUploader
-            onUploaded={(url) => set("photoUrl", url)}
+            onUploaded={(url) => set("photoUrl", toStoragePath(url))}
             onPickedFile={setPickedPhoto}
             currentName={form.name}
             previousUrl={form.photoUrl}

@@ -3,6 +3,7 @@ import { Target, Eye, Heart } from "lucide-react";
 import { SectionHeading } from "@/components/SectionHeading";
 import { Card, CardContent } from "@/components/ui/card";
 import { aboutPage } from "@/data/about";
+import { assetUrl } from "@/lib/assets";
 
 const guideIcons = {
   target: Target,
@@ -41,7 +42,7 @@ function AboutPage() {
 
       <section className="container mx-auto grid gap-12 px-4 py-20 lg:grid-cols-2 lg:items-center">
         <img
-          src={story.image}
+          src={assetUrl(story.image)}
           alt={story.imageAlt}
           loading="lazy"
           width={1280}
@@ -97,7 +98,7 @@ function AboutPage() {
                 <CardContent className="p-8 text-center">
                   <div className="mx-auto flex h-24 w-24 items-center justify-center">
                     <img
-                      src={v.logo}
+                      src={assetUrl(v.logo)}
                       alt={`${v.title} logo`}
                       className="max-h-24 max-w-24 object-contain"
                     />

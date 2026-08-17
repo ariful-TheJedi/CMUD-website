@@ -1,9 +1,6 @@
 /**
- * Serve newly written uploads under public/media and public/attachment.
- *
- * Vite keeps a `publicFiles` allowlist and only adds new files after chokidar
- * fires — on Windows that delay often makes admin previews 404 until reload.
- * This post-middleware reads those paths from disk so uploads work immediately.
+ * Serve uploads from ASSETS_ROOT (or project/public) for Vite dev.
+ * Supports optional VITE_ASSETS_PREFIX (e.g. /cmud-assets/media/...).
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -30,21 +27,48 @@ const MIME: Record<string, string> = {
   ".7z": "application/x-7z-compressed",
 };
 
+function normalizePrefix(raw: string | undefined): string {
+  const value = (raw ?? "").trim();
+  if (!value || /^https?:\/\//i.test(value)) return "";
+  return value.replace(/\/+$/, "");
+}
+
+function stripPrefix(pathname: string, prefix: string): string {
+  if (!prefix) return pathname;
+  if (pathname === prefix) return "/";
+  if (pathname.startsWith(`${prefix}/`)) return pathname.slice(prefix.length) || "/";
+  return pathname;
+}
+
 function isUploadPath(pathname: string): boolean {
   return pathname.startsWith("/media/") || pathname.startsWith("/attachment/");
+}
+
+function resolveAssetsRoot(projectRoot: string): string {
+  const fromEnv =
+    process.env.ASSETS_ROOT?.trim() ||
+    process.env.PUBLIC_ASSETS_DIR?.trim() ||
+    process.env.UPLOAD_PUBLIC_ROOT?.trim() ||
+    "";
+  if (fromEnv) return path.resolve(fromEnv);
+  return path.resolve(projectRoot, "public");
 }
 
 export function serveFreshUploadsPlugin(): Plugin {
   return {
     name: "serve-fresh-uploads",
     configureServer(server) {
-      const publicDir = path.resolve(server.config.root, "public");
+      const assetsRoot = resolveAssetsRoot(server.config.root);
+      const prefix = normalizePrefix(
+        process.env.VITE_ASSETS_PREFIX || process.env.ASSETS_PREFIX,
+      );
 
       return () => {
         server.middlewares.use((req, res, next) => {
           try {
             const rawUrl = req.url ?? "";
-            const pathname = decodeURIComponent(rawUrl.split("?")[0] || "");
+            const rawPathname = decodeURIComponent(rawUrl.split("?")[0] || "");
+            const pathname = stripPrefix(rawPathname, prefix);
             if (!isUploadPath(pathname)) {
               next();
               return;
@@ -56,12 +80,11 @@ export function serveFreshUploadsPlugin(): Plugin {
               return;
             }
 
-            const filePath = path.resolve(publicDir, rel);
-            if (!filePath.startsWith(publicDir + path.sep) && filePath !== publicDir) {
+            const filePath = path.resolve(assetsRoot, rel);
+            if (!filePath.startsWith(assetsRoot + path.sep) && filePath !== assetsRoot) {
               next();
               return;
             }
-
             if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
               next();
               return;
@@ -71,7 +94,7 @@ export function serveFreshUploadsPlugin(): Plugin {
             const type = MIME[ext] || "application/octet-stream";
             res.statusCode = 200;
             res.setHeader("Content-Type", type);
-            res.setHeader("Cache-Control", "no-cache");
+            res.setHeader("Cache-Control", "no-store");
             fs.createReadStream(filePath).pipe(res);
           } catch {
             next();
