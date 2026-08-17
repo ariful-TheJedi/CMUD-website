@@ -245,51 +245,6 @@ function HomePage() {
         </div>
       </section>
 
-      {/* Hands-on band — CMS */}
-      <section className="container mx-auto px-4 py-20">
-        <div className="grid items-center gap-10 lg:grid-cols-2">
-          <div className="relative">
-            <img
-              src={handsImg}
-              alt={hands.imageAlt}
-              loading="lazy"
-              width={1280}
-              height={896}
-              className="aspect-[5/4] w-full rounded-2xl object-cover shadow-[var(--shadow-elegant)]"
-            />
-            <div className="absolute -bottom-6 left-6 hidden rounded-xl bg-card p-4 shadow-[var(--shadow-card)] sm:block">
-              <div className="flex items-center gap-3">
-                <Stethoscope className="h-6 w-6 text-secondary" />
-                <div>
-                  <p className="font-serif text-xl font-bold text-foreground">{hands.badgeValue}</p>
-                  <p className="text-xs text-muted-foreground">{hands.badgeLabel}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div>
-            <SectionHeading
-              eyebrow={hands.eyebrow}
-              title={hands.title}
-              description={hands.description}
-            />
-            <ul className="mt-6 space-y-3">
-              {hands.bullets.map((p) => (
-                <li key={p} className="flex items-start gap-2 text-sm">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-secondary" />
-                  <span>{p}</span>
-                </li>
-              ))}
-            </ul>
-            <Button asChild className="mt-8">
-              <a href={hands.ctaHref}>
-                {hands.ctaLabel} <ArrowRight className="h-4 w-4" />
-              </a>
-            </Button>
-          </div>
-        </div>
-      </section>
-
       {/* Categories */}
       <section className="bg-surface">
         <div className="container mx-auto px-4 py-20">
@@ -464,6 +419,51 @@ function HomePage() {
               </CardContent>
             </Card>
           ))}
+        </div>
+      </section>
+
+      {/* Hands-on band — CMS (above Visit CMUD) */}
+      <section className="container mx-auto px-4 py-20">
+        <div className="grid items-center gap-10 lg:grid-cols-2">
+          <div className="relative">
+            <img
+              src={handsImg}
+              alt={hands.imageAlt}
+              loading="lazy"
+              width={1280}
+              height={896}
+              className="aspect-[5/4] w-full rounded-2xl object-cover shadow-[var(--shadow-elegant)]"
+            />
+            <div className="absolute -bottom-6 left-6 hidden rounded-xl bg-card p-4 shadow-[var(--shadow-card)] sm:block">
+              <div className="flex items-center gap-3">
+                <Stethoscope className="h-6 w-6 text-secondary" />
+                <div>
+                  <p className="font-serif text-xl font-bold text-foreground">{hands.badgeValue}</p>
+                  <p className="text-xs text-muted-foreground">{hands.badgeLabel}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <SectionHeading
+              eyebrow={hands.eyebrow}
+              title={hands.title}
+              description={hands.description}
+            />
+            <ul className="mt-6 space-y-3">
+              {hands.bullets.map((p) => (
+                <li key={p} className="flex items-start gap-2 text-sm">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-secondary" />
+                  <span>{p}</span>
+                </li>
+              ))}
+            </ul>
+            <Button asChild className="mt-8">
+              <a href={hands.ctaHref}>
+                {hands.ctaLabel} <ArrowRight className="h-4 w-4" />
+              </a>
+            </Button>
+          </div>
         </div>
       </section>
 
