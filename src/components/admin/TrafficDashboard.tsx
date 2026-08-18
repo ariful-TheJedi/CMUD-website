@@ -217,10 +217,14 @@ export function TrafficDashboard() {
       {q.isLoading ? <DashboardSkeleton /> : null}
 
       {q.isError ? (
-        <div className="flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
-          <AlertCircle className="h-4 w-4 shrink-0" />
-          <span>Could not load traffic data.</span>
-          <Button size="sm" variant="ghost" onClick={() => q.refetch()}>
+        <div className="flex flex-col gap-2 rounded-md border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive sm:flex-row sm:items-center">
+          <div className="flex items-start gap-2 min-w-0">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            <span className="break-words">
+              {(q.error instanceof Error && q.error.message) || "Could not load traffic data."}
+            </span>
+          </div>
+          <Button size="sm" variant="ghost" className="shrink-0 self-start" onClick={() => q.refetch()}>
             Retry
           </Button>
         </div>

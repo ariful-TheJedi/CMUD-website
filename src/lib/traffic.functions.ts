@@ -3,6 +3,7 @@
  * Retention target: ~60 days (cleanup via `npm run traffic:cleanup`).
  */
 import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
 import { requireAuth } from "@/lib/require-auth";
 import { assertSectionView } from "@/lib/admin-guards";
 import { pool } from "@/lib/db";
@@ -14,6 +15,7 @@ import {
   detectBrowser,
   detectDevice,
   formatDuration,
+  isBotUserAgent,
   rangeToDays,
   type TrafficDevice,
   type TrafficRangeKey,
@@ -105,6 +107,46 @@ function rangeBounds(range: TrafficRangeKey): { from: Date; to: Date; prevFrom: 
   return { from, to, prevFrom, prevTo };
 }
 
+let trafficSchemaReady = false;
+
+/** Idempotent — safe if `npm run db:schema` was not run on a host yet. */
+async function ensureTrafficSchema(): Promise<void> {
+  if (trafficSchemaReady) return;
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS site_traffic_events (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      event_type TEXT NOT NULL DEFAULT 'page_view',
+      session_id TEXT NOT NULL,
+      visitor_id TEXT NOT NULL,
+      path TEXT NOT NULL,
+      page_title TEXT NOT NULL DEFAULT '',
+      referrer TEXT NOT NULL DEFAULT '',
+      source TEXT NOT NULL DEFAULT 'direct',
+      device TEXT NOT NULL DEFAULT 'desktop',
+      browser TEXT NOT NULL DEFAULT 'Other',
+      country TEXT NOT NULL DEFAULT 'Unknown',
+      country_code TEXT NOT NULL DEFAULT '',
+      duration_ms INTEGER NOT NULL DEFAULT 0,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+  `);
+  const indexes = [
+    `CREATE INDEX IF NOT EXISTS site_traffic_events_created_at_idx ON site_traffic_events (created_at DESC)`,
+    `CREATE INDEX IF NOT EXISTS site_traffic_events_session_id_idx ON site_traffic_events (session_id)`,
+    `CREATE INDEX IF NOT EXISTS site_traffic_events_visitor_id_idx ON site_traffic_events (visitor_id)`,
+    `CREATE INDEX IF NOT EXISTS site_traffic_events_path_idx ON site_traffic_events (path)`,
+    `CREATE INDEX IF NOT EXISTS site_traffic_events_country_idx ON site_traffic_events (country)`,
+    `CREATE INDEX IF NOT EXISTS site_traffic_events_source_idx ON site_traffic_events (source)`,
+    `CREATE INDEX IF NOT EXISTS site_traffic_events_created_source_idx ON site_traffic_events (created_at DESC, source)`,
+    `CREATE INDEX IF NOT EXISTS site_traffic_events_created_path_idx ON site_traffic_events (created_at DESC, path)`,
+    `CREATE INDEX IF NOT EXISTS site_traffic_events_type_created_idx ON site_traffic_events (event_type, created_at DESC)`,
+  ];
+  for (const sql of indexes) {
+    await pool.query(sql);
+  }
+  trafficSchemaReady = true;
+}
+
 async function avgSessionDurationMs(from: Date, to: Date): Promise<number> {
   const { rows } = await pool.query<{ avg_ms: string | null }>(
     `SELECT AVG(session_ms)::float AS avg_ms
@@ -120,18 +162,57 @@ async function avgSessionDurationMs(from: Date, to: Date): Promise<number> {
   return Number(rows[0]?.avg_ms ?? 0) || 0;
 }
 
+const trackPageViewSchema = z.object({
+  sessionId: z.string().min(1).max(120),
+  visitorId: z.string().min(1).max(120),
+  path: z.string().min(1).max(500),
+  pageTitle: z.string().max(300).optional(),
+  referrer: z.string().max(500).optional(),
+  utmSource: z.string().max(120).optional(),
+  utmMedium: z.string().max(120).optional(),
+  locale: z.string().max(40).optional(),
+  userAgent: z.string().max(500).optional(),
+  currentHost: z.string().max(200).optional(),
+});
+
+const trackDurationSchema = z.object({
+  eventId: z.string().min(1).max(80),
+  durationMs: z.number().finite().nonnegative(),
+});
+
+const dashboardInputSchema = z
+  .object({
+    range: z.enum(["7d", "30d", "60d"]).optional(),
+    recentLimit: z.number().finite().optional(),
+    recentOffset: z.number().finite().optional(),
+  })
+  .optional()
+  .transform((input) => {
+    const range: TrafficRangeKey =
+      input?.range === "7d" || input?.range === "60d" || input?.range === "30d" ? input.range : "30d";
+    return {
+      range,
+      recentLimit: Math.min(Math.max(Number(input?.recentLimit) || 20, 5), 50),
+      recentOffset: Math.max(Number(input?.recentOffset) || 0, 0),
+    };
+  });
+
 /** Public — record a page view (no PII / no raw IP stored). */
 export const trackTrafficPageView = createServerFn({ method: "POST" })
-  .inputValidator((input: TrackPageViewInput) => input)
+  .validator(trackPageViewSchema)
   .handler(async ({ data }): Promise<{ eventId: string }> => {
-    const sessionId = (data.sessionId || "").trim().slice(0, 80);
-    const visitorId = (data.visitorId || "").trim().slice(0, 80);
+    await ensureTrafficSchema();
+    const sessionId = data.sessionId.trim().slice(0, 80);
+    const visitorId = data.visitorId.trim().slice(0, 80);
     const path = clampPath(data.path);
     if (!sessionId || !visitorId || !path) {
       throw new Error("Invalid tracking payload");
     }
 
     const ua = (data.userAgent || "").slice(0, 500);
+    if (isBotUserAgent(ua)) {
+      return { eventId: "" };
+    }
     const referrer = (data.referrer || "").trim().slice(0, 500);
     const source = classifyTrafficSource({
       referrer,
@@ -170,11 +251,12 @@ export const trackTrafficPageView = createServerFn({ method: "POST" })
 
 /** Public — update time-on-page for an event (heartbeat / unload). */
 export const trackTrafficDuration = createServerFn({ method: "POST" })
-  .inputValidator((input: TrackDurationInput) => input)
+  .validator(trackDurationSchema)
   .handler(async ({ data }): Promise<{ ok: boolean }> => {
-    const eventId = (data.eventId || "").trim();
-    const durationMs = Math.min(Math.max(0, Math.floor(Number(data.durationMs) || 0)), 60 * 60 * 1000);
-    if (!eventId || durationMs <= 0) return { ok: false };
+    await ensureTrafficSchema();
+    const eventId = data.eventId.trim();
+    const durationMs = Math.min(Math.max(0, Math.floor(data.durationMs)), 60 * 60 * 1000);
+    if (!eventId || !/^[0-9a-f-]{36}$/i.test(eventId) || durationMs <= 0) return { ok: false };
     await pool.query(
       `UPDATE site_traffic_events
        SET duration_ms = GREATEST(duration_ms, $2)
@@ -184,24 +266,33 @@ export const trackTrafficDuration = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-export const getTrafficDashboard = createServerFn({ method: "GET" })
+/** POST — GET+body is unreliable for server-fn payloads in some environments. */
+export const getTrafficDashboard = createServerFn({ method: "POST" })
   .middleware([requireAuth])
-  .inputValidator(
-    (input: { range?: TrafficRangeKey; recentLimit?: number; recentOffset?: number }) => input,
-  )
+  .validator(dashboardInputSchema)
   .handler(async ({ data, context }): Promise<TrafficDashboardData> => {
-    await assertSectionView(context, "traffic");
-    const range: TrafficRangeKey =
-      data.range === "7d" || data.range === "60d" || data.range === "30d" ? data.range : "30d";
-    const { from, to, prevFrom, prevTo } = rangeBounds(range);
-    const recentLimit = Math.min(Math.max(Number(data.recentLimit) || 20, 5), 50);
-    const recentOffset = Math.max(Number(data.recentOffset) || 0, 0);
+    try {
+      await assertSectionView(context, "traffic");
+      await ensureTrafficSchema();
+      const { range, recentLimit, recentOffset } = data;
+      const { from, to, prevFrom, prevTo } = rangeBounds(range);
 
-    const fromIso = from.toISOString();
-    const toIso = to.toISOString();
+      const fromIso = from.toISOString();
+      const toIso = to.toISOString();
 
-    const [totals, avgMs, prevAvgMs, seriesRes, sourcesRes, pagesRes, devicesRes, countriesRes, recentRes, recentCount, liveRes] =
-      await Promise.all([
+      const [
+        totals,
+        avgMs,
+        prevAvgMs,
+        seriesRes,
+        sourcesRes,
+        pagesRes,
+        devicesRes,
+        countriesRes,
+        recentRes,
+        recentCount,
+        liveRes,
+      ] = await Promise.all([
         pool.query<{ visitors: string; sessions: string; page_views: string }>(
           `SELECT
              COUNT(DISTINCT visitor_id)::text AS visitors,
@@ -293,136 +384,145 @@ export const getTrafficDashboard = createServerFn({ method: "GET" })
         ),
       ]);
 
-    const visitors = Number(totals.rows[0]?.visitors ?? 0);
-    const sessions = Number(totals.rows[0]?.sessions ?? 0);
-    const pageViews = Number(totals.rows[0]?.page_views ?? 0);
+      const visitors = Number(totals.rows[0]?.visitors ?? 0);
+      const sessions = Number(totals.rows[0]?.sessions ?? 0);
+      const pageViews = Number(totals.rows[0]?.page_views ?? 0);
 
-    const avgDurationChangePct =
-      prevAvgMs > 0 ? Math.round(((avgMs - prevAvgMs) / prevAvgMs) * 1000) / 10 : null;
+      const avgDurationChangePct =
+        prevAvgMs > 0 ? Math.round(((avgMs - prevAvgMs) / prevAvgMs) * 1000) / 10 : null;
 
-    const sourceVisitorTotal = sourcesRes.rows.reduce((n, r) => n + Number(r.visitors), 0) || 1;
-    const sources: TrafficSourceRow[] = TRAFFIC_SOURCES.map((source) => {
-      const row = sourcesRes.rows.find((r) => r.source === source);
-      const v = Number(row?.visitors ?? 0);
-      return {
-        source,
-        visitors: v,
-        pageViews: Number(row?.page_views ?? 0),
-        percent: Math.round((v / sourceVisitorTotal) * 1000) / 10,
-      };
-    })
-      .filter((r) => r.visitors > 0 || r.pageViews > 0)
-      .sort((a, b) => b.visitors - a.visitors);
-
-    // Include unexpected source labels if any.
-    for (const row of sourcesRes.rows) {
-      if (!TRAFFIC_SOURCES.includes(row.source as TrafficSource)) {
-        const v = Number(row.visitors);
-        sources.push({
-          source: "other",
-          visitors: v,
-          pageViews: Number(row.page_views),
-          percent: Math.round((v / sourceVisitorTotal) * 1000) / 10,
-        });
-      }
-    }
-
-    const deviceTotal = devicesRes.rows.reduce((n, r) => n + Number(r.visitors), 0) || 1;
-    const devices: TrafficDeviceRow[] = (["desktop", "mobile", "tablet"] as TrafficDevice[]).map(
-      (device) => {
-        const row = devicesRes.rows.find((r) => r.device === device);
+      const sourceVisitorTotal = sourcesRes.rows.reduce((n, r) => n + Number(r.visitors), 0) || 1;
+      const sources: TrafficSourceRow[] = TRAFFIC_SOURCES.map((source) => {
+        const row = sourcesRes.rows.find((r) => r.source === source);
         const v = Number(row?.visitors ?? 0);
-        return { device, visitors: v, percent: Math.round((v / deviceTotal) * 1000) / 10 };
-      },
-    );
+        return {
+          source,
+          visitors: v,
+          pageViews: Number(row?.page_views ?? 0),
+          percent: Math.round((v / sourceVisitorTotal) * 1000) / 10,
+        };
+      })
+        .filter((r) => r.visitors > 0 || r.pageViews > 0)
+        .sort((a, b) => b.visitors - a.visitors);
 
-    const countryTotal = countriesRes.rows.reduce((n, r) => n + Number(r.visitors), 0) || 1;
+      for (const row of sourcesRes.rows) {
+        if (!TRAFFIC_SOURCES.includes(row.source as TrafficSource)) {
+          const v = Number(row.visitors);
+          sources.push({
+            source: "other",
+            visitors: v,
+            pageViews: Number(row.page_views),
+            percent: Math.round((v / sourceVisitorTotal) * 1000) / 10,
+          });
+        }
+      }
 
-    return {
-      range,
-      from: fromIso,
-      to: toIso,
-      visitors,
-      sessions,
-      pageViews,
-      avgSessionDurationMs: avgMs,
-      avgSessionDurationLabel: formatDuration(avgMs),
-      prevAvgSessionDurationMs: prevAvgMs,
-      avgDurationChangePct,
-      series: seriesRes.rows.map((r) => ({
-        date: String(r.day).slice(0, 10),
-        visitors: Number(r.visitors),
-        pageViews: Number(r.page_views),
-      })),
-      sources,
-      topPages: pagesRes.rows.map((r) => ({
-        path: r.path,
-        title: r.title || r.path,
-        pageViews: Number(r.page_views),
-        uniqueVisitors: Number(r.unique_visitors),
-      })),
-      devices,
-      countries: countriesRes.rows.map((r) => ({
-        country: r.country || "Unknown",
-        countryCode: r.country_code || "",
-        visitors: Number(r.visitors),
-        percent: Math.round((Number(r.visitors) / countryTotal) * 1000) / 10,
-      })),
-      recentVisits: recentRes.rows.map((r) => ({
-        id: r.id,
-        visitedAt: asIso(r.created_at),
-        country: r.country || "Unknown",
-        device: r.device,
-        browser: r.browser,
-        path: r.path,
-        pageTitle: r.page_title || r.path,
-        source: r.source,
-      })),
-      recentTotal: Number(recentCount.rows[0]?.count ?? 0),
-      liveLast5Min: Number(liveRes.rows[0]?.count ?? 0),
-    };
+      const deviceTotal = devicesRes.rows.reduce((n, r) => n + Number(r.visitors), 0) || 1;
+      const devices: TrafficDeviceRow[] = (["desktop", "mobile", "tablet"] as TrafficDevice[]).map(
+        (device) => {
+          const row = devicesRes.rows.find((r) => r.device === device);
+          const v = Number(row?.visitors ?? 0);
+          return { device, visitors: v, percent: Math.round((v / deviceTotal) * 1000) / 10 };
+        },
+      );
+
+      const countryTotal = countriesRes.rows.reduce((n, r) => n + Number(r.visitors), 0) || 1;
+
+      return {
+        range,
+        from: fromIso,
+        to: toIso,
+        visitors,
+        sessions,
+        pageViews,
+        avgSessionDurationMs: avgMs,
+        avgSessionDurationLabel: formatDuration(avgMs),
+        prevAvgSessionDurationMs: prevAvgMs,
+        avgDurationChangePct,
+        series: seriesRes.rows.map((r) => ({
+          date: String(r.day).slice(0, 10),
+          visitors: Number(r.visitors),
+          pageViews: Number(r.page_views),
+        })),
+        sources,
+        topPages: pagesRes.rows.map((r) => ({
+          path: r.path,
+          title: r.title || r.path,
+          pageViews: Number(r.page_views),
+          uniqueVisitors: Number(r.unique_visitors),
+        })),
+        devices,
+        countries: countriesRes.rows.map((r) => ({
+          country: r.country || "Unknown",
+          countryCode: r.country_code || "",
+          visitors: Number(r.visitors),
+          percent: Math.round((Number(r.visitors) / countryTotal) * 1000) / 10,
+        })),
+        recentVisits: recentRes.rows.map((r) => ({
+          id: r.id,
+          visitedAt: asIso(r.created_at),
+          country: r.country || "Unknown",
+          device: r.device,
+          browser: r.browser,
+          path: r.path,
+          pageTitle: r.page_title || r.path,
+          source: r.source,
+        })),
+        recentTotal: Number(recentCount.rows[0]?.count ?? 0),
+        liveLast5Min: Number(liveRes.rows[0]?.count ?? 0),
+      };
+    } catch (err) {
+      console.error("[getTrafficDashboard]", err);
+      throw err instanceof Error ? err : new Error(String(err));
+    }
   });
 
-export const getTrafficSummary = createServerFn({ method: "GET" })
+export const getTrafficSummary = createServerFn({ method: "POST" })
   .middleware([requireAuth])
   .handler(async ({ context }): Promise<TrafficSummary> => {
-    await assertSectionView(context, "traffic");
-    const { from, to } = rangeBounds("30d");
-    const fromIso = from.toISOString();
-    const toIso = to.toISOString();
+    try {
+      await assertSectionView(context, "traffic");
+      await ensureTrafficSchema();
+      const { from, to } = rangeBounds("30d");
+      const fromIso = from.toISOString();
+      const toIso = to.toISOString();
 
-    const [totals, avgMs, sourceRes, liveRes] = await Promise.all([
-      pool.query<{ visitors: string; page_views: string }>(
-        `SELECT COUNT(DISTINCT visitor_id)::text AS visitors,
-                COUNT(*)::text AS page_views
-         FROM site_traffic_events
-         WHERE event_type = 'page_view' AND created_at >= $1 AND created_at < $2`,
-        [fromIso, toIso],
-      ),
-      avgSessionDurationMs(from, to),
-      pool.query<{ source: string }>(
-        `SELECT source
-         FROM site_traffic_events
-         WHERE event_type = 'page_view' AND created_at >= $1 AND created_at < $2
-         GROUP BY source
-         ORDER BY COUNT(DISTINCT visitor_id) DESC
-         LIMIT 1`,
-        [fromIso, toIso],
-      ),
-      pool.query<{ count: string }>(
-        `SELECT COUNT(DISTINCT visitor_id)::text AS count
-         FROM site_traffic_events
-         WHERE event_type = 'page_view'
-           AND created_at >= now() - interval '5 minutes'`,
-      ),
-    ]);
+      const [totals, avgMs, sourceRes, liveRes] = await Promise.all([
+        pool.query<{ visitors: string; page_views: string }>(
+          `SELECT COUNT(DISTINCT visitor_id)::text AS visitors,
+                  COUNT(*)::text AS page_views
+           FROM site_traffic_events
+           WHERE event_type = 'page_view' AND created_at >= $1 AND created_at < $2`,
+          [fromIso, toIso],
+        ),
+        avgSessionDurationMs(from, to),
+        pool.query<{ source: string }>(
+          `SELECT source
+           FROM site_traffic_events
+           WHERE event_type = 'page_view' AND created_at >= $1 AND created_at < $2
+           GROUP BY source
+           ORDER BY COUNT(DISTINCT visitor_id) DESC
+           LIMIT 1`,
+          [fromIso, toIso],
+        ),
+        pool.query<{ count: string }>(
+          `SELECT COUNT(DISTINCT visitor_id)::text AS count
+           FROM site_traffic_events
+           WHERE event_type = 'page_view'
+             AND created_at >= now() - interval '5 minutes'`,
+        ),
+      ]);
 
-    const topSource = (sourceRes.rows[0]?.source as TrafficSource) || "direct";
-    return {
-      visitors30d: Number(totals.rows[0]?.visitors ?? 0),
-      pageViews30d: Number(totals.rows[0]?.page_views ?? 0),
-      avgSessionDurationLabel: formatDuration(avgMs),
-      topSource,
-      liveLast5Min: Number(liveRes.rows[0]?.count ?? 0),
-    };
+      const topSource = (sourceRes.rows[0]?.source as TrafficSource) || "direct";
+      return {
+        visitors30d: Number(totals.rows[0]?.visitors ?? 0),
+        pageViews30d: Number(totals.rows[0]?.page_views ?? 0),
+        avgSessionDurationLabel: formatDuration(avgMs),
+        topSource,
+        liveLast5Min: Number(liveRes.rows[0]?.count ?? 0),
+      };
+    } catch (err) {
+      console.error("[getTrafficSummary]", err);
+      throw err instanceof Error ? err : new Error(String(err));
+    }
   });

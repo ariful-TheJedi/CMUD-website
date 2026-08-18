@@ -6,6 +6,7 @@ import { useEffect, useRef } from "react";
 import { useRouterState } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { trackTrafficDuration, trackTrafficPageView } from "@/lib/traffic.functions";
+import { isBotUserAgent } from "@/lib/traffic.shared";
 
 const VISITOR_KEY = "cmud_vid";
 const SESSION_KEY = "cmud_sid";
@@ -57,22 +58,19 @@ export function TrafficTracker() {
   const durationFn = useServerFn(trackTrafficDuration);
   const eventIdRef = useRef<string | null>(null);
   const startedAtRef = useRef<number>(0);
-  const pathRef = useRef(pathname);
-
-  useEffect(() => {
-    pathRef.current = pathname;
-  }, [pathname]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (shouldSkipPath(pathname)) return;
 
+    const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
+    if (isBotUserAgent(ua)) return;
+
     let cancelled = false;
     const visitorId = getOrCreate(window.localStorage, VISITOR_KEY);
     const sessionId = getOrCreate(window.sessionStorage, SESSION_KEY);
     const { utmSource, utmMedium } = readUtm();
-    const startedAt = Date.now();
-    startedAtRef.current = startedAt;
+    startedAtRef.current = Date.now();
     eventIdRef.current = null;
 
     const flushDuration = (eventId: string | null) => {
@@ -96,11 +94,11 @@ export function TrafficTracker() {
             utmSource,
             utmMedium,
             locale: typeof navigator !== "undefined" ? navigator.language : "",
-            userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "",
+            userAgent: ua,
             currentHost: window.location.hostname,
           },
         });
-        if (cancelled) return;
+        if (cancelled || !eventId) return;
         eventIdRef.current = eventId;
       } catch {
         /* ignore */

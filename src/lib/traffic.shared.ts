@@ -1,6 +1,8 @@
 /**
  * Client-safe traffic types + helpers (no Node/pg).
  */
+import { UAParser } from "ua-parser-js";
+import { isbot } from "isbot";
 
 export const TRAFFIC_SOURCES = [
   "direct",
@@ -112,7 +114,11 @@ export function classifyTrafficSource(input: {
   if (!ref) return "direct";
   const host = hostOf(ref);
   if (!host) return "direct";
-  if (SEARCH_HOSTS.some((s) => host.includes(s.replace(/\.$/, "")) || host.startsWith(s) || host.includes(s))) {
+  if (
+    SEARCH_HOSTS.some(
+      (s) => host.includes(s.replace(/\.$/, "")) || host.startsWith(s) || host.includes(s),
+    )
+  ) {
     return "organic";
   }
   if (SOCIAL_HOSTS.some((s) => host === s || host.endsWith(`.${s}`))) return "social";
@@ -126,25 +132,48 @@ export function classifyTrafficSource(input: {
   return "referral";
 }
 
+/** True for crawlers / automated agents — skip storing these hits. */
+export function isBotUserAgent(ua: string): boolean {
+  if (!ua.trim()) return false;
+  try {
+    return isbot(ua);
+  } catch {
+    return false;
+  }
+}
+
 export function detectDevice(ua: string): TrafficDevice {
-  const u = ua.toLowerCase();
-  if (/ipad|tablet|kindle|playbook|silk|(android(?!.*mobile))/i.test(u)) return "tablet";
-  if (/mobi|iphone|ipod|android.*mobile|windows phone|blackberry/i.test(u)) return "mobile";
-  return "desktop";
+  try {
+    const type = new UAParser(ua).getDevice().type;
+    if (type === "mobile") return "mobile";
+    if (type === "tablet") return "tablet";
+    if (/ipad|tablet|kindle|playbook|silk/i.test(ua)) return "tablet";
+    return "desktop";
+  } catch {
+    return "desktop";
+  }
 }
 
 export function detectBrowser(ua: string): string {
-  const u = ua;
-  if (/edg\//i.test(u)) return "Edge";
-  if (/opr\/|opera/i.test(u)) return "Opera";
-  if (/chrome\//i.test(u) && !/edg\//i.test(u)) return "Chrome";
-  if (/safari\//i.test(u) && !/chrome\//i.test(u)) return "Safari";
-  if (/firefox\//i.test(u)) return "Firefox";
-  if (/msie|trident/i.test(u)) return "IE";
-  return "Other";
+  try {
+    const name = new UAParser(ua).getBrowser().name;
+    if (!name) return "Other";
+    if (/mobile safari/i.test(name)) return "Safari";
+    if (/chrome/i.test(name) && !/edge|chromium/i.test(name)) return "Chrome";
+    if (/edge/i.test(name)) return "Edge";
+    if (/firefox/i.test(name)) return "Firefox";
+    if (/safari/i.test(name)) return "Safari";
+    if (/opera|opr/i.test(name)) return "Opera";
+    return name.slice(0, 40);
+  } catch {
+    return "Other";
+  }
 }
 
-export function countryFromLocale(locale: string | undefined | null): { code: string; name: string } {
+export function countryFromLocale(locale: string | undefined | null): {
+  code: string;
+  name: string;
+} {
   const raw = (locale ?? "").trim();
   const code = (raw.split(/[-_]/)[1] || "").toUpperCase();
   if (!code || code.length !== 2) return { code: "", name: "Unknown" };
