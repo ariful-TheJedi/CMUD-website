@@ -56,6 +56,8 @@ export function normalizeOrigin(url: string): string {
 const DEFAULT_LOCAL_ORIGINS = [
   "http://localhost:8080",
   "http://127.0.0.1:8080",
+  "http://localhost:8081",
+  "http://127.0.0.1:8081",
   "http://localhost:3000",
   "http://127.0.0.1:3000",
   "http://localhost:4173",
@@ -88,7 +90,7 @@ export function buildTrustedOrigins(baseURL: string): string[] {
     const u = new URL(baseURL);
     const host = u.hostname;
     const proto = u.protocol;
-    for (const port of ["3000", "8080", "4173", "80", "443"]) {
+    for (const port of ["3000", "8080", "8081", "4173", "80", "443"]) {
       if (port === "80" && proto === "http:") origins.add(`http://${host}`);
       else if (port === "443" && proto === "https:") origins.add(`https://${host}`);
       else origins.add(`${proto}//${host}:${port}`);

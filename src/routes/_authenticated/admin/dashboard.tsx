@@ -107,7 +107,9 @@ function humanizeAction(action: string) {
 function DashboardPage() {
   const { data: currentUser } = useCurrentUser();
   const canSeeAdmissions = !!currentUser && canViewSection(currentUser, "admissions");
-  const canSeeTraffic = !!currentUser && canViewSection(currentUser, "traffic");
+  const canSeeTraffic =
+    !!currentUser &&
+    (canViewSection(currentUser, "traffic") || canViewSection(currentUser, "dashboard"));
 
   const metricsFn = useServerFn(getDashboardMetrics);
   const updatesFn = useServerFn(getRecentContentUpdates);

@@ -5,7 +5,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireAuth } from "@/lib/require-auth";
-import { assertSectionView } from "@/lib/admin-guards";
+import { assertStaffRead } from "@/lib/admin-guards";
 import { pool } from "@/lib/db";
 import { asIso } from "@/lib/db-helpers";
 import {
@@ -180,26 +180,27 @@ const trackDurationSchema = z.object({
   durationMs: z.number().finite().nonnegative(),
 });
 
-const dashboardInputSchema = z
-  .object({
-    range: z.enum(["7d", "30d", "60d"]).optional(),
-    recentLimit: z.number().finite().optional(),
-    recentOffset: z.number().finite().optional(),
-  })
-  .optional()
-  .transform((input) => {
-    const range: TrafficRangeKey =
-      input?.range === "7d" || input?.range === "60d" || input?.range === "30d" ? input.range : "30d";
-    return {
-      range,
-      recentLimit: Math.min(Math.max(Number(input?.recentLimit) || 20, 5), 50),
-      recentOffset: Math.max(Number(input?.recentOffset) || 0, 0),
-    };
-  });
+type DashboardQuery = {
+  range: TrafficRangeKey;
+  recentLimit: number;
+  recentOffset: number;
+};
+
+function normalizeDashboardQuery(
+  input: { range?: TrafficRangeKey; recentLimit?: number; recentOffset?: number } | undefined,
+): DashboardQuery {
+  const range: TrafficRangeKey =
+    input?.range === "7d" || input?.range === "60d" || input?.range === "30d" ? input.range : "30d";
+  return {
+    range,
+    recentLimit: Math.min(Math.max(Number(input?.recentLimit) || 20, 5), 50),
+    recentOffset: Math.max(Number(input?.recentOffset) || 0, 0),
+  };
+}
 
 /** Public — record a page view (no PII / no raw IP stored). */
 export const trackTrafficPageView = createServerFn({ method: "POST" })
-  .validator(trackPageViewSchema)
+  .inputValidator((input: z.infer<typeof trackPageViewSchema>) => trackPageViewSchema.parse(input))
   .handler(async ({ data }): Promise<{ eventId: string }> => {
     await ensureTrafficSchema();
     const sessionId = data.sessionId.trim().slice(0, 80);
@@ -251,7 +252,7 @@ export const trackTrafficPageView = createServerFn({ method: "POST" })
 
 /** Public — update time-on-page for an event (heartbeat / unload). */
 export const trackTrafficDuration = createServerFn({ method: "POST" })
-  .validator(trackDurationSchema)
+  .inputValidator((input: z.infer<typeof trackDurationSchema>) => trackDurationSchema.parse(input))
   .handler(async ({ data }): Promise<{ ok: boolean }> => {
     await ensureTrafficSchema();
     const eventId = data.eventId.trim();
@@ -266,15 +267,19 @@ export const trackTrafficDuration = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-/** POST — GET+body is unreliable for server-fn payloads in some environments. */
+/** Same pattern as admissions list — POST + simple inputValidator. */
 export const getTrafficDashboard = createServerFn({ method: "POST" })
   .middleware([requireAuth])
-  .validator(dashboardInputSchema)
+  .inputValidator(
+    (input: { range?: TrafficRangeKey; recentLimit?: number; recentOffset?: number } | undefined) =>
+      normalizeDashboardQuery(input),
+  )
   .handler(async ({ data, context }): Promise<TrafficDashboardData> => {
     try {
-      await assertSectionView(context, "traffic");
+      // Any signed-in staff can read analytics (sidebar still gated by section perms).
+      await assertStaffRead(context);
       await ensureTrafficSchema();
-      const { range, recentLimit, recentOffset } = data;
+      const { range, recentLimit, recentOffset } = data ?? normalizeDashboardQuery(undefined);
       const { from, to, prevFrom, prevTo } = rangeBounds(range);
 
       const fromIso = from.toISOString();
@@ -481,7 +486,7 @@ export const getTrafficSummary = createServerFn({ method: "POST" })
   .middleware([requireAuth])
   .handler(async ({ context }): Promise<TrafficSummary> => {
     try {
-      await assertSectionView(context, "traffic");
+      await assertStaffRead(context);
       await ensureTrafficSchema();
       const { from, to } = rangeBounds("30d");
       const fromIso = from.toISOString();

@@ -124,6 +124,23 @@ function EmptyBlock({ message }: { message: string }) {
   return <p className="py-8 text-center text-sm text-muted-foreground">{message}</p>;
 }
 
+function trafficQueryErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.message.trim()) return error.message;
+  if (typeof error === "string" && error.trim()) return error;
+  if (error && typeof error === "object") {
+    const o = error as Record<string, unknown>;
+    if (typeof o.message === "string" && o.message.trim()) return o.message;
+    if (typeof o.error === "string" && o.error.trim()) return o.error;
+  }
+  try {
+    const s = JSON.stringify(error);
+    if (s && s !== "{}") return s;
+  } catch {
+    /* ignore */
+  }
+  return "Could not load traffic data.";
+}
+
 export function TrafficDashboard() {
   const [range, setRange] = useState<TrafficRangeKey>("30d");
   const [recentOffset, setRecentOffset] = useState(0);
@@ -221,7 +238,7 @@ export function TrafficDashboard() {
           <div className="flex items-start gap-2 min-w-0">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
             <span className="break-words">
-              {(q.error instanceof Error && q.error.message) || "Could not load traffic data."}
+              {(q.error && trafficQueryErrorMessage(q.error)) || "Could not load traffic data."}
             </span>
           </div>
           <Button size="sm" variant="ghost" className="shrink-0 self-start" onClick={() => q.refetch()}>

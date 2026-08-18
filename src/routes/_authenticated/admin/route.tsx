@@ -40,7 +40,11 @@ export const Route = createFileRoute("/_authenticated/admin")({
         throw redirect({ to: "/admin/dashboard" });
       }
     } else if (section) {
-      if (!canViewSection(info, section)) {
+      const allowed =
+        section === "traffic"
+          ? canViewSection(info, "traffic") || canViewSection(info, "dashboard")
+          : canViewSection(info, section);
+      if (!allowed) {
         const fallback =
           (
             [

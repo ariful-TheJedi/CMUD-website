@@ -87,6 +87,11 @@ export function AdminSidebar({ currentUser }: { currentUser: CurrentUserInfo | u
 
   const visibleContent = CONTENT_ITEMS.filter((item) => {
     if (!item.section) return isAdmin;
+    if (item.section === "traffic") {
+      return (
+        canViewSection(currentUser, "traffic") || canViewSection(currentUser, "dashboard")
+      );
+    }
     return canViewSection(currentUser, item.section);
   });
 
