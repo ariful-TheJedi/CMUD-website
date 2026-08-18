@@ -225,7 +225,7 @@ export const trackTrafficPageView = createServerFn({ method: "POST" })
     const browser = detectBrowser(ua);
     // Country from request IP on the server (never store/expose raw IP).
     const { resolveCountryFromRequest } = await import("@/lib/traffic-geo.server");
-    const { code, name } = resolveCountryFromRequest();
+    const { code, name } = await resolveCountryFromRequest();
 
     const { rows } = await pool.query<{ id: string }>(
       `INSERT INTO site_traffic_events (

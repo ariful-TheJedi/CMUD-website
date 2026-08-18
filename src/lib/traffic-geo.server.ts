@@ -2,15 +2,22 @@
  * Server-only: resolve visitor country from the real client IP.
  * Never returns or logs the raw IP to callers — only country code/name.
  *
+ * No geoip-lite dependency (unavailable on some npm mirrors).
+ * Resolution order:
+ *   1) Cloudflare CF-IPCountry (when CF-Connecting-IP is present)
+ *   2) HTTPS lookup via ipwho.is (cached in-memory)
+ *
  * Behind Nginx, set:
  *   proxy_set_header X-Real-IP $remote_addr;
  *   proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
- * Behind Cloudflare, CF-Connecting-IP / CF-IPCountry are preferred.
  */
 import { getRequest, getRequestIP } from "@tanstack/react-start/server";
-import geoip from "geoip-lite";
 
 export type GeoCountry = { code: string; name: string };
+
+const UNKNOWN: GeoCountry = { code: "", name: "Unknown" };
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const ipCountryCache = new Map<string, { at: number; value: GeoCountry }>();
 
 function countryNameFromCode(code: string): string {
   try {
@@ -28,7 +35,6 @@ function normalizeIp(raw: string | null | undefined): string {
   if (!ip) return "";
   if (ip.startsWith("[") && ip.endsWith("]")) ip = ip.slice(1, -1);
   if (ip.toLowerCase().startsWith("::ffff:")) ip = ip.slice(7);
-  // "1.2.3.4:12345" (rare proxy form)
   if (/^\d{1,3}(?:\.\d{1,3}){3}:\d+$/.test(ip)) ip = ip.split(":")[0]!;
   return ip;
 }
@@ -59,22 +65,17 @@ function header(name: string): string {
   }
 }
 
-/**
- * Pick the real visitor IP (not the reverse-proxy / CDN edge).
- */
+/** Pick the real visitor IP (not the reverse-proxy / CDN edge). */
 function resolveClientIp(): string {
-  // 1) Cloudflare connecting IP (authoritative when CF is in front)
   const cfConnecting = normalizeIp(header("cf-connecting-ip"));
   if (isPublicIp(cfConnecting)) return cfConnecting;
 
-  // 2) Common proxy headers
   const trueClient = normalizeIp(header("true-client-ip"));
   if (isPublicIp(trueClient)) return trueClient;
 
   const realIp = normalizeIp(header("x-real-ip"));
   if (isPublicIp(realIp)) return realIp;
 
-  // 3) X-Forwarded-For: client is usually the first *public* hop
   const xff = header("x-forwarded-for");
   if (xff) {
     const parts = xff.split(",").map((p) => normalizeIp(p)).filter(Boolean);
@@ -82,7 +83,6 @@ function resolveClientIp(): string {
     if (publicHop) return publicHop;
   }
 
-  // 4) Framework helper (may be proxy-local on misconfigured Nginx)
   try {
     const viaFw = normalizeIp(getRequestIP({ xForwardedFor: true }));
     if (isPublicIp(viaFw)) return viaFw;
@@ -95,32 +95,53 @@ function resolveClientIp(): string {
   return "";
 }
 
-function countryFromIp(ip: string): GeoCountry {
-  if (!isPublicIp(ip)) return { code: "", name: "Unknown" };
+async function countryFromIpApi(ip: string): Promise<GeoCountry> {
+  if (!isPublicIp(ip)) return UNKNOWN;
+
+  const cached = ipCountryCache.get(ip);
+  if (cached && Date.now() - cached.at < CACHE_TTL_MS) return cached.value;
+
   try {
-    const hit = geoip.lookup(ip);
-    const code = (hit?.country || "").toUpperCase();
-    if (!code || code.length !== 2) return { code: "", name: "Unknown" };
-    return { code, name: countryNameFromCode(code) };
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 2500);
+    const res = await fetch(`https://ipwho.is/${encodeURIComponent(ip)}`, {
+      signal: ctrl.signal,
+      headers: { accept: "application/json" },
+    });
+    clearTimeout(timer);
+    if (!res.ok) return UNKNOWN;
+    const json = (await res.json()) as {
+      success?: boolean;
+      country_code?: string;
+      country?: string;
+    };
+    if (json.success === false) return UNKNOWN;
+    const code = (json.country_code || "").toUpperCase();
+    if (!code || code.length !== 2) return UNKNOWN;
+    const value: GeoCountry = {
+      code,
+      name: (json.country || countryNameFromCode(code)).trim() || code,
+    };
+    ipCountryCache.set(ip, { at: Date.now(), value });
+    return value;
   } catch {
-    return { code: "", name: "Unknown" };
+    return UNKNOWN;
   }
 }
 
 /**
  * Resolve country for the current request.
- * Prefer CF country only when Cloudflare also sent the connecting IP
- * (avoids trusting a stray/spoofed CF-IPCountry that always says US).
+ * Prefer CF country only when Cloudflare also sent the connecting IP.
  */
-export function resolveCountryFromRequest(): GeoCountry {
+export async function resolveCountryFromRequest(): Promise<GeoCountry> {
   const cfConnecting = normalizeIp(header("cf-connecting-ip"));
   if (isPublicIp(cfConnecting)) {
     const cfCountry = (header("cf-ipcountry") || "").toUpperCase();
     if (cfCountry && /^[A-Z]{2}$/.test(cfCountry) && cfCountry !== "XX" && cfCountry !== "T1") {
       return { code: cfCountry, name: countryNameFromCode(cfCountry) };
     }
-    return countryFromIp(cfConnecting);
+    return countryFromIpApi(cfConnecting);
   }
 
-  return countryFromIp(resolveClientIp());
+  return countryFromIpApi(resolveClientIp());
 }
