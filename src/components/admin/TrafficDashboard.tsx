@@ -420,7 +420,7 @@ export function TrafficDashboard() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">Countries</CardTitle>
-                <CardDescription>Approx. from browser locale (no IP)</CardDescription>
+                <CardDescription>From client IP via server (IP not stored)</CardDescription>
               </CardHeader>
               <CardContent className="overflow-x-auto">
                 {data.countries.length === 0 ? (

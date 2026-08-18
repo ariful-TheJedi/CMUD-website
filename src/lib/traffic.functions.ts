@@ -11,7 +11,6 @@ import { asIso } from "@/lib/db-helpers";
 import {
   TRAFFIC_SOURCES,
   classifyTrafficSource,
-  countryFromLocale,
   detectBrowser,
   detectDevice,
   formatDuration,
@@ -224,7 +223,9 @@ export const trackTrafficPageView = createServerFn({ method: "POST" })
     });
     const device = detectDevice(ua);
     const browser = detectBrowser(ua);
-    const { code, name } = countryFromLocale(data.locale);
+    // Country from request IP on the server (never store/expose raw IP).
+    const { resolveCountryFromRequest } = await import("@/lib/traffic-geo.server");
+    const { code, name } = resolveCountryFromRequest();
 
     const { rows } = await pool.query<{ id: string }>(
       `INSERT INTO site_traffic_events (

@@ -169,21 +169,3 @@ export function detectBrowser(ua: string): string {
     return "Other";
   }
 }
-
-export function countryFromLocale(locale: string | undefined | null): {
-  code: string;
-  name: string;
-} {
-  const raw = (locale ?? "").trim();
-  const code = (raw.split(/[-_]/)[1] || "").toUpperCase();
-  if (!code || code.length !== 2) return { code: "", name: "Unknown" };
-  try {
-    const name =
-      typeof Intl !== "undefined" && "DisplayNames" in Intl
-        ? new Intl.DisplayNames([raw.split(/[-_]/)[0] || "en"], { type: "region" }).of(code)
-        : code;
-    return { code, name: name || code };
-  } catch {
-    return { code, name: code };
-  }
-}

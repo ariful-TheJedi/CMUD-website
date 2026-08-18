@@ -93,7 +93,6 @@ export function TrafficTracker() {
             referrer: typeof document !== "undefined" ? document.referrer : "",
             utmSource,
             utmMedium,
-            locale: typeof navigator !== "undefined" ? navigator.language : "",
             userAgent: ua,
             currentHost: window.location.hostname,
           },
