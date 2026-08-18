@@ -45,6 +45,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
           (
             [
               "dashboard",
+              "traffic",
               "home_page",
               "courses",
               "faculty",
@@ -61,6 +62,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
           ).find((s) => canViewSection(info, s)) ?? null;
         const pathMap: Record<string, string> = {
           dashboard: "/admin/dashboard",
+          traffic: "/admin/traffic",
           home_page: "/admin/home-page",
           courses: "/admin/courses",
           faculty: "/admin/faculty",

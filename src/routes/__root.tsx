@@ -16,6 +16,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Header } from "../components/layout/Header";
 import { Footer } from "../components/layout/Footer";
 import { Toaster } from "../components/ui/sonner";
+import { TrafficTracker } from "@/components/TrafficTracker";
 import { assetUrl, getAssetsPrefixBootstrap } from "@/lib/assets";
 import { sharedMedia } from "@/data/shared";
 
@@ -157,6 +158,7 @@ function RootComponent() {
         {!isChromeless && <Footer />}
       </div>
       <Toaster />
+      {!isChromeless ? <TrafficTracker /> : null}
     </QueryClientProvider>
   );
 }

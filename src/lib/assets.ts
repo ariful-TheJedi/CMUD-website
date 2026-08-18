@@ -23,16 +23,17 @@ function normalizePrefix(raw: string | undefined | null): string {
 }
 
 function readPrefixFromEnv(): string {
-  if (typeof window !== "undefined") {
-    const fromWindow = normalizePrefix(window.__CMUD_ASSETS_PREFIX__);
-    if (fromWindow) return fromWindow;
-  }
-
+  // Prefer Vite-baked value (works in admin CSR routes with ssr:false).
   const vite =
     typeof import.meta !== "undefined"
       ? (import.meta.env?.VITE_ASSETS_PREFIX as string | undefined)
       : undefined;
   if (normalizePrefix(vite)) return normalizePrefix(vite);
+
+  if (typeof window !== "undefined") {
+    const fromWindow = normalizePrefix(window.__CMUD_ASSETS_PREFIX__);
+    if (fromWindow) return fromWindow;
+  }
 
   if (typeof process !== "undefined") {
     return normalizePrefix(process.env.ASSETS_PREFIX || process.env.VITE_ASSETS_PREFIX);

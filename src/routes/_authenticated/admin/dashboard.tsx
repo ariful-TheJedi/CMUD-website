@@ -27,6 +27,7 @@ import {
   getRecentAdmissionApplications,
   type DashboardMetrics,
 } from "@/lib/dashboard.functions";
+import { TrafficSummaryCard } from "@/components/admin/TrafficSummaryCard";
 
 export const Route = createFileRoute("/_authenticated/admin/dashboard")({
   head: () => ({
@@ -106,6 +107,7 @@ function humanizeAction(action: string) {
 function DashboardPage() {
   const { data: currentUser } = useCurrentUser();
   const canSeeAdmissions = !!currentUser && canViewSection(currentUser, "admissions");
+  const canSeeTraffic = !!currentUser && canViewSection(currentUser, "traffic");
 
   const metricsFn = useServerFn(getDashboardMetrics);
   const updatesFn = useServerFn(getRecentContentUpdates);
@@ -214,6 +216,11 @@ function DashboardPage() {
         <h2 className="mb-3 text-base font-medium uppercase tracking-wide text-muted-foreground">
           Overview
         </h2>
+        {canSeeTraffic ? (
+          <div className="mb-4">
+            <TrafficSummaryCard />
+          </div>
+        ) : null}
         {metricsQ.isError ? (
           <div className="mb-3 flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
             <AlertCircle className="h-4 w-4" />

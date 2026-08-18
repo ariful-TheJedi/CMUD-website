@@ -42,6 +42,7 @@ import { Route as AuthenticatedAdminNoticesRouteImport } from './routes/_authent
 import { Route as AuthenticatedAdminRoutinesRouteImport } from './routes/_authenticated/admin/routines'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin/settings'
 import { Route as AuthenticatedAdminTestimonialsRouteImport } from './routes/_authenticated/admin/testimonials'
+import { Route as AuthenticatedAdminTrafficRouteImport } from './routes/_authenticated/admin/traffic'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin/users'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as CoursesCategorySlugRouteImport } from './routes/courses.category.$slug'
@@ -227,6 +228,12 @@ const AuthenticatedAdminTestimonialsRoute =
     path: '/testimonials',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const AuthenticatedAdminTrafficRoute =
+  AuthenticatedAdminTrafficRouteImport.update({
+    id: '/traffic',
+    path: '/traffic',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
   id: '/users',
   path: '/users',
@@ -299,6 +306,7 @@ export interface FileRoutesByFullPath {
   '/admin/routines': typeof AuthenticatedAdminRoutinesRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/testimonials': typeof AuthenticatedAdminTestimonialsRoute
+  '/admin/traffic': typeof AuthenticatedAdminTrafficRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/courses/category/$slug': typeof CoursesCategorySlugRoute
@@ -339,6 +347,7 @@ export interface FileRoutesByTo {
   '/admin/routines': typeof AuthenticatedAdminRoutinesRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/testimonials': typeof AuthenticatedAdminTestimonialsRoute
+  '/admin/traffic': typeof AuthenticatedAdminTrafficRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/courses/category/$slug': typeof CoursesCategorySlugRoute
@@ -382,6 +391,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/routines': typeof AuthenticatedAdminRoutinesRoute
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/admin/testimonials': typeof AuthenticatedAdminTestimonialsRoute
+  '/_authenticated/admin/traffic': typeof AuthenticatedAdminTrafficRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/courses/category/$slug': typeof CoursesCategorySlugRoute
@@ -425,6 +435,7 @@ export interface FileRouteTypes {
     | '/admin/routines'
     | '/admin/settings'
     | '/admin/testimonials'
+    | '/admin/traffic'
     | '/admin/users'
     | '/api/auth/$'
     | '/courses/category/$slug'
@@ -465,6 +476,7 @@ export interface FileRouteTypes {
     | '/admin/routines'
     | '/admin/settings'
     | '/admin/testimonials'
+    | '/admin/traffic'
     | '/admin/users'
     | '/api/auth/$'
     | '/courses/category/$slug'
@@ -507,6 +519,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/routines'
     | '/_authenticated/admin/settings'
     | '/_authenticated/admin/testimonials'
+    | '/_authenticated/admin/traffic'
     | '/_authenticated/admin/users'
     | '/api/auth/$'
     | '/courses/category/$slug'
@@ -772,6 +785,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminTestimonialsRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/admin/traffic': {
+      id: '/_authenticated/admin/traffic'
+      path: '/traffic'
+      fullPath: '/admin/traffic'
+      preLoaderRoute: typeof AuthenticatedAdminTrafficRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/_authenticated/admin/users': {
       id: '/_authenticated/admin/users'
       path: '/users'
@@ -871,6 +891,7 @@ interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminRoutinesRoute: typeof AuthenticatedAdminRoutinesRoute
   AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
   AuthenticatedAdminTestimonialsRoute: typeof AuthenticatedAdminTestimonialsRoute
+  AuthenticatedAdminTrafficRoute: typeof AuthenticatedAdminTrafficRoute
   AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
@@ -893,6 +914,7 @@ const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren
     AuthenticatedAdminRoutinesRoute: AuthenticatedAdminRoutinesRoute,
     AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
     AuthenticatedAdminTestimonialsRoute: AuthenticatedAdminTestimonialsRoute,
+    AuthenticatedAdminTrafficRoute: AuthenticatedAdminTrafficRoute,
     AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
     AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
   }

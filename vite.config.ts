@@ -41,8 +41,11 @@ if (assetsPrefix && !process.env.VITE_ASSETS_PREFIX) {
 
 export default defineConfig({
   plugins: [serveFreshUploadsPlugin()],
-  // Bake prefix into the client so img src becomes /cmud-assets/media/... after build.
+  // Bake prefix into the client so admin + public img src use /cmud-assets/media/...
   envPrefix: ["VITE_"],
+  define: {
+    "import.meta.env.VITE_ASSETS_PREFIX": JSON.stringify(assetsPrefix),
+  },
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     server: { entry: "server" },

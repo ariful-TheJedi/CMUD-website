@@ -300,6 +300,44 @@ CREATE TABLE IF NOT EXISTS user_content_permissions (
   PRIMARY KEY (user_id, section)
 );
 
+-- ---------- site traffic (lightweight analytics, ~2 months retention) ----------
+-- event_type allows future events (course_click, form_submit, download, …)
+CREATE TABLE IF NOT EXISTS site_traffic_events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  event_type TEXT NOT NULL DEFAULT 'page_view',
+  session_id TEXT NOT NULL,
+  visitor_id TEXT NOT NULL,
+  path TEXT NOT NULL,
+  page_title TEXT NOT NULL DEFAULT '',
+  referrer TEXT NOT NULL DEFAULT '',
+  source TEXT NOT NULL DEFAULT 'direct',
+  device TEXT NOT NULL DEFAULT 'desktop',
+  browser TEXT NOT NULL DEFAULT 'Other',
+  country TEXT NOT NULL DEFAULT 'Unknown',
+  country_code TEXT NOT NULL DEFAULT '',
+  duration_ms INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS site_traffic_events_created_at_idx
+  ON site_traffic_events (created_at DESC);
+CREATE INDEX IF NOT EXISTS site_traffic_events_session_id_idx
+  ON site_traffic_events (session_id);
+CREATE INDEX IF NOT EXISTS site_traffic_events_visitor_id_idx
+  ON site_traffic_events (visitor_id);
+CREATE INDEX IF NOT EXISTS site_traffic_events_path_idx
+  ON site_traffic_events (path);
+CREATE INDEX IF NOT EXISTS site_traffic_events_country_idx
+  ON site_traffic_events (country);
+CREATE INDEX IF NOT EXISTS site_traffic_events_source_idx
+  ON site_traffic_events (source);
+CREATE INDEX IF NOT EXISTS site_traffic_events_created_source_idx
+  ON site_traffic_events (created_at DESC, source);
+CREATE INDEX IF NOT EXISTS site_traffic_events_created_path_idx
+  ON site_traffic_events (created_at DESC, path);
+CREATE INDEX IF NOT EXISTS site_traffic_events_type_created_idx
+  ON site_traffic_events (event_type, created_at DESC);
+
 -- Custom display name for staff roles (auth role stays administrator|staff)
 -- Applied on Better Auth "user" table at runtime via ensureRoleLabelColumn()
 -- ALTER TABLE "user" ADD COLUMN IF NOT EXISTS role_label TEXT NOT NULL DEFAULT '';

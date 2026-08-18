@@ -16,7 +16,8 @@ export type ContentSection =
   | "testimonials"
   | "faqs"
   | "admissions"
-  | "certificates";
+  | "certificates"
+  | "traffic";
 
 /** Sections an admin may grant to staff (not users/settings). */
 export const ASSIGNABLE_SECTIONS: readonly ContentSection[] = [
@@ -33,6 +34,7 @@ export const ASSIGNABLE_SECTIONS: readonly ContentSection[] = [
   "faqs",
   "admissions",
   "certificates",
+  "traffic",
 ] as const;
 
 export const SECTION_LABELS: Record<ContentSection, string> = {
@@ -49,6 +51,7 @@ export const SECTION_LABELS: Record<ContentSection, string> = {
   faqs: "FAQs",
   admissions: "Admissions",
   certificates: "Certificates",
+  traffic: "Traffic",
 };
 
 /** Map admin route path prefix → section. */
@@ -66,6 +69,7 @@ export const ROUTE_SECTION: Record<string, ContentSection | "users" | "settings"
   "/admin/faqs": "faqs",
   "/admin/admissions": "admissions",
   "/admin/certificate-check": "certificates",
+  "/admin/traffic": "traffic",
   "/admin/users": "users",
   "/admin/settings": "settings",
 };

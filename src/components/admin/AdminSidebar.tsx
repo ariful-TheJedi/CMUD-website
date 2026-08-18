@@ -16,6 +16,7 @@ import {
   UserCog,
   Settings,
   LogOut,
+  Activity,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -47,6 +48,7 @@ type NavItem = {
 
 const CONTENT_ITEMS: NavItem[] = [
   { title: "Dashboard", url: "/admin/dashboard", icon: LayoutDashboard, section: "dashboard" },
+  { title: "Traffic", url: "/admin/traffic", icon: Activity, section: "traffic" },
   { title: "Home Page", url: "/admin/home-page", icon: Home, section: "home_page" },
   { title: "Courses", url: "/admin/courses", icon: GraduationCap, section: "courses" },
   { title: "Faculty", url: "/admin/faculty", icon: Users, section: "faculty" },

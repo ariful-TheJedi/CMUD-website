@@ -20,6 +20,7 @@
     "seed:cms": "tsx --env-file=.env scripts/seed-from-json.ts",
     "auth:migrate": "node --env-file=.env ./node_modules/@better-auth/cli/dist/index.mjs migrate --config ./src/lib/auth.ts --yes",
     "auth:seed-admin": "tsx --env-file=.env scripts/seed-admin.ts",
+    "traffic:cleanup": "tsx --env-file=.env scripts/cleanup-traffic.ts",
     "check:env": "tsx scripts/check-env.ts",
     "ensure:start": "node ./scripts/ensure-start-scripts.mjs",
     "postbuild": "node ./scripts/print-start-help.mjs"

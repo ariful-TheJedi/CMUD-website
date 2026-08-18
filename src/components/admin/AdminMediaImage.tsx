@@ -13,7 +13,8 @@ type Props = {
 /**
  * Admin media preview that:
  * 1. Prefers an in-memory blob URL when provided (instant after file pick)
- * 2. Retries the remote `/media` URL a few times if the first paint 404s
+ * 2. Applies VITE_ASSETS_PREFIX via assetUrl() so `/media/...` → `/cmud-assets/media/...`
+ * 3. Retries the remote URL a few times if the first paint 404s
  */
 export function AdminMediaImage({ src, alt, className, localPreviewSrc }: Props) {
   const remote = assetUrl(src?.trim() || "");

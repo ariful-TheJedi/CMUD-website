@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { AdminMediaImage } from "@/components/admin/AdminMediaImage";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { toStoragePath } from "@/lib/assets";
 import {
   Dialog,
   DialogContent,
@@ -285,7 +286,7 @@ function EducationAidesAdminPage() {
                     onUploaded={(url) =>
                       addSlide.mutate({
                         sectionId: s.id,
-                        imageUrl: url,
+                        imageUrl: toStoragePath(url),
                         sortOrder: (s.slides[s.slides.length - 1]?.sortOrder ?? -1) + 1,
                       })
                     }

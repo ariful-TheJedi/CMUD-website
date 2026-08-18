@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { AdminMediaImage } from "@/components/admin/AdminMediaImage";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { toStoragePath } from "@/lib/assets";
 import {
   Dialog,
   DialogContent,
@@ -306,7 +307,7 @@ function GalleryAdminPage() {
                     onUploaded={(url) =>
                       addImage.mutate({
                         albumId: a.id,
-                        url,
+                        url: toStoragePath(url),
                         sortOrder: (a.images[a.images.length - 1]?.sortOrder ?? -1) + 1,
                       })
                     }
