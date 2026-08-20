@@ -39,18 +39,20 @@ function GalleryPage() {
   return (
     <>
       <section className="bg-surface text-foreground">
-        <div className="container mx-auto px-4 py-16 md:py-20">
-          <p className="font-sans text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+        <div className="container mx-auto px-4 py-10">
+          <p className="font-sans text-xs font-semibold uppercase tracking-[0.22em] text-secondary">
             {hero.eyebrow}
           </p>
-          <h1 className="mt-3 font-serif text-4xl font-bold leading-tight md:text-5xl">
+          <h1 className="mt-3 font-serif text-3xl font-bold leading-tight tracking-tight md:text-4xl">
             {hero.title}
           </h1>
-          <p className="mt-4 max-w-2xl text-foreground/80">{hero.description}</p>
+          <p className="mt-3 max-w-2xl text-base text-muted-foreground md:text-lg">
+            {hero.description}
+          </p>
         </div>
       </section>
 
-      <section className="container mx-auto space-y-12 px-4 py-16">
+      <section className="container mx-auto space-y-8 px-4 py-10">
         {albums.map((album) => (
           <AlbumBlock key={album.id} album={album} />
         ))}
@@ -64,7 +66,7 @@ function AlbumBlock({ album }: { album: PublicAlbum }) {
     <article>
       <header className="mb-5">
         <div className="flex flex-wrap items-center gap-2">
-          <h2 className="font-serif text-2xl font-bold">{album.title}</h2>
+          <h2 className="font-serif text-xl font-bold md:text-2xl">{album.title}</h2>
           {album.category ? (
             <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
               {album.category}

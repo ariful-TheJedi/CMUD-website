@@ -145,19 +145,19 @@ function HomePage() {
           />
         </div>
         <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-surface/60 to-transparent" />
-        <div className="container relative mx-auto grid gap-10 px-4 py-20 lg:grid-cols-12 lg:gap-12 lg:py-28">
+        <div className="container relative mx-auto grid gap-8 px-4 py-10 lg:grid-cols-12 lg:gap-10">
           <div className="lg:col-span-7">
             <Badge className="border-0 bg-primary text-primary-foreground hover:bg-primary/90">
               <Activity className="mr-1 h-3 w-3" /> {hero.badge}
             </Badge>
-            <h1 className="mt-5 font-serif text-4xl font-bold leading-[1.05] tracking-tight md:text-5xl lg:text-6xl">
+            <h1 className="mt-3 font-serif text-3xl font-bold leading-[1.05] tracking-tight md:text-4xl lg:text-5xl">
               {hero.heading}
             </h1>
-            <p className="mt-5 max-w-xl text-base text-muted-foreground md:text-lg">
+            <p className="mt-3 max-w-xl text-base text-muted-foreground md:text-lg">
               {hero.description}
             </p>
 
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="mt-5 flex flex-wrap gap-3">
               <Button asChild size="lg">
                 <a href={hero.primaryCtaHref}>
                   {hero.primaryCtaLabel} <ArrowRight className="h-4 w-4" />
@@ -168,10 +168,10 @@ function HomePage() {
               </Button>
             </div>
 
-            <dl className="mt-12 grid max-w-lg grid-cols-3 gap-6 border-t border-border/60 pt-8">
+            <dl className="mt-6 grid max-w-lg grid-cols-3 gap-6 border-t border-border/60 pt-5">
               {hero.stats.map((s) => (
                 <div key={s.label}>
-                  <dt className="font-serif text-3xl font-bold">{s.value}</dt>
+                  <dt className="font-serif text-2xl font-bold">{s.value}</dt>
                   <dd className="text-xs uppercase tracking-wider text-muted-foreground">
                     {s.label}
                   </dd>
@@ -195,13 +195,13 @@ function HomePage() {
       </section>
 
       {/* Why Choose */}
-      <section className="container mx-auto px-4 py-20">
+      <section className="container mx-auto px-4 py-10">
         <SectionHeading
           eyebrow={whyCmud.eyebrow}
           title={whyCmud.title}
           description={whyCmud.description}
         />
-        <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {whyCmud.features.map((f) => {
             const Icon = featureIcons[f.icon];
             return (
@@ -225,7 +225,7 @@ function HomePage() {
 
       {/* Featured courses */}
       <section className="bg-surface">
-        <div className="container mx-auto px-4 py-20">
+        <div className="container mx-auto px-4 py-10">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <SectionHeading
               eyebrow={featuredCourses.eyebrow}
@@ -238,7 +238,7 @@ function HomePage() {
               </Link>
             </Button>
           </div>
-          <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {featured.map((c) => (
               <CourseCard key={c.slug} course={c} />
             ))}
@@ -248,13 +248,13 @@ function HomePage() {
 
       {/* Categories */}
       <section className="bg-surface">
-        <div className="container mx-auto px-4 py-20">
+        <div className="container mx-auto px-4 py-10">
           <SectionHeading
             eyebrow={categories.eyebrow}
             title={categories.title}
             align="center"
           />
-          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {courseCategories.map((cat) => {
               const iconKey = categories.icons[cat.name as keyof typeof categories.icons];
               const Icon = (iconKey && categoryIcons[iconKey]) || GraduationCap;
@@ -294,7 +294,7 @@ function HomePage() {
       </section>
 
       {/* Faculty preview */}
-      <section className="container mx-auto px-4 py-20">
+      <section className="container mx-auto px-4 py-10">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <SectionHeading eyebrow={facultyPreview.eyebrow} title={facultyPreview.title} />
           <Button asChild variant="outline">
@@ -303,7 +303,7 @@ function HomePage() {
             </Link>
           </Button>
         </div>
-        <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {faculty.slice(0, facultyPreview.limit).map((f) => (
             <Card key={f.id} className="border-border/70">
               <CardContent className="flex gap-4 p-6">
@@ -327,7 +327,7 @@ function HomePage() {
 
       {/* Notices */}
       <section className="bg-surface">
-        <div className="container mx-auto px-4 py-20">
+        <div className="container mx-auto px-4 py-10">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <SectionHeading eyebrow={notices.eyebrow} title={notices.title} />
             <Button asChild variant="outline">
@@ -336,7 +336,7 @@ function HomePage() {
               </Link>
             </Button>
           </div>
-          <div className="mt-10 grid gap-4">
+          <div className="mt-6 grid gap-4">
             {latestNotices.map((n) => {
               const d = new Date(n.noticeDate);
               return (
@@ -394,13 +394,13 @@ function HomePage() {
       </section>
 
       {/* Testimonials */}
-      <section className="container mx-auto px-4 py-20">
+      <section className="container mx-auto px-4 py-10">
         <SectionHeading
           eyebrow={testimonialsSection.eyebrow}
           title={testimonialsSection.title}
           align="center"
         />
-        <div className="mt-12 grid gap-6 md:grid-cols-2">
+        <div className="mt-8 grid gap-6 md:grid-cols-2">
           {testimonials.slice(0, testimonialsSection.limit).map((t) => (
             <Card key={t.id} className="border-border/70">
               <CardContent className="p-6">
@@ -425,7 +425,7 @@ function HomePage() {
       </section>
 
       {/* Hands-on band — CMS (above Visit CMUD) */}
-      <section className="container mx-auto px-4 py-20">
+      <section className="container mx-auto px-4 py-10">
         <div className="grid items-center gap-10 lg:grid-cols-2">
           <div className="relative">
             <img
@@ -470,11 +470,11 @@ function HomePage() {
       </section>
 
       {/* Contact CTA */}
-      <section className="container mx-auto px-4 pb-20">
+      <section className="container mx-auto px-4 py-10">
         <div className="overflow-hidden rounded-3xl border border-border bg-card p-10 text-foreground md:p-14">
           <div className="grid gap-8 lg:grid-cols-2 lg:items-center">
             <div>
-              <h2 className="font-serif text-3xl font-bold md:text-4xl">{contactCta.title}</h2>
+              <h2 className="font-serif text-xl font-bold md:text-2xl">{contactCta.title}</h2>
               <p className="mt-3 text-muted-foreground">{contactCta.description}</p>
               <div className="mt-6 flex flex-wrap gap-3">
                 <Button asChild size="lg">

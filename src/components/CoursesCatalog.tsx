@@ -38,20 +38,20 @@ export function CoursesCatalog({
   return (
     <>
       <section className="bg-surface text-foreground">
-        <div className="container mx-auto px-4 py-16 md:py-20">
-          <p className="font-sans text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+        <div className="container mx-auto px-4 py-10">
+          <p className="font-sans text-xs font-semibold uppercase tracking-[0.22em] text-secondary">
             {hero.eyebrow}
           </p>
-          <h1 className="mt-3 max-w-3xl font-serif text-4xl font-bold leading-tight md:text-5xl">
+          <h1 className="mt-3 max-w-3xl font-serif text-3xl font-bold leading-tight tracking-tight md:text-4xl">
             {heroTitle ?? hero.title}
           </h1>
-          <p className="mt-4 max-w-2xl text-foreground/80">
+          <p className="mt-3 max-w-2xl text-base text-muted-foreground md:text-lg">
             {heroDescription ?? hero.description}
           </p>
         </div>
       </section>
 
-      <section className="container mx-auto px-4 py-12">
+      <section className="container mx-auto px-4 py-10">
         <div className="flex flex-wrap gap-2">
           {filters.map((f) => {
             const isActive = active === f;
@@ -87,7 +87,7 @@ export function CoursesCatalog({
           })}
         </div>
         {visible.length === 0 ? (
-          <p className="mt-10 text-muted-foreground">
+          <p className="mt-8 text-muted-foreground">
             No published courses in this category yet.{" "}
             <Link to="/courses" className="font-semibold text-primary underline-offset-4 hover:underline">
               Browse all courses
@@ -95,7 +95,7 @@ export function CoursesCatalog({
             .
           </p>
         ) : (
-          <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {visible.map((c) => (
               <CourseCard key={c.slug} course={c} />
             ))}

@@ -39,18 +39,20 @@ function FacultyPage() {
   return (
     <>
       <section className="bg-background text-foreground">
-        <div className="container mx-auto px-4 py-16 md:py-20">
+        <div className="container mx-auto px-4 py-10">
           <p className="font-sans text-xs font-semibold uppercase tracking-[0.22em] text-secondary">
             {hero.eyebrow}
           </p>
-          <h1 className="mt-3 font-serif text-4xl font-bold leading-tight md:text-5xl">
+          <h1 className="mt-3 font-serif text-3xl font-bold leading-tight tracking-tight md:text-4xl">
             {hero.title}
           </h1>
-          <p className="mt-4 max-w-2xl text-foreground/80">{hero.description}</p>
+          <p className="mt-3 max-w-2xl text-base text-muted-foreground md:text-lg">
+            {hero.description}
+          </p>
         </div>
       </section>
 
-      <section className="container mx-auto px-4 py-16">
+      <section className="container mx-auto px-4 py-10">
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {faculty.map((f) => (
             <Card key={f.id} className="border-border/70">

@@ -11,17 +11,21 @@ export const contactPage = {
     description:
       "Talk to our admissions team about programs, fees, or visit us at our Panthapath or Uttara campus.",
   },
-  mapEmbedUrl:
-    "https://www.openstreetmap.org/export/embed.html?bbox=90.386%2C23.750%2C90.394%2C23.756&layer=mapnik",
   campuses: [
     {
       title: "Panthapath Branch",
       address:
         "Holding No. 66, Razanighanda Complex, Bir Uttam K. M. Shafiullah Road, Green Road (Panthapath), Dhaka – 1205",
+      mapsUrl: "https://maps.app.goo.gl/utxb96ziku1dfM8w9",
+      lat: 23.7500591,
+      lng: 90.3869046,
     },
     {
       title: "Uttara Branch",
       address: "House 06, Sonargaon Jonopath Road, Sector 11 Uttara, Dhaka",
+      mapsUrl: "https://maps.app.goo.gl/4VT1VeEBG5a62Fhz7",
+      lat: 23.874568,
+      lng: 90.3928031,
     },
   ],
   channels: [
@@ -51,8 +55,8 @@ export const contactPage = {
   ],
   map: {
     eyebrow: "Find us",
-    title: "Campus location",
-    description: "Visit our Panthapath campus — admissions can also guide you to Uttara.",
+    title: "Campus locations",
+    description: "Panthapath and Uttara marked on one map.",
   },
   /** Compact contact details reused by the site footer */
   footer: {

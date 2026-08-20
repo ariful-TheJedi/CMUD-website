@@ -128,22 +128,24 @@ function EducationAidesPage() {
   return (
     <>
       <section className="bg-[var(--gradient-hero)] text-primary-foreground">
-        <div className="container mx-auto px-4 py-16 md:py-20">
+        <div className="container mx-auto px-4 py-10">
           <p className="font-sans text-xs font-semibold uppercase tracking-[0.22em] text-secondary">
             {hero.eyebrow}
           </p>
-          <h1 className="mt-3 font-serif text-4xl font-bold leading-tight text-foreground md:text-5xl">
+          <h1 className="mt-3 font-serif text-3xl font-bold leading-tight tracking-tight text-foreground md:text-4xl">
             {hero.title}
           </h1>
-          <p className="mt-4 max-w-2xl text-foreground/80">{hero.description}</p>
+          <p className="mt-3 max-w-2xl text-base text-muted-foreground md:text-lg">
+            {hero.description}
+          </p>
         </div>
       </section>
 
-      <section className="container mx-auto px-4 py-16">
+      <section className="container mx-auto px-4 py-10">
         {sections.length === 0 ? (
           <p className="text-center text-sm text-muted-foreground">{emptyState}</p>
         ) : (
-          <div className="flex flex-col gap-12">
+          <div className="flex flex-col gap-8">
             {sections.map((s: PublicAidSection, i: number) => (
               <article
                 key={s.id}
@@ -153,10 +155,10 @@ function EducationAidesPage() {
               >
                 <AutoSlider slides={s.slides} offset={i * 400} />
                 <div>
-                  <h2 className="font-serif text-2xl font-bold text-foreground md:text-3xl">
+                  <h2 className="font-serif text-xl font-bold text-foreground md:text-2xl">
                     {s.title}
                   </h2>
-                  <p className="mt-4 whitespace-pre-line text-base text-foreground/80 md:text-lg">
+                  <p className="mt-3 whitespace-pre-line text-base text-foreground/80 md:text-lg">
                     {s.description}
                   </p>
                 </div>

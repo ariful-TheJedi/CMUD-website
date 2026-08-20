@@ -17,15 +17,15 @@ export function SectionHeading({
   return (
     <div className={cn("max-w-2xl", align === "center" && "mx-auto text-center", className)}>
       {eyebrow && (
-        <p className="mb-3 font-sans text-xs font-semibold uppercase tracking-[0.22em] text-secondary">
+        <p className="mb-2 font-sans text-xs font-semibold uppercase tracking-[0.22em] text-secondary">
           {eyebrow}
         </p>
       )}
-      <h2 className="font-serif text-3xl font-bold leading-tight text-foreground md:text-4xl">
+      <h2 className="font-serif text-xl font-bold leading-tight text-foreground md:text-2xl">
         {title}
       </h2>
       {description && (
-        <p className="mt-4 text-base text-muted-foreground md:text-lg">{description}</p>
+        <p className="mt-3 text-sm text-muted-foreground md:text-base">{description}</p>
       )}
     </div>
   );
