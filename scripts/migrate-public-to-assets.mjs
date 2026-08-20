@@ -2,7 +2,7 @@
  * One-time migrate: move project `public/media` + `public/attachment`
  * into the external assets root (ASSETS_ROOT / cmud-assets).
  *
- * Keeps `public/favicon.png` in the app folder.
+ * Site icon lives in `src/assets/favicon.png` (bundled), not under public/.
  *
  * Usage (on VPS, from app root):
  *   ASSETS_ROOT=/www/wwwroot/cmud-assets node scripts/migrate-public-to-assets.mjs
@@ -90,9 +90,6 @@ for (const folder of folders) {
   console.info(`[migrate] removed ${src}`);
 }
 
-// Leave favicon (and anything else) in public/
-const favicon = path.join(publicDir, "favicon.png");
-console.info(
-  `[migrate] done. ${total} file(s). favicon ${existsSync(favicon) ? "kept at public/favicon.png" : "MISSING — upload separately"}`,
-);
+console.info(`[migrate] done. ${total} file(s).`);
 console.info(`[migrate] Set ASSETS_ROOT=${assetsRoot} and rebuild if VITE_ASSETS_PREFIX changed.`);
+console.info(`[migrate] Favicon is bundled from src/assets/favicon.png (not public/).`);

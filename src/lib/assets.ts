@@ -7,7 +7,7 @@
  * 3. `process.env.VITE_ASSETS_PREFIX` / `ASSETS_PREFIX` (Node / PM2)
  *
  * CMS/DB keeps unprefixed paths (`/media/...`). Prefix is applied for the browser.
- * Site icons (`/favicon.png`) are never prefixed.
+ * Site icon is imported from `src/assets/favicon.png` (bundled), not from public/.
  */
 
 declare global {
