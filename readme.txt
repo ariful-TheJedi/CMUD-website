@@ -1,4 +1,4 @@
-/gallery
+/admission
  for typography + vertical spacing on this page only. Same scale — don’t invent new sizes.
 
 All sections (hero + every content section):

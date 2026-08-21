@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { Upload } from "lucide-react";
+import { Upload, Plus, Trash2 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,8 @@ import {
   type AdminCourseRow,
   type CourseInput,
   type CourseStatus,
+  type SyllabusMode,
+  type SyllabusSemester,
 } from "@/lib/courses.functions";
 import { DEFAULT_COURSE_WHATS_INCLUDED, eligibilityBullets, eligibilityToCmsString, normalizeCourseMode } from "@/data/courses";
 import { AdminMediaImage, useObjectUrl } from "@/components/admin/AdminMediaImage";
@@ -67,7 +69,10 @@ export function emptyCourseForm(): CourseInput {
     description: "",
     fee: 0,
     discountFee: 0,
+    admissionFee: 0,
     syllabus: [],
+    syllabusMode: "flat",
+    syllabusSemesters: [],
     outcomes: [],
     whatsIncluded: [...DEFAULT_COURSE_WHATS_INCLUDED],
     featured: false,
@@ -92,7 +97,10 @@ export function courseInputFromRow(row: AdminCourseRow): CourseInput {
     description: row.description ?? "",
     fee: Number(row.fee) || 0,
     discountFee: Number(row.discountFee) || 0,
+    admissionFee: Number(row.admissionFee) || 0,
     syllabus: Array.isArray(row.syllabus) ? row.syllabus : [],
+    syllabusMode: row.syllabusMode === "semester" ? "semester" : "flat",
+    syllabusSemesters: Array.isArray(row.syllabusSemesters) ? row.syllabusSemesters : [],
     outcomes: Array.isArray(row.outcomes) ? row.outcomes : [],
     whatsIncluded:
       Array.isArray(row.whatsIncluded) && row.whatsIncluded.length > 0
@@ -132,6 +140,21 @@ export function CourseForm({
   const [syllabusText, setSyllabusText] = useState<string>(() =>
     (seed.syllabus ?? []).join("\n"),
   );
+  const [syllabusMode, setSyllabusMode] = useState<SyllabusMode>(
+    () => seed.syllabusMode ?? "flat",
+  );
+  const [semesters, setSemesters] = useState<
+    { label: string; modulesText: string }[]
+  >(() => {
+    const list = seed.syllabusSemesters ?? [];
+    if (list.length === 0) {
+      return [{ label: "Semester 1", modulesText: "" }];
+    }
+    return list.map((s, i) => ({
+      label: s.label || `Semester ${i + 1}`,
+      modulesText: (s.modules ?? []).join("\n"),
+    }));
+  });
   const [outcomesText, setOutcomesText] = useState<string>(() =>
     (seed.outcomes ?? []).join("\n"),
   );
@@ -171,18 +194,28 @@ export function CourseForm({
         .split("\n")
         .map((s) => s.trim())
         .filter(Boolean);
+    const syllabusSemesters: SyllabusSemester[] =
+      syllabusMode === "semester"
+        ? semesters.map((s, i) => ({
+            label: s.label.trim() || `Semester ${i + 1}`,
+            modules: toLines(s.modulesText),
+          }))
+        : [];
     onSubmit({
       ...form,
       mode: normalizeMode(form.mode),
       category: normalizeCategory(form.category),
       status: normalizeStatus(form.status),
       slug: form.slug.trim().toLowerCase(),
-      syllabus: toLines(syllabusText),
+      syllabusMode,
+      syllabusSemesters,
+      syllabus: syllabusMode === "flat" ? toLines(syllabusText) : [],
       outcomes: toLines(outcomesText),
       whatsIncluded: toLines(whatsIncludedText),
       eligibility: eligibilityToCmsString(eligibilityText),
       fee: Number(form.fee) || 0,
       discountFee: Number(form.discountFee) || 0,
+      admissionFee: Number(form.admissionFee) || 0,
       sortOrder: Number(form.sortOrder) || 0,
     });
   };
@@ -241,12 +274,16 @@ export function CourseForm({
             </SelectContent>
           </Select>
         </Field>
-        <Field label="Duration">
+        <Field label="Duration (months)">
           <Input
             value={form.duration}
             onChange={(e) => set("duration", e.target.value)}
-            placeholder="e.g. 3 Months"
+            placeholder="e.g. 3 or 3 Months"
           />
+          <p className="text-xs text-muted-foreground">
+            Enter months (e.g. <strong>3</strong> or <strong>12–18</strong>). The site shows
+            “Months” automatically if you leave the unit out.
+          </p>
         </Field>
         <Field label="Full fee (BDT)">
           <Input
@@ -260,6 +297,14 @@ export function CourseForm({
             type="number"
             value={form.discountFee}
             onChange={(e) => set("discountFee", Number(e.target.value) || 0)}
+          />
+        </Field>
+        <Field label="Admission fee (BDT)">
+          <Input
+            type="number"
+            value={form.admissionFee}
+            onChange={(e) => set("admissionFee", Number(e.target.value) || 0)}
+            placeholder="0 = hide on site"
           />
         </Field>
         <Field label="Sort order">
@@ -355,37 +400,126 @@ export function CourseForm({
         ) : null}
       </Field>
 
-      <Field label="Syllabus / Module (one module per line)">
-        <Textarea
-          value={syllabusText}
-          onChange={(e) => setSyllabusText(e.target.value)}
-          rows={6}
-          placeholder={"Ultrasound physics & instrumentation\nAbdominal sonography\nPelvic & obstetric scanning"}
-        />
-        <p className="text-xs text-muted-foreground">
-          Each line is one module. The site shows them as numbered items under{" "}
-          <strong>Syllabus / Module (count)</strong>. Do not type the module number
-          in the line — it is added automatically.
-        </p>
-        {syllabusText
-          .split("\n")
-          .map((s) => s.trim())
-          .filter(Boolean).length > 0 ? (
-          <ol className="mt-2 space-y-1 rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
-            {syllabusText
-              .split("\n")
-              .map((s) => s.trim())
-              .filter(Boolean)
-              .map((line, i) => (
-                <li key={`${i}-${line}`} className="flex items-start gap-2">
-                  <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded bg-secondary text-[10px] font-bold text-secondary-foreground">
-                    {i + 1}
-                  </span>
-                  <span>{line}</span>
-                </li>
+      <Field label="Syllabus / Module">
+        <div className="space-y-3">
+          <Select
+            value={syllabusMode}
+            onValueChange={(v) => setSyllabusMode(v as SyllabusMode)}
+          >
+            <SelectTrigger className="max-w-sm">
+              <SelectValue placeholder="Syllabus type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="flat">Modules only (no semesters)</SelectItem>
+              <SelectItem value="semester">Semester-based modules</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {syllabusMode === "flat" ? (
+            <>
+              <Textarea
+                value={syllabusText}
+                onChange={(e) => setSyllabusText(e.target.value)}
+                rows={6}
+                placeholder={
+                  "Ultrasound physics & instrumentation\nAbdominal sonography\nPelvic & obstetric scanning"
+                }
+              />
+              <p className="text-xs text-muted-foreground">
+                Each line is one module. The site shows numbered items under{" "}
+                <strong>Syllabus / Module (count)</strong>. Do not type the module
+                number — it is added automatically.
+              </p>
+              {syllabusText
+                .split("\n")
+                .map((s) => s.trim())
+                .filter(Boolean).length > 0 ? (
+                <ol className="mt-2 space-y-1 rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+                  {syllabusText
+                    .split("\n")
+                    .map((s) => s.trim())
+                    .filter(Boolean)
+                    .map((line, i) => (
+                      <li key={`${i}-${line}`} className="flex items-start gap-2">
+                        <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded bg-secondary text-[10px] font-bold text-secondary-foreground">
+                          {i + 1}
+                        </span>
+                        <span>{line}</span>
+                      </li>
+                    ))}
+                </ol>
+              ) : null}
+            </>
+          ) : (
+            <div className="space-y-4">
+              <p className="text-xs text-muted-foreground">
+                Add each semester with its modules (one module per line). The public
+                course page shows a semester dropdown, then lists that semester’s
+                modules.
+              </p>
+              {semesters.map((sem, idx) => (
+                <div
+                  key={idx}
+                  className="space-y-2 rounded-lg border border-border bg-muted/20 p-3"
+                >
+                  <div className="flex flex-wrap items-end gap-2">
+                    <div className="min-w-[10rem] flex-1 space-y-1.5">
+                      <Label className="text-xs">Semester label</Label>
+                      <Input
+                        value={sem.label}
+                        onChange={(e) =>
+                          setSemesters((list) =>
+                            list.map((s, i) =>
+                              i === idx ? { ...s, label: e.target.value } : s,
+                            ),
+                          )
+                        }
+                        placeholder={`Semester ${idx + 1}`}
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      disabled={semesters.length <= 1}
+                      onClick={() =>
+                        setSemesters((list) => list.filter((_, i) => i !== idx))
+                      }
+                      aria-label="Remove semester"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <Textarea
+                    value={sem.modulesText}
+                    onChange={(e) =>
+                      setSemesters((list) =>
+                        list.map((s, i) =>
+                          i === idx ? { ...s, modulesText: e.target.value } : s,
+                        ),
+                      )
+                    }
+                    rows={4}
+                    placeholder={"Module one\nModule two\nModule three"}
+                  />
+                </div>
               ))}
-          </ol>
-        ) : null}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setSemesters((list) => [
+                    ...list,
+                    { label: `Semester ${list.length + 1}`, modulesText: "" },
+                  ])
+                }
+              >
+                <Plus className="h-4 w-4" /> Add semester
+              </Button>
+            </div>
+          )}
+        </div>
       </Field>
       <Field label="Learning outcomes (one item per line)">
         <Textarea value={outcomesText} onChange={(e) => setOutcomesText(e.target.value)} rows={4} />

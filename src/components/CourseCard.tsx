@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Course } from "@/data/courses";
-import { eligibilityBullets } from "@/data/courses";
+import { eligibilityBullets, formatCourseDuration } from "@/data/courses";
 
 export function CourseCard({ course }: { course: Course }) {
   const savings = course.fee - course.discountFee;
@@ -26,7 +26,7 @@ export function CourseCard({ course }: { course: Course }) {
       <CardContent className="flex flex-1 flex-col gap-3 pb-3 text-sm">
         <div className="grid grid-cols-2 gap-2 text-xs">
           <div className="flex items-center gap-1.5 text-muted-foreground">
-            <Clock className="h-3.5 w-3.5" /> {course.duration}
+            <Clock className="h-3.5 w-3.5" /> {formatCourseDuration(course.duration)}
           </div>
           <div className="flex items-center gap-1.5 text-muted-foreground">
             <Monitor className="h-3.5 w-3.5" /> {course.mode}

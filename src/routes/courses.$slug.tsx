@@ -10,12 +10,20 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { getPublicCourseBySlug } from "@/lib/courses.functions";
 import {
   courseDetailPage,
   DEFAULT_COURSE_WHATS_INCLUDED,
   eligibilityBullets,
+  formatCourseDuration,
 } from "@/data/courses";
+import { syllabusModuleCount } from "@/lib/syllabus";
 import { assetUrl } from "@/lib/assets";
 
 function ListBullet({
@@ -113,18 +121,20 @@ function CourseDetailPage() {
   return (
     <>
       <section className="bg-surface text-foreground">
-        <div className="container mx-auto grid gap-10 px-4 py-16 md:py-20 lg:grid-cols-12">
+        <div className="container mx-auto grid gap-8 px-4 py-10 lg:grid-cols-12">
           <div className="lg:col-span-8">
             <Badge className="border-0 bg-primary-glow text-foreground hover:bg-secondary">
               {course.category}
             </Badge>
-            <h1 className="mt-4 font-serif text-4xl font-bold leading-tight md:text-5xl">
+            <h1 className="mt-3 font-serif text-3xl font-bold leading-tight tracking-tight md:text-4xl">
               {course.name}
             </h1>
-            <p className="mt-4 max-w-2xl text-foreground/85">{course.description}</p>
-            <div className="mt-6 flex flex-wrap gap-4 text-sm">
+            <p className="mt-3 max-w-2xl text-base text-muted-foreground md:text-lg">
+              {course.description}
+            </p>
+            <div className="mt-5 flex flex-wrap gap-4 text-sm">
               <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5">
-                <Clock className="h-4 w-4" /> {course.duration}
+                <Clock className="h-4 w-4" /> {formatCourseDuration(course.duration)}
               </span>
               <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5">
                 <Monitor className="h-4 w-4" /> {course.mode}
@@ -149,6 +159,16 @@ function CourseDetailPage() {
                   Save BDT {savings.toLocaleString()} {copy.savingsSuffix}
                 </p>
               )}
+              {course.admissionFee > 0 ? (
+                <div className="mt-4 border-t border-border/70 pt-3">
+                  <p className="text-xs uppercase tracking-wider text-muted-foreground">
+                    {copy.admissionFeeLabel}
+                  </p>
+                  <p className="mt-1 font-serif text-xl font-bold text-foreground">
+                    BDT {course.admissionFee.toLocaleString()}
+                  </p>
+                </div>
+              ) : null}
               <Button asChild size="lg" className="mt-5 w-full">
                 <Link to="/admission" search={{ course: course.slug }}>
                   {copy.applyLabel} <ArrowRight className="h-4 w-4" />
@@ -178,39 +198,26 @@ function CourseDetailPage() {
         </div>
       </section>
 
-      <section className="container mx-auto grid gap-12 px-4 py-16 lg:grid-cols-2">
-        <div>
-          <h2 className="font-serif text-2xl font-bold">
-            {copy.sections.syllabusWithCount(course.syllabus.length)}
-          </h2>
-          {course.syllabus.length > 0 ? (
-            <ul className="mt-5 space-y-3">
-              {course.syllabus.map((s: string, i: number) => (
-                <ModuleBullet key={`${i}-${s}`} index={i + 1}>
-                  {stripModulePrefix(s) || s}
-                </ModuleBullet>
-              ))}
-            </ul>
-          ) : (
-            <p className="mt-5 text-sm text-muted-foreground">
-              Modules for this course will be listed here soon.
-            </p>
-          )}
-        </div>
+      <section className="container mx-auto grid gap-8 px-4 py-10 lg:grid-cols-2">
+        <SyllabusSection course={course} copy={copy} />
 
         <div>
-          <h2 className="font-serif text-2xl font-bold">{copy.sections.outcomes}</h2>
-          <ul className="mt-5 space-y-3">
-            {course.outcomes.map((o: string) => (
-              <ListBullet key={o} icon={Target}>
-                {o}
-              </ListBullet>
-            ))}
-          </ul>
+          {course.outcomes.length > 0 ? (
+            <>
+              <h2 className="font-serif text-xl font-bold md:text-2xl">{copy.sections.outcomes}</h2>
+              <ul className="mt-5 space-y-3">
+                {course.outcomes.map((o: string) => (
+                  <ListBullet key={o} icon={Target}>
+                    {o}
+                  </ListBullet>
+                ))}
+              </ul>
+            </>
+          ) : null}
 
           {whatsIncluded.length > 0 ? (
-            <div className="mt-10">
-              <h2 className="font-serif text-2xl font-bold">{copy.sections.whatsIncluded}</h2>
+            <div className={course.outcomes.length > 0 ? "mt-8" : undefined}>
+              <h2 className="font-serif text-xl font-bold md:text-2xl">{copy.sections.whatsIncluded}</h2>
               <ul className="mt-5 space-y-3">
                 {whatsIncluded.map((item) => (
                   <ListBullet key={item} icon={BadgeCheck}>
@@ -221,9 +228,13 @@ function CourseDetailPage() {
             </div>
           ) : null}
 
-          <div className="mt-10 rounded-xl bg-surface p-6">
-            <h3 className="font-serif text-lg font-bold">{copy.sections.eligibility}</h3>
-            {eligibilityBullets(course.eligibility).length > 0 ? (
+          {eligibilityBullets(course.eligibility).length > 0 ? (
+            <div
+              className={`rounded-xl bg-surface p-6 ${
+                course.outcomes.length > 0 || whatsIncluded.length > 0 ? "mt-8" : ""
+              }`}
+            >
+              <h3 className="font-serif text-lg font-bold">{copy.sections.eligibility}</h3>
               <ul className="mt-4 space-y-3">
                 {eligibilityBullets(course.eligibility).map((item) => (
                   <ListBullet key={item} icon={UserCheck}>
@@ -231,12 +242,88 @@ function CourseDetailPage() {
                   </ListBullet>
                 ))}
               </ul>
-            ) : (
-              <p className="mt-2 text-sm text-muted-foreground">Not specified.</p>
-            )}
-          </div>
+            </div>
+          ) : null}
         </div>
       </section>
     </>
+  );
+}
+
+function SyllabusSection({
+  course,
+  copy,
+}: {
+  course: {
+    syllabus: string[];
+    syllabusMode: string;
+    syllabusSemesters: { label: string; modules: string[] }[];
+  };
+  copy: typeof courseDetailPage;
+}) {
+  const semesters = (course.syllabusSemesters ?? []).filter(
+    (s) => (s.modules?.length ?? 0) > 0,
+  );
+  const isSemester =
+    course.syllabusMode === "semester" && semesters.length > 0;
+  const flatModules = course.syllabus ?? [];
+  const totalCount = syllabusModuleCount(
+    isSemester ? "semester" : "flat",
+    flatModules,
+    semesters,
+  );
+
+  if (isSemester) {
+    return (
+      <div>
+        <h2 className="font-serif text-xl font-bold md:text-2xl">
+          {copy.sections.syllabusWithCount(totalCount)}
+        </h2>
+        <Accordion type="multiple" className="mt-5 space-y-3">
+          {semesters.map((s, i) => (
+            <AccordionItem
+              key={`${s.label}-${i}`}
+              value={`semester-${i}`}
+              className="overflow-hidden rounded-xl border border-border bg-card px-5"
+            >
+              <AccordionTrigger className="py-4 font-serif text-base font-bold hover:no-underline md:text-lg">
+                <span className="flex min-w-0 flex-1 items-center gap-2.5 text-left">
+                  <span className="truncate text-foreground">{s.label}</span>
+                  <span className="shrink-0 rounded-md bg-muted px-2 py-0.5 font-sans text-xs font-medium tabular-nums text-muted-foreground">
+                    {s.modules.length}
+                  </span>
+                </span>
+              </AccordionTrigger>
+              <AccordionContent className="pb-4">
+                <ul className="space-y-3 border-t border-border/70 pt-4">
+                  {s.modules.map((mod, mi) => (
+                    <ModuleBullet key={`${i}-${mi}-${mod}`} index={mi + 1}>
+                      {stripModulePrefix(mod) || mod}
+                    </ModuleBullet>
+                  ))}
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
+      </div>
+    );
+  }
+
+  if (flatModules.length === 0) return null;
+
+  return (
+    <div>
+      <h2 className="font-serif text-xl font-bold md:text-2xl">
+        {copy.sections.syllabusWithCount(totalCount)}
+      </h2>
+      <ul className="mt-5 space-y-3">
+        {flatModules.map((s: string, i: number) => (
+          <ModuleBullet key={`${i}-${s}`} index={i + 1}>
+            {stripModulePrefix(s) || s}
+          </ModuleBullet>
+        ))}
+      </ul>
+    </div>
   );
 }

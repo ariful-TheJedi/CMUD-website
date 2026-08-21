@@ -2,6 +2,9 @@
  * Course types + seed/page copy.
  * Live course lists load from Postgres via `listPublicCourses` / `getPublicCourseBySlug`.
  */
+import type { SyllabusMode, SyllabusSemester } from "@/lib/syllabus";
+
+export type { SyllabusMode, SyllabusSemester };
 export type CourseMode = "Online" | "Offline" | "Online/Offline/Both";
 
 export type Course = {
@@ -11,12 +14,18 @@ export type Course = {
   duration: string;
   fee: number;
   discountFee: number;
+  /** One-time admission fee from details JSONB (0 = hide). */
+  admissionFee: number;
   mode: CourseMode;
   /** One criterion per line in CMS (legacy comma / slash lists still supported). */
   eligibility: string;
   shortDescription: string;
   description: string;
+  /** Flat module list (used when syllabusMode is "flat"). */
   syllabus: string[];
+  /** "flat" = syllabus only; "semester" = syllabusSemesters with dropdown on detail page. */
+  syllabusMode: SyllabusMode;
+  syllabusSemesters: SyllabusSemester[];
   outcomes: string[];
   /** Items shown under “What’s included in the course” on the detail page. */
   whatsIncluded: string[];
@@ -64,6 +73,30 @@ export function normalizeCourseMode(mode: string | null | undefined): CourseMode
   return "Offline";
 }
 
+/**
+ * Display duration with a clear unit. Bare numbers (e.g. "3", "12-18") become months.
+ * Values that already include week/month/year are left as-is.
+ */
+export function formatCourseDuration(duration: string | null | undefined): string {
+  const raw = (duration ?? "").trim();
+  if (!raw) return "";
+  if (/\b(month|months|week|weeks|year|years|day|days|yr|yrs|mo)\b/i.test(raw)) {
+    return raw.replace(/\bmonth\b/i, (m) => (m[0] === "M" ? "Months" : "months")).replace(
+      /^(\d+)\s*month$/i,
+      (_, n) => `${n} ${Number(n) === 1 ? "Month" : "Months"}`,
+    );
+  }
+  // "3", "12", "12-18", "12–18"
+  if (/^\d+(\s*[-–—]\s*\d+)?$/.test(raw)) {
+    const normalized = raw.replace(/\s*[-–—]\s*/, "–");
+    const end = normalized.split("–").pop();
+    const n = Number(end);
+    const unit = n === 1 ? "Month" : "Months";
+    return `${normalized} ${unit}`;
+  }
+  return `${raw} Months`;
+}
+
 /** Default CMS seed for courses that do not set a custom includes list. */
 export const DEFAULT_COURSE_WHATS_INCLUDED: string[] = [
   "Hands-on scanning practice sessions",
@@ -73,7 +106,15 @@ export const DEFAULT_COURSE_WHATS_INCLUDED: string[] = [
   "Batch mentoring & case discussion support",
 ];
 
-type CourseSeed = Omit<Course, "whatsIncluded"> & { whatsIncluded?: string[] };
+type CourseSeed = Omit<
+  Course,
+  "whatsIncluded" | "syllabusMode" | "syllabusSemesters" | "admissionFee"
+> & {
+  whatsIncluded?: string[];
+  syllabusMode?: SyllabusMode;
+  syllabusSemesters?: SyllabusSemester[];
+  admissionFee?: number;
+};
 
 const courseSeeds: CourseSeed[] = [
   {
@@ -526,6 +567,9 @@ const courseSeeds: CourseSeed[] = [
 
 export const courses: Course[] = courseSeeds.map((c) => ({
   ...c,
+  syllabusMode: c.syllabusMode ?? "flat",
+  syllabusSemesters: c.syllabusSemesters ?? [],
+  admissionFee: c.admissionFee ?? 0,
   whatsIncluded:
     c.whatsIncluded && c.whatsIncluded.length > 0
       ? c.whatsIncluded
@@ -580,6 +624,7 @@ export const coursesPage = {
 
 export const courseDetailPage = {
   feeLabel: "Course Fee",
+  admissionFeeLabel: "Admission Fee",
   savingsSuffix: "— limited-time admission offer",
   applyLabel: "Apply for this course",
   seatsNote: "Limited seats per batch. Speak to admissions for instalment options.",

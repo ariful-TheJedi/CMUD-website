@@ -9,8 +9,11 @@ import {
 import { writeAuditLog } from "@/lib/audit";
 import { dbQuery, parseStringArray } from "@/lib/db-helpers";
 import { toStoragePath } from "@/lib/assets";
+import { buildCourseDetails, resolveCourseDetails } from "@/lib/course-details";
+import type { SyllabusMode, SyllabusSemester } from "@/lib/syllabus";
 
 export type CourseStatus = "draft" | "published" | "archived";
+export type { SyllabusMode, SyllabusSemester };
 
 export type AdminCourseRow = {
   id: string;
@@ -24,7 +27,10 @@ export type AdminCourseRow = {
   description: string;
   fee: number;
   discountFee: number;
+  admissionFee: number;
   syllabus: string[];
+  syllabusMode: SyllabusMode;
+  syllabusSemesters: SyllabusSemester[];
   outcomes: string[];
   whatsIncluded: string[];
   featured: boolean;
@@ -51,7 +57,11 @@ type CourseDbRow = {
   description: string;
   fee: number | string;
   discountFee: number | string;
+  details: unknown;
+  /** Legacy fallbacks while migrating to details JSONB */
   syllabus: unknown;
+  syllabusMode: unknown;
+  syllabusSemesters: unknown;
   outcomes: unknown;
   whatsIncluded: unknown;
   featured: boolean;
@@ -75,7 +85,10 @@ const COURSE_SELECT = `
   description,
   fee,
   discount_fee AS "discountFee",
+  COALESCE(details, '{}'::jsonb) AS details,
   COALESCE(syllabus, ARRAY[]::text[]) AS syllabus,
+  COALESCE(syllabus_mode, 'flat') AS "syllabusMode",
+  COALESCE(syllabus_semesters, '[]'::jsonb) AS "syllabusSemesters",
   COALESCE(outcomes, ARRAY[]::text[]) AS outcomes,
   COALESCE(whats_included, ARRAY[]::text[]) AS "whatsIncluded",
   featured,
@@ -92,6 +105,13 @@ function toPublicMode(mode: string): CourseMode {
 }
 
 function normalizeCourse(r: CourseDbRow): AdminCourseRow {
+  const details = resolveCourseDetails(r.details, {
+    syllabus: r.syllabus,
+    syllabusMode: r.syllabusMode,
+    syllabusSemesters: r.syllabusSemesters,
+    outcomes: r.outcomes,
+    whatsIncluded: r.whatsIncluded,
+  });
   return {
     id: r.id,
     slug: r.slug,
@@ -104,9 +124,12 @@ function normalizeCourse(r: CourseDbRow): AdminCourseRow {
     description: r.description ?? "",
     fee: Number(r.fee) || 0,
     discountFee: Number(r.discountFee) || 0,
-    syllabus: parseStringArray(r.syllabus),
-    outcomes: parseStringArray(r.outcomes),
-    whatsIncluded: parseStringArray(r.whatsIncluded),
+    admissionFee: details.admissionFee,
+    syllabus: details.syllabus,
+    syllabusMode: details.syllabusMode,
+    syllabusSemesters: details.syllabusSemesters,
+    outcomes: details.outcomes,
+    whatsIncluded: details.whatsIncluded,
     featured: Boolean(r.featured),
     isPublished: Boolean(r.isPublished),
     status: (r.status as CourseStatus) ?? "draft",
@@ -129,7 +152,10 @@ function toPublic(r: AdminCourseRow): Course {
     description: r.description,
     fee: r.fee,
     discountFee: r.discountFee,
+    admissionFee: r.admissionFee,
     syllabus: r.syllabus,
+    syllabusMode: r.syllabusMode,
+    syllabusSemesters: r.syllabusSemesters,
     outcomes: r.outcomes,
     whatsIncluded: r.whatsIncluded,
     featured: r.featured,
@@ -227,12 +253,18 @@ async function upsertCourseAdminImpl(
     // Update access includes publish/archive (no longer admin-only).
 
     const isPublished = status === "published";
-    const syllabus = parseStringArray(data.syllabus);
-    const outcomes = parseStringArray(data.outcomes);
-    const whatsIncluded = parseStringArray(data.whatsIncluded);
+    const details = buildCourseDetails({
+      syllabusMode: data.syllabusMode,
+      syllabus: data.syllabus,
+      syllabusSemesters: data.syllabusSemesters,
+      outcomes: data.outcomes,
+      whatsIncluded: data.whatsIncluded,
+      admissionFee: data.admissionFee,
+    });
     const fee = Number(data.fee) || 0;
     const discountFee = Number(data.discountFee) || 0;
     const sortOrder = Number(data.sortOrder) || 0;
+    // Mirror flat arrays for older queries; source of truth is details JSONB.
     const vals = [
       cleanSlug,
       data.name.trim(),
@@ -244,9 +276,10 @@ async function upsertCourseAdminImpl(
       data.description ?? "",
       fee,
       discountFee,
-      syllabus,
-      outcomes,
-      whatsIncluded,
+      details.syllabus,
+      details.outcomes,
+      details.whatsIncluded,
+      JSON.stringify(details),
       Boolean(data.featured),
       status,
       isPublished,
@@ -264,10 +297,11 @@ async function upsertCourseAdminImpl(
            slug=$1, name=$2, category=$3, duration=$4, mode=$5, eligibility=$6,
            short_description=$7, description=$8, fee=$9, discount_fee=$10,
            syllabus=$11::text[], outcomes=$12::text[], whats_included=$13::text[],
-           featured=$14, status=$15::content_status,
-           is_published=$16, sort_order=$17, image_url=$18, seo_title=$19,
-           seo_description=$20, updated_by=$21, updated_at=now()
-         WHERE id=$22
+           details=$14::jsonb,
+           featured=$15, status=$16::content_status,
+           is_published=$17, sort_order=$18, image_url=$19, seo_title=$20,
+           seo_description=$21, updated_by=$22, updated_at=now()
+         WHERE id=$23
          RETURNING ${COURSE_SELECT}`,
         [...vals, data.id],
       );
@@ -292,10 +326,12 @@ async function upsertCourseAdminImpl(
       "upsertCourseAdmin.insert",
       `INSERT INTO courses (
          slug, name, category, duration, mode, eligibility, short_description, description,
-         fee, discount_fee, syllabus, outcomes, whats_included, featured, status, is_published, sort_order,
+         fee, discount_fee, syllabus, outcomes, whats_included, details,
+         featured, status, is_published, sort_order,
          image_url, seo_title, seo_description, created_by, updated_by
        ) VALUES (
-         $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::text[],$12::text[],$13::text[],$14,$15::content_status,$16,$17,$18,$19,$20,$21,$21
+         $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::text[],$12::text[],$13::text[],$14::jsonb,
+         $15,$16::content_status,$17,$18,$19,$20,$21,$22,$22
        )
        RETURNING ${COURSE_SELECT}`,
       vals,

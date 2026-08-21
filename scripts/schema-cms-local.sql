@@ -64,6 +64,7 @@ CREATE TABLE IF NOT EXISTS courses (
   syllabus TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
   outcomes TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
   whats_included TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+  details JSONB NOT NULL DEFAULT '{}'::jsonb,
   featured BOOLEAN NOT NULL DEFAULT false,
   is_published BOOLEAN NOT NULL DEFAULT false,
   status content_status NOT NULL DEFAULT 'draft',
@@ -83,6 +84,22 @@ CREATE TABLE IF NOT EXISTS courses (
 
 -- Additive for existing DBs (CREATE TABLE IF NOT EXISTS does not add new columns)
 ALTER TABLE courses ADD COLUMN IF NOT EXISTS whats_included TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[];
+ALTER TABLE courses ADD COLUMN IF NOT EXISTS syllabus_mode TEXT NOT NULL DEFAULT 'flat';
+ALTER TABLE courses ADD COLUMN IF NOT EXISTS syllabus_semesters JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE courses ADD COLUMN IF NOT EXISTS details JSONB NOT NULL DEFAULT '{}'::jsonb;
+
+-- Backfill details JSONB from legacy detail columns (safe to re-run)
+UPDATE courses
+SET details = jsonb_build_object(
+  'syllabusMode', COALESCE(NULLIF(syllabus_mode, ''), 'flat'),
+  'syllabus', to_jsonb(COALESCE(syllabus, ARRAY[]::text[])),
+  'syllabusSemesters', COALESCE(syllabus_semesters, '[]'::jsonb),
+  'outcomes', to_jsonb(COALESCE(outcomes, ARRAY[]::text[])),
+  'whatsIncluded', to_jsonb(COALESCE(whats_included, ARRAY[]::text[]))
+)
+WHERE details IS NULL
+   OR details = '{}'::jsonb
+   OR NOT (details ? 'syllabusMode');
 
 -- ---------- gallery ----------
 CREATE TABLE IF NOT EXISTS gallery_albums (

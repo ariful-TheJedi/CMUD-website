@@ -84,11 +84,13 @@ async function seedCourses(): Promise<Counts> {
         `INSERT INTO courses (
            id, slug, name, category, duration, mode, eligibility,
            short_description, description, fee, discount_fee, syllabus, outcomes, whats_included,
+           details,
            featured, status, is_published, sort_order, image_url, seo_title, seo_description,
            updated_at
          ) VALUES (
            $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12::text[],$13::text[],$14::text[],
-           $15,'published'::content_status,true,$16,$17,'','',now()
+           $15::jsonb,
+           $16,'published'::content_status,true,$17,$18,'','',now()
          )
          ON CONFLICT (slug) DO UPDATE SET
            name = EXCLUDED.name,
@@ -103,6 +105,7 @@ async function seedCourses(): Promise<Counts> {
            syllabus = EXCLUDED.syllabus,
            outcomes = EXCLUDED.outcomes,
            whats_included = EXCLUDED.whats_included,
+           details = EXCLUDED.details,
            featured = EXCLUDED.featured,
            status = EXCLUDED.status,
            is_published = EXCLUDED.is_published,
@@ -124,6 +127,14 @@ async function seedCourses(): Promise<Counts> {
           c.syllabus,
           c.outcomes,
           c.whatsIncluded,
+          JSON.stringify({
+            syllabusMode: c.syllabusMode ?? "flat",
+            syllabus: c.syllabus,
+            syllabusSemesters: c.syllabusSemesters ?? [],
+            outcomes: c.outcomes,
+            whatsIncluded: c.whatsIncluded,
+            admissionFee: c.admissionFee ?? 0,
+          }),
           Boolean(c.featured),
           i,
           c.imageUrl ?? "",
