@@ -20,6 +20,8 @@ export type CourseDetails = {
   whatsIncluded: string[];
   /** One-time admission fee (BDT). 0 = not shown. */
   admissionFee: number;
+  /** Multiple installment payment option available. */
+  installmentsAvailable: boolean;
 };
 
 export const EMPTY_COURSE_DETAILS: CourseDetails = {
@@ -29,11 +31,16 @@ export const EMPTY_COURSE_DETAILS: CourseDetails = {
   outcomes: [],
   whatsIncluded: [],
   admissionFee: 0,
+  installmentsAvailable: false,
 };
 
 function toMoney(value: unknown): number {
   const n = typeof value === "number" ? value : Number(value);
   return Number.isFinite(n) && n > 0 ? Math.round(n) : 0;
+}
+
+function toBool(value: unknown): boolean {
+  return value === true || value === "true" || value === 1 || value === "1";
 }
 
 type LegacyDetailFields = {
@@ -57,7 +64,8 @@ export function resolveCourseDetails(
       obj.syllabusSemesters != null ||
       obj.outcomes != null ||
       obj.whatsIncluded != null ||
-      obj.admissionFee != null);
+      obj.admissionFee != null ||
+      obj.installmentsAvailable != null);
 
   if (hasDetails) {
     const mode = normalizeSyllabusMode(obj.syllabusMode);
@@ -73,6 +81,7 @@ export function resolveCourseDetails(
       outcomes: parseStringArray(obj.outcomes),
       whatsIncluded: parseStringArray(obj.whatsIncluded),
       admissionFee: toMoney(obj.admissionFee),
+      installmentsAvailable: toBool(obj.installmentsAvailable),
     };
   }
 
@@ -88,6 +97,7 @@ export function resolveCourseDetails(
     outcomes: parseStringArray(legacy.outcomes),
     whatsIncluded: parseStringArray(legacy.whatsIncluded),
     admissionFee: 0,
+    installmentsAvailable: false,
   };
 }
 
@@ -99,6 +109,7 @@ export function buildCourseDetails(input: {
   outcomes?: string[];
   whatsIncluded?: string[];
   admissionFee?: number;
+  installmentsAvailable?: boolean;
 }): CourseDetails {
   const mode = normalizeSyllabusMode(input.syllabusMode);
   const semesters =
@@ -115,5 +126,6 @@ export function buildCourseDetails(input: {
     outcomes: parseStringArray(input.outcomes),
     whatsIncluded: parseStringArray(input.whatsIncluded),
     admissionFee: toMoney(input.admissionFee),
+    installmentsAvailable: Boolean(input.installmentsAvailable),
   };
 }

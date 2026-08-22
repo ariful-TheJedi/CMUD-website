@@ -20,6 +20,7 @@ import { getPublicCourseBySlug } from "@/lib/courses.functions";
 import {
   courseDetailPage,
   DEFAULT_COURSE_WHATS_INCLUDED,
+  courseFeeDisplay,
   eligibilityBullets,
   formatCourseDuration,
 } from "@/data/courses";
@@ -111,7 +112,10 @@ export const Route = createFileRoute("/courses/$slug")({
 
 function CourseDetailPage() {
   const { course } = Route.useLoaderData();
-  const savings = course.fee - course.discountFee;
+  const { displayFee, compareAtFee, savings, hasDiscount } = courseFeeDisplay(
+    course.fee,
+    course.discountFee,
+  );
   const copy = courseDetailPage;
   const whatsIncluded =
     course.whatsIncluded?.length > 0
@@ -146,19 +150,19 @@ function CourseDetailPage() {
               <p className="text-xs uppercase tracking-wider text-muted-foreground">{copy.feeLabel}</p>
               <div className="mt-2 flex items-baseline gap-2">
                 <span className="font-serif text-3xl font-bold text-primary">
-                  BDT {course.discountFee.toLocaleString()}
+                  BDT {displayFee.toLocaleString()}
                 </span>
-                {savings > 0 && (
+                {compareAtFee != null ? (
                   <span className="text-muted-foreground line-through">
-                    {course.fee.toLocaleString()}
+                    {compareAtFee.toLocaleString()}
                   </span>
-                )}
+                ) : null}
               </div>
-              {savings > 0 && (
+              {hasDiscount ? (
                 <p className="mt-1 text-xs font-medium text-secondary">
                   Save BDT {savings.toLocaleString()} {copy.savingsSuffix}
                 </p>
-              )}
+              ) : null}
               {course.admissionFee > 0 ? (
                 <div className="mt-4 border-t border-border/70 pt-3">
                   <p className="text-xs uppercase tracking-wider text-muted-foreground">
@@ -168,6 +172,12 @@ function CourseDetailPage() {
                     BDT {course.admissionFee.toLocaleString()}
                   </p>
                 </div>
+              ) : null}
+              {course.installmentsAvailable ? (
+                <p className="mt-3 flex items-center gap-1.5 text-sm font-medium text-secondary">
+                  <BadgeCheck className="h-4 w-4 shrink-0" />
+                  {copy.installmentsLabel}
+                </p>
               ) : null}
               <Button asChild size="lg" className="mt-5 w-full">
                 <Link to="/admission" search={{ course: course.slug }}>
@@ -279,7 +289,7 @@ function SyllabusSection({
         <h2 className="font-serif text-xl font-bold md:text-2xl">
           {copy.sections.syllabusWithCount(totalCount)}
         </h2>
-        <Accordion type="multiple" className="mt-5 space-y-3">
+        <Accordion type="multiple" defaultValue={["semester-0"]} className="mt-5 space-y-3">
           {semesters.map((s, i) => (
             <AccordionItem
               key={`${s.label}-${i}`}

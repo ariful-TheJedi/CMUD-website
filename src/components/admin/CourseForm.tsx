@@ -70,6 +70,7 @@ export function emptyCourseForm(): CourseInput {
     fee: 0,
     discountFee: 0,
     admissionFee: 0,
+    installmentsAvailable: false,
     syllabus: [],
     syllabusMode: "flat",
     syllabusSemesters: [],
@@ -98,6 +99,7 @@ export function courseInputFromRow(row: AdminCourseRow): CourseInput {
     fee: Number(row.fee) || 0,
     discountFee: Number(row.discountFee) || 0,
     admissionFee: Number(row.admissionFee) || 0,
+    installmentsAvailable: Boolean(row.installmentsAvailable),
     syllabus: Array.isArray(row.syllabus) ? row.syllabus : [],
     syllabusMode: row.syllabusMode === "semester" ? "semester" : "flat",
     syllabusSemesters: Array.isArray(row.syllabusSemesters) ? row.syllabusSemesters : [],
@@ -216,6 +218,7 @@ export function CourseForm({
       fee: Number(form.fee) || 0,
       discountFee: Number(form.discountFee) || 0,
       admissionFee: Number(form.admissionFee) || 0,
+      installmentsAvailable: Boolean(form.installmentsAvailable),
       sortOrder: Number(form.sortOrder) || 0,
     });
   };
@@ -307,6 +310,15 @@ export function CourseForm({
             placeholder="0 = hide on site"
           />
         </Field>
+        <div className="flex items-end sm:col-span-2">
+          <label className="flex items-center gap-2 pb-2 text-sm">
+            <Switch
+              checked={form.installmentsAvailable}
+              onCheckedChange={(v) => set("installmentsAvailable", v)}
+            />
+            Multiple installments available
+          </label>
+        </div>
         <Field label="Sort order">
           <Input
             type="number"

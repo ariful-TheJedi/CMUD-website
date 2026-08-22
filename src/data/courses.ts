@@ -16,6 +16,8 @@ export type Course = {
   discountFee: number;
   /** One-time admission fee from details JSONB (0 = hide). */
   admissionFee: number;
+  /** Multiple installment payments available (from details JSONB). */
+  installmentsAvailable: boolean;
   mode: CourseMode;
   /** One criterion per line in CMS (legacy comma / slash lists still supported). */
   eligibility: string;
@@ -97,6 +99,21 @@ export function formatCourseDuration(duration: string | null | undefined): strin
   return `${raw} Months`;
 }
 
+/** Course fee UI: show discount only when discounted fee is set and lower than full fee. */
+export function courseFeeDisplay(fee: number, discountFee: number) {
+  const full = Number(fee) || 0;
+  const discounted = Number(discountFee) || 0;
+  const hasDiscount = discounted > 0 && discounted < full;
+  return {
+    hasDiscount,
+    /** Price to highlight */
+    displayFee: hasDiscount ? discounted : full,
+    /** Original fee to strike through (only when discounted) */
+    compareAtFee: hasDiscount ? full : null,
+    savings: hasDiscount ? full - discounted : 0,
+  };
+}
+
 /** Default CMS seed for courses that do not set a custom includes list. */
 export const DEFAULT_COURSE_WHATS_INCLUDED: string[] = [
   "Hands-on scanning practice sessions",
@@ -108,12 +125,13 @@ export const DEFAULT_COURSE_WHATS_INCLUDED: string[] = [
 
 type CourseSeed = Omit<
   Course,
-  "whatsIncluded" | "syllabusMode" | "syllabusSemesters" | "admissionFee"
+  "whatsIncluded" | "syllabusMode" | "syllabusSemesters" | "admissionFee" | "installmentsAvailable"
 > & {
   whatsIncluded?: string[];
   syllabusMode?: SyllabusMode;
   syllabusSemesters?: SyllabusSemester[];
   admissionFee?: number;
+  installmentsAvailable?: boolean;
 };
 
 const courseSeeds: CourseSeed[] = [
@@ -570,6 +588,7 @@ export const courses: Course[] = courseSeeds.map((c) => ({
   syllabusMode: c.syllabusMode ?? "flat",
   syllabusSemesters: c.syllabusSemesters ?? [],
   admissionFee: c.admissionFee ?? 0,
+  installmentsAvailable: Boolean(c.installmentsAvailable),
   whatsIncluded:
     c.whatsIncluded && c.whatsIncluded.length > 0
       ? c.whatsIncluded
@@ -625,9 +644,10 @@ export const coursesPage = {
 export const courseDetailPage = {
   feeLabel: "Course Fee",
   admissionFeeLabel: "Admission Fee",
+  installmentsLabel: "Multiple installments available",
   savingsSuffix: "— limited-time admission offer",
   applyLabel: "Apply for this course",
-  seatsNote: "Limited seats per batch. Speak to admissions for instalment options.",
+  seatsNote: "Limited seats per batch.",
   sections: {
     syllabus: "Syllabus / Module",
     syllabusWithCount: (count: number) => `Syllabus / Module (${count})`,

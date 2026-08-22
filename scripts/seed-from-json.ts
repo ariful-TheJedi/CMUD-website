@@ -134,6 +134,7 @@ async function seedCourses(): Promise<Counts> {
             outcomes: c.outcomes,
             whatsIncluded: c.whatsIncluded,
             admissionFee: c.admissionFee ?? 0,
+            installmentsAvailable: Boolean(c.installmentsAvailable),
           }),
           Boolean(c.featured),
           i,

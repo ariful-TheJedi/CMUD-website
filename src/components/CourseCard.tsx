@@ -4,10 +4,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Course } from "@/data/courses";
-import { eligibilityBullets, formatCourseDuration } from "@/data/courses";
+import { courseFeeDisplay, eligibilityBullets, formatCourseDuration } from "@/data/courses";
 
 export function CourseCard({ course }: { course: Course }) {
-  const savings = course.fee - course.discountFee;
+  const { displayFee, compareAtFee } = courseFeeDisplay(course.fee, course.discountFee);
   const eligibilityPreview = eligibilityBullets(course.eligibility);
   return (
     <Card className="group flex h-full flex-col overflow-hidden border-border/70 transition-all hover:-translate-y-1 hover:shadow-[var(--shadow-elegant)]">
@@ -46,13 +46,13 @@ export function CourseCard({ course }: { course: Course }) {
         </div>
         <div className="mt-auto flex items-baseline gap-2 border-t border-border pt-3">
           <span className="font-serif text-2xl font-bold text-primary">
-            BDT {course.discountFee.toLocaleString()}
+            BDT {displayFee.toLocaleString()}
           </span>
-          {savings > 0 && (
+          {compareAtFee != null ? (
             <span className="text-sm text-muted-foreground line-through">
-              {course.fee.toLocaleString()}
+              {compareAtFee.toLocaleString()}
             </span>
-          )}
+          ) : null}
         </div>
       </CardContent>
       <CardFooter className="grid grid-cols-2 gap-2 pt-0">

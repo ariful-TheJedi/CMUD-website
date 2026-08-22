@@ -28,6 +28,7 @@ export type AdminCourseRow = {
   fee: number;
   discountFee: number;
   admissionFee: number;
+  installmentsAvailable: boolean;
   syllabus: string[];
   syllabusMode: SyllabusMode;
   syllabusSemesters: SyllabusSemester[];
@@ -125,6 +126,7 @@ function normalizeCourse(r: CourseDbRow): AdminCourseRow {
     fee: Number(r.fee) || 0,
     discountFee: Number(r.discountFee) || 0,
     admissionFee: details.admissionFee,
+    installmentsAvailable: details.installmentsAvailable,
     syllabus: details.syllabus,
     syllabusMode: details.syllabusMode,
     syllabusSemesters: details.syllabusSemesters,
@@ -153,6 +155,7 @@ function toPublic(r: AdminCourseRow): Course {
     fee: r.fee,
     discountFee: r.discountFee,
     admissionFee: r.admissionFee,
+    installmentsAvailable: r.installmentsAvailable,
     syllabus: r.syllabus,
     syllabusMode: r.syllabusMode,
     syllabusSemesters: r.syllabusSemesters,
@@ -260,6 +263,7 @@ async function upsertCourseAdminImpl(
       outcomes: data.outcomes,
       whatsIncluded: data.whatsIncluded,
       admissionFee: data.admissionFee,
+      installmentsAvailable: data.installmentsAvailable,
     });
     const fee = Number(data.fee) || 0;
     const discountFee = Number(data.discountFee) || 0;
