@@ -35,6 +35,14 @@ export type Course = {
   imageUrl?: string;
 };
 
+/** Fallback cover when a course has no uploaded image (under ASSETS_ROOT). */
+export const DEFAULT_COURSE_COVER = "/media/courses/default-ultra.png";
+
+export function resolveCourseCover(imageUrl?: string | null): string {
+  const raw = (imageUrl ?? "").trim();
+  return raw || DEFAULT_COURSE_COVER;
+}
+
 /** Split eligibility into bullets. Prefer one item per line; also accept commas or " / ". */
 export function eligibilityBullets(eligibility: string | null | undefined): string[] {
   const raw = (eligibility ?? "").trim();

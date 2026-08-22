@@ -3,7 +3,6 @@ import {
   ArrowRight,
   BadgeCheck,
   Clock,
-  ImageIcon,
   Monitor,
   Target,
   UserCheck,
@@ -23,8 +22,8 @@ import {
   courseFeeDisplay,
   eligibilityBullets,
   formatCourseDuration,
+  resolveCourseCover,
 } from "@/data/courses";
-import { syllabusModuleCount } from "@/lib/syllabus";
 import { assetUrl } from "@/lib/assets";
 
 function ListBullet({
@@ -192,19 +191,12 @@ function CourseDetailPage() {
 
       <section className="container mx-auto px-4 pt-10">
         <div className="overflow-hidden rounded-2xl border border-border bg-muted">
-          {course.imageUrl ? (
-            <img
-              src={assetUrl(course.imageUrl)}
-              alt={`${course.name} cover`}
-              className="aspect-[4/3] w-full object-cover object-center sm:aspect-[16/6]"
-              loading="lazy"
-            />
-          ) : (
-            <div className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-2 text-muted-foreground sm:aspect-[16/6]">
-              <ImageIcon className="h-10 w-10" />
-              <p className="text-sm">{copy.imagePlaceholder}</p>
-            </div>
-          )}
+          <img
+            src={assetUrl(resolveCourseCover(course.imageUrl))}
+            alt={`${course.name} cover`}
+            className="aspect-[4/3] w-full object-cover object-center sm:aspect-[16/6]"
+            loading="lazy"
+          />
         </div>
       </section>
 
@@ -277,17 +269,12 @@ function SyllabusSection({
   const isSemester =
     course.syllabusMode === "semester" && semesters.length > 0;
   const flatModules = course.syllabus ?? [];
-  const totalCount = syllabusModuleCount(
-    isSemester ? "semester" : "flat",
-    flatModules,
-    semesters,
-  );
 
   if (isSemester) {
     return (
       <div>
         <h2 className="font-serif text-xl font-bold md:text-2xl">
-          {copy.sections.syllabusWithCount(totalCount)}
+          {copy.sections.syllabus}
         </h2>
         <Accordion type="multiple" defaultValue={["semester-0"]} className="mt-5 space-y-3">
           {semesters.map((s, i) => (
@@ -325,7 +312,7 @@ function SyllabusSection({
   return (
     <div>
       <h2 className="font-serif text-xl font-bold md:text-2xl">
-        {copy.sections.syllabusWithCount(totalCount)}
+        {copy.sections.syllabus}
       </h2>
       <ul className="mt-5 space-y-3">
         {flatModules.map((s: string, i: number) => (
