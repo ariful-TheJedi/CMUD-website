@@ -284,12 +284,7 @@ function SyllabusSection({
               className="overflow-hidden rounded-xl border border-border bg-card px-5"
             >
               <AccordionTrigger className="py-4 font-serif text-base font-bold hover:no-underline md:text-lg">
-                <span className="flex min-w-0 flex-1 items-center gap-2.5 text-left">
-                  <span className="truncate text-foreground">{s.label}</span>
-                  <span className="shrink-0 rounded-md bg-muted px-2 py-0.5 font-sans text-xs font-medium tabular-nums text-muted-foreground">
-                    {s.modules.length}
-                  </span>
-                </span>
+                <span className="truncate text-left text-foreground">{s.label}</span>
               </AccordionTrigger>
               <AccordionContent className="pb-4">
                 <ul className="space-y-3 border-t border-border/70 pt-4">
