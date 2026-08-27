@@ -58,12 +58,4 @@ export const contactPage = {
     title: "Campus locations",
     description: "Panthapath and Uttara marked on one map.",
   },
-  /** Compact contact details reused by the site footer */
-  footer: {
-    logo: "/media/shared/cmud-light-sea-green-transparent.png",
-    panthapath: "Panthapath: Holding No. 66, Razanighanda Complex, Green Road, Dhaka – 1205",
-    uttara: "Uttara: House 06, Sonargaon Jonopath Road, Sector 11, Dhaka",
-    phones: ["+880 1826-306254", "+880 1974-557777"],
-    email: "info@cmudusg.com",
-  },
 };

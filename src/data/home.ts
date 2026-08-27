@@ -62,7 +62,7 @@ export const homePage = {
 
   facultyPreview: {
     eyebrow: "Meet the Faculty",
-    title: "Senior consultants. Patient teachers.",
+    title: "",
     ctaLabel: "See all faculty",
     ctaTo: "/faculty" as const,
     limit: 3,
