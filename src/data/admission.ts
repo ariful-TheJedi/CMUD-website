@@ -17,9 +17,11 @@ export const admissionPage = {
     { value: "Uttara", label: "Uttara" },
   ],
   batches: [
-    { value: "jul-2026", label: "July 2026" },
-    { value: "oct-2026", label: "October 2026" },
+    { value: "Sept-2026", label: "September 2026" },
+    { value: "nov-2026", label: "November 2026" },
     { value: "jan-2027", label: "January 2027" },
+    { value: "may-2027", label: "May 2027" },
+    { value: "cmu", label: "CMU batch" }
   ],
   placeholders: {
     fullName: "Dr Kawser Mahmood",
