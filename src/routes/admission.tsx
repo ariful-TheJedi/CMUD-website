@@ -61,7 +61,7 @@ const schema = z.object({
   ]),
   phone: z.string().min(7, "Enter a valid phone number"),
   qualification: z.string().min(2, "Required"),
-  medicalCollege: z.string().min(2, "Required"),
+  medicalCollege: z.string().optional().or(z.literal("")),
   bmdcNumber: z.string().min(2, "Enter BMDC number"),
   preferredBranch: z.string().min(1, "Select a preferred branch"),
   course: z.string().min(1, "Select a course"),
@@ -243,9 +243,7 @@ function AdmissionPage() {
                 name="medicalCollege"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>
-                      {labels.medicalCollege} <RequiredMark />
-                    </FormLabel>
+                    <FormLabel>{labels.medicalCollege}</FormLabel>
                     <FormControl>
                       <Input placeholder={placeholders.medicalCollege} {...field} />
                     </FormControl>
