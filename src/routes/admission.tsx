@@ -55,15 +55,19 @@ export const Route = createFileRoute("/admission")({
 
 const schema = z.object({
   fullName: z.string().min(2, "Enter your full name"),
-  email: z.string().email("Enter a valid email"),
+  email: z.union([
+    z.literal(""),
+    z.string().trim().email("Enter a valid email"),
+  ]),
   phone: z.string().min(7, "Enter a valid phone number"),
   qualification: z.string().min(2, "Required"),
   medicalCollege: z.string().min(2, "Required"),
   bmdcNumber: z.string().min(2, "Enter BMDC number"),
   preferredBranch: z.string().min(1, "Select a preferred branch"),
   course: z.string().min(1, "Select a course"),
-  batch: z.string().min(1, "Select a preferred batch"),
-  address: z.string().min(2, "Required"),
+  batch: z.string().optional().or(z.literal("")),
+  address: z.string().optional().or(z.literal("")),
+  howDidYouFindUs: z.string().optional().or(z.literal("")),
   message: z.string().optional(),
 });
 
@@ -93,6 +97,7 @@ function AdmissionPage() {
       course: course ?? "",
       batch: "",
       address: "",
+      howDidYouFindUs: "",
       message: "",
     },
   });
@@ -117,6 +122,7 @@ function AdmissionPage() {
           courseSlug: values.course,
           preferredBatch: values.batch,
           address: values.address,
+          howDidYouFindUs: values.howDidYouFindUs,
           applicantMessage: values.message ?? "",
           website: "",
           captchaToken,
@@ -141,7 +147,18 @@ function AdmissionPage() {
     }
   }
 
-  const { hero, branches, batches, placeholders, success } = admissionPage;
+  const {
+    hero,
+    labels,
+    branches,
+    batches,
+    findUsOptions,
+    placeholders,
+    submit: submitCopy,
+    success,
+  } = admissionPage;
+
+  const RequiredMark = () => <span className="text-destructive">*</span>;
 
   return (
     <>
@@ -168,7 +185,9 @@ function AdmissionPage() {
                 name="fullName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Full name</FormLabel>
+                    <FormLabel>
+                      {labels.fullName} <RequiredMark />
+                    </FormLabel>
                     <FormControl>
                       <Input placeholder={placeholders.fullName} {...field} />
                     </FormControl>
@@ -181,7 +200,7 @@ function AdmissionPage() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>{labels.email}</FormLabel>
                     <FormControl>
                       <Input type="email" placeholder={placeholders.email} {...field} />
                     </FormControl>
@@ -194,7 +213,9 @@ function AdmissionPage() {
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Phone</FormLabel>
+                    <FormLabel>
+                      {labels.phone} <RequiredMark />
+                    </FormLabel>
                     <FormControl>
                       <Input placeholder={placeholders.phone} {...field} />
                     </FormControl>
@@ -207,7 +228,9 @@ function AdmissionPage() {
                 name="qualification"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Qualification</FormLabel>
+                    <FormLabel>
+                      {labels.qualification} <RequiredMark />
+                    </FormLabel>
                     <FormControl>
                       <Input placeholder={placeholders.qualification} {...field} />
                     </FormControl>
@@ -220,7 +243,9 @@ function AdmissionPage() {
                 name="medicalCollege"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Medical College</FormLabel>
+                    <FormLabel>
+                      {labels.medicalCollege} <RequiredMark />
+                    </FormLabel>
                     <FormControl>
                       <Input placeholder={placeholders.medicalCollege} {...field} />
                     </FormControl>
@@ -233,7 +258,9 @@ function AdmissionPage() {
                 name="bmdcNumber"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>BMDC number</FormLabel>
+                    <FormLabel>
+                      {labels.bmdcNumber} <RequiredMark />
+                    </FormLabel>
                     <FormControl>
                       <Input placeholder={placeholders.bmdcNumber} {...field} />
                     </FormControl>
@@ -246,11 +273,13 @@ function AdmissionPage() {
                 name="preferredBranch"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Preferred Branch</FormLabel>
+                    <FormLabel>
+                      {labels.preferredBranch} <RequiredMark />
+                    </FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select preferred branch" />
+                          <SelectValue placeholder={placeholders.preferredBranch} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -270,11 +299,13 @@ function AdmissionPage() {
                 name="course"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Course</FormLabel>
+                    <FormLabel>
+                      {labels.course} <RequiredMark />
+                    </FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Choose a course" />
+                          <SelectValue placeholder={placeholders.course} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -294,11 +325,14 @@ function AdmissionPage() {
                 name="batch"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Preferred batch</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <FormLabel>{labels.preferredBatch}</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value || undefined}
+                    >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Choose batch" />
+                          <SelectValue placeholder={placeholders.preferredBatch} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -315,10 +349,37 @@ function AdmissionPage() {
               />
               <FormField
                 control={form.control}
+                name="howDidYouFindUs"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{labels.howDidYouFindUs}</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value || undefined}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder={placeholders.howDidYouFindUs} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {findUsOptions.map((o) => (
+                          <SelectItem key={o.value} value={o.value}>
+                            {o.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
                 name="address"
                 render={({ field }) => (
                   <FormItem className="md:col-span-2">
-                    <FormLabel>Address</FormLabel>
+                    <FormLabel>{labels.address}</FormLabel>
                     <FormControl>
                       <Input placeholder={placeholders.address} {...field} />
                     </FormControl>
@@ -331,7 +392,7 @@ function AdmissionPage() {
                 name="message"
                 render={({ field }) => (
                   <FormItem className="md:col-span-2">
-                    <FormLabel>Message (optional)</FormLabel>
+                    <FormLabel>{labels.message}</FormLabel>
                     <FormControl>
                       <Textarea placeholder={placeholders.message} rows={4} {...field} />
                     </FormControl>
@@ -362,9 +423,8 @@ function AdmissionPage() {
                   className="w-full md:w-auto"
                   disabled={submitting || !captchaToken}
                 >
-                  {submitting ? "Submitting…" : "Submit application"}
+                  {submitting ? submitCopy.submitting : submitCopy.idle}
                 </Button>
-
               </div>
             </form>
           </Form>

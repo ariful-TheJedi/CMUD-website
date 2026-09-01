@@ -22,6 +22,7 @@ import {
   type AdmissionNote,
 } from "@/lib/admissions.functions";
 import { listPublicCourses } from "@/lib/courses.functions";
+import { admissionPage } from "@/data/admission";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -535,6 +536,7 @@ function AdmissionDetailsDialog({ id, onClose }: { id: string; onClose: () => vo
                 <Field label="Course" value={d.courseName} />
                 <Field label="Branch" value={d.preferredBranch} />
                 <Field label="Preferred batch" value={d.preferredBatch} />
+                <Field label={admissionPage.labels.howDidYouFindUs} value={d.howDidYouFindUs || "—"} />
                 <Field label="Submitted" value={new Date(d.submittedAt).toLocaleString()} />
                 <Field label="Status">
                   <StatusBadge status={d.status} />
@@ -685,6 +687,7 @@ function AdmissionEditDialog({ id, onClose }: { id: string; onClose: () => void 
           preferredBranch: d.preferredBranch,
           preferredBatch: d.preferredBatch,
           address: d.address,
+          howDidYouFindUs: d.howDidYouFindUs,
           applicantMessage: d.applicantMessage ?? "",
         }
       : null);
@@ -705,6 +708,7 @@ function AdmissionEditDialog({ id, onClose }: { id: string; onClose: () => void 
           preferredBranch: values!.preferredBranch as "Panthapath" | "Uttara",
           preferredBatch: values!.preferredBatch,
           address: values!.address,
+          howDidYouFindUs: values!.howDidYouFindUs,
           applicantMessage: values!.applicantMessage,
         },
       }),
@@ -777,6 +781,26 @@ function AdmissionEditDialog({ id, onClose }: { id: string; onClose: () => void 
               value={values.preferredBatch}
               onChange={(v) => set("preferredBatch", v)}
             />
+            <div>
+              <div className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {admissionPage.labels.howDidYouFindUs}
+              </div>
+              <Select
+                value={values.howDidYouFindUs || undefined}
+                onValueChange={(v) => set("howDidYouFindUs", v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Optional" />
+                </SelectTrigger>
+                <SelectContent>
+                  {admissionPage.findUsOptions.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="md:col-span-2">
               <div className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Address

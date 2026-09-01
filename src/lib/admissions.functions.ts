@@ -30,6 +30,7 @@ export type AdmissionApplicationDetail = AdmissionApplicationListItem & {
   medicalCollege: string;
   address: string;
   preferredBatch: string;
+  howDidYouFindUs: string;
   applicantMessage: string | null;
   statusUpdatedAt: string | null;
   statusUpdatedBy: string | null;
@@ -74,6 +75,7 @@ type AdmissionRow = {
   medical_college?: string;
   address?: string;
   preferred_batch?: string;
+  how_did_you_find_us?: string;
   applicant_message?: string | null;
   status_updated_at?: string | Date | null;
   status_updated_by?: string | null;
@@ -103,6 +105,7 @@ function toDetail(r: AdmissionRow): AdmissionApplicationDetail {
     medicalCollege: r.medical_college ?? "",
     address: r.address ?? "",
     preferredBatch: r.preferred_batch ?? "",
+    howDidYouFindUs: r.how_did_you_find_us ?? "",
     applicantMessage: r.applicant_message ?? null,
     statusUpdatedAt: r.status_updated_at ? asIso(r.status_updated_at) : null,
     statusUpdatedBy: r.status_updated_by ?? null,
@@ -122,7 +125,10 @@ async function assertAdmissionsUpdate(ctx: StaffContext) {
 // ---------- public submission ----------
 const submitSchema = z.object({
   fullName: z.string().trim().min(2).max(120),
-  email: z.string().trim().toLowerCase().email().max(255),
+  email: z.union([
+    z.literal(""),
+    z.string().trim().toLowerCase().email().max(255),
+  ]),
   phone: z
     .string()
     .trim()
@@ -134,8 +140,9 @@ const submitSchema = z.object({
   bmdcNumber: z.string().trim().min(2).max(60),
   preferredBranch: z.enum(BRANCHES),
   courseSlug: z.string().trim().min(1).max(120),
-  preferredBatch: z.string().trim().min(1).max(60),
-  address: z.string().trim().min(2).max(500),
+  preferredBatch: z.string().trim().max(60).optional().or(z.literal("")),
+  address: z.string().trim().max(500).optional().or(z.literal("")),
+  howDidYouFindUs: z.string().trim().max(200).optional().or(z.literal("")),
   applicantMessage: z.string().trim().max(2000).optional().or(z.literal("")),
   website: z.string().max(0).optional().or(z.literal("")),
   captchaToken: z.string().trim().min(10).max(4000),
@@ -166,14 +173,16 @@ export const submitAdmissionApplication = createServerFn({ method: "POST" })
       }
 
       const sixtyAgo = new Date(Date.now() - 60_000).toISOString();
-      const { rows: recent } = await dbQuery<{ id: string }>(
-        "submitAdmission.dup",
-        `SELECT id FROM admission_applications
-         WHERE email = $1 AND course_slug = $2 AND submitted_at >= $3
-         LIMIT 1`,
-        [data.email, data.courseSlug, sixtyAgo],
-      );
-      if (recent.length > 0) return { ok: true };
+      if (data.email) {
+        const { rows: recent } = await dbQuery<{ id: string }>(
+          "submitAdmission.dup",
+          `SELECT id FROM admission_applications
+           WHERE email = $1 AND course_slug = $2 AND submitted_at >= $3
+           LIMIT 1`,
+          [data.email, data.courseSlug, sixtyAgo],
+        );
+        if (recent.length > 0) return { ok: true };
+      }
 
       const message = data.applicantMessage?.trim() || "";
       await dbQuery(
@@ -181,13 +190,13 @@ export const submitAdmissionApplication = createServerFn({ method: "POST" })
         `INSERT INTO admission_applications (
            full_name, email, phone, qualification, medical_college, bmdc_number,
            preferred_branch, course_id, course_slug, course_name, preferred_batch,
-           address, applicant_message, message, status, submitted_at
+           address, how_did_you_find_us, applicant_message, message, status, submitted_at
          ) VALUES (
-           $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,'new'::admission_status, now()
+           $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,'new'::admission_status, now()
          )`,
         [
           data.fullName,
-          data.email,
+          data.email || "",
           data.phone,
           data.qualification,
           data.medicalCollege,
@@ -196,8 +205,9 @@ export const submitAdmissionApplication = createServerFn({ method: "POST" })
           course.id,
           course.slug,
           course.name,
-          data.preferredBatch,
-          data.address,
+          data.preferredBatch || "",
+          data.address || "",
+          data.howDidYouFindUs || "",
           message || null,
           message,
         ],
@@ -294,7 +304,8 @@ export const getAdmissionApplication = createServerFn({ method: "POST" })
       "getAdmissionApplication",
       `SELECT id, full_name, email, phone, bmdc_number, course_name, course_slug,
               preferred_branch, submitted_at, status::text AS status,
-              qualification, medical_college, address, preferred_batch, applicant_message,
+              qualification, medical_college, address, preferred_batch,
+              how_did_you_find_us, applicant_message,
               status_updated_at, status_updated_by, reviewed_at, reviewed_by
        FROM admission_applications
        WHERE id = $1`,
@@ -369,6 +380,7 @@ const editSchema = z.object({
   preferredBranch: z.enum(BRANCHES),
   preferredBatch: z.string().trim().min(1).max(60),
   address: z.string().trim().min(2).max(500),
+  howDidYouFindUs: z.string().trim().max(200).optional().or(z.literal("")),
   applicantMessage: z.string().trim().max(2000).nullable().optional(),
 });
 
@@ -383,9 +395,9 @@ export const updateAdmissionApplication = createServerFn({ method: "POST" })
       `UPDATE admission_applications SET
          full_name = $1, email = $2, phone = $3, qualification = $4,
          medical_college = $5, bmdc_number = $6, preferred_branch = $7,
-         preferred_batch = $8, address = $9, applicant_message = $10,
-         message = $10, updated_at = now()
-       WHERE id = $11`,
+         preferred_batch = $8, address = $9, how_did_you_find_us = $10,
+         applicant_message = $11, message = $11, updated_at = now()
+       WHERE id = $12`,
       [
         data.fullName,
         data.email,
@@ -396,6 +408,7 @@ export const updateAdmissionApplication = createServerFn({ method: "POST" })
         data.preferredBranch,
         data.preferredBatch,
         data.address,
+        data.howDidYouFindUs || "",
         message || null,
         data.id,
       ],

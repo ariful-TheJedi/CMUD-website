@@ -254,6 +254,7 @@ CREATE TABLE IF NOT EXISTS admission_applications (
   course_name TEXT NOT NULL DEFAULT '',
   preferred_batch TEXT NOT NULL DEFAULT '',
   address TEXT NOT NULL DEFAULT '',
+  how_did_you_find_us TEXT NOT NULL DEFAULT '',
   applicant_message TEXT NULL,
   message TEXT NOT NULL DEFAULT '',
   status admission_status NOT NULL DEFAULT 'new',
@@ -274,6 +275,7 @@ ALTER TABLE admission_applications ADD COLUMN IF NOT EXISTS preferred_branch TEX
 ALTER TABLE admission_applications ADD COLUMN IF NOT EXISTS course_slug TEXT NOT NULL DEFAULT '';
 ALTER TABLE admission_applications ADD COLUMN IF NOT EXISTS preferred_batch TEXT NOT NULL DEFAULT '';
 ALTER TABLE admission_applications ADD COLUMN IF NOT EXISTS address TEXT NOT NULL DEFAULT '';
+ALTER TABLE admission_applications ADD COLUMN IF NOT EXISTS how_did_you_find_us TEXT NOT NULL DEFAULT '';
 ALTER TABLE admission_applications ADD COLUMN IF NOT EXISTS applicant_message TEXT NULL;
 ALTER TABLE admission_applications ADD COLUMN IF NOT EXISTS submitted_at TIMESTAMPTZ NOT NULL DEFAULT now();
 
