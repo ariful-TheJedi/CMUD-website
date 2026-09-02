@@ -13,6 +13,14 @@ export const facultyPage = {
   hero: {
     eyebrow: "Faculty",
     title: "Clinicians who teach.",
-    description: "Our faculty are practising consultants who bring real life examples and cases into every session.",
+    description:
+      "Our faculty are practising consultants who bring real life examples and cases into every session.",
+    image: "/media/faculty/team.jpg",
+    imageAlt: "CMUD faculty and consultants group photograph",
+  },
+  roster: {
+    eyebrow: "Our team",
+    title: "Meet the instructors",
+    description: "Senior clinicians leading theory, supervised scanning, and case-based learning.",
   },
 };
