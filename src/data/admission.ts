@@ -63,7 +63,7 @@ export const admissionPage = {
     message: "Tell us about your background and goals",
   },
   submit: {
-    idle: "Submit application",
+    idle: "Submit",
     submitting: "Submitting…",
   },
   success: {

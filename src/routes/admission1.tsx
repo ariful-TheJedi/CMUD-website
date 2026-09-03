@@ -39,7 +39,7 @@ const admissionSearchSchema = z.object({
   course: z.string().optional().catch(undefined),
 });
 
-export const Route = createFileRoute("/admission")({
+export const Route = createFileRoute("/admission1")({
   validateSearch: (search) => admissionSearchSchema.parse(search),
   head: () => ({
     meta: [
@@ -53,7 +53,6 @@ export const Route = createFileRoute("/admission")({
   loader: ({ context }) => context.queryClient.ensureQueryData(coursesQueryOptions),
 });
 
-// Note: We will update this schema to handle the new payment fields conditionally later
 const schema = z.object({
   fullName: z.string().min(2, "Enter your full name"),
   email: z.union([
@@ -80,13 +79,10 @@ function AdmissionPage() {
   const submit = useServerFn(submitAdmissionApplication);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  
-  // State to track form type
-  const [admissionType, setAdmissionType] = useState<"request" | "payment">("request");
-
   const [captchaToken, setCaptchaToken] = useState(() =>
     isTurnstileEnabledClient() ? "" : TURNSTILE_BYPASS_TOKEN,
   );
+
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -182,42 +178,8 @@ function AdmissionPage() {
 
       <section className="container mx-auto px-4 py-10">
         <div className="mx-auto max-w-3xl rounded-2xl border border-border bg-card p-6 shadow-[var(--shadow-card)] md:p-10">
-          
-          {/* Smooth Segmented Control Toggle */}
-          <div className="relative mb-8 flex w-full rounded-lg bg-muted p-1">
-            <div
-              className={`absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-md bg-background shadow-sm transition-transform duration-300 ease-out ${
-                admissionType === "payment" ? "translate-x-full" : "translate-x-0"
-              }`}
-            />
-            <button
-              type="button"
-              onClick={() => setAdmissionType("request")}
-              className={`relative z-10 w-1/2 py-2.5 text-sm font-semibold transition-colors duration-300 ${
-                admissionType === "request"
-                  ? "text-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Request For Admission
-            </button>
-            <button
-              type="button"
-              onClick={() => setAdmissionType("payment")}
-              className={`relative z-10 w-1/2 py-2.5 text-sm font-semibold transition-colors duration-300 ${
-                admissionType === "payment"
-                  ? "text-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              New Student Admission (On Payment)
-            </button>
-          </div>
-
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-5 md:grid-cols-2">
-              
-              {/* Existing Fields */}
               <FormField
                 control={form.control}
                 name="fullName"
@@ -436,25 +398,8 @@ function AdmissionPage() {
                   </FormItem>
                 )}
               />
-
-              {/* Smoothly Animated Conditional Payment Block */}
-              <div 
-                className={`col-span-1 md:col-span-2 grid transition-all duration-500 ease-in-out ${
-                  admissionType === "payment" ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-                }`}
-              >
-                <div className="overflow-hidden">
-                  <div className="mt-4 rounded-lg border border-border bg-muted/20 p-6 space-y-4">
-                    <h3 className="font-semibold text-foreground text-lg border-b pb-2">Payment Details</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Placeholder for your payment input fields.
-                    </p>
-                    {/* Add your payment <FormField> components here */}
-                  </div>
-                </div>
-              </div>
-
-              <div className="md:col-span-2 space-y-3 pt-4 border-t border-border mt-2">
+              <div className="md:col-span-2 space-y-3">
+                {/* Honeypot — hidden from users */}
                 <input
                   type="text"
                   name="website"
@@ -465,13 +410,11 @@ function AdmissionPage() {
                   onChange={() => {}}
                 />
                 <Turnstile onVerify={setCaptchaToken} onExpire={() => setCaptchaToken("")} />
-                
                 {submitted ? (
                   <div className="rounded-md border border-secondary/40 bg-secondary/10 p-4 text-sm text-foreground">
                     {success.banner}
                   </div>
                 ) : null}
-                
                 <Button
                   type="submit"
                   size="lg"

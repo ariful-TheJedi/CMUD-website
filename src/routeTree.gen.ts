@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AdmissionRouteImport } from './routes/admission'
+import { Route as Admission1RouteImport } from './routes/admission1'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CertificateCheckRouteImport } from './routes/certificate-check'
 import { Route as CertificationRouteImport } from './routes/certification'
@@ -68,6 +69,11 @@ const AboutRoute = AboutRouteImport.update({
 const AdmissionRoute = AdmissionRouteImport.update({
   id: '/admission',
   path: '/admission',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Admission1Route = Admission1RouteImport.update({
+  id: '/admission1',
+  path: '/admission1',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -278,6 +284,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/admission': typeof AdmissionRoute
+  '/admission1': typeof Admission1Route
   '/auth': typeof AuthRoute
   '/certificate-check': typeof CertificateCheckRoute
   '/certification': typeof CertificationRoute
@@ -320,6 +327,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/admission': typeof AdmissionRoute
+  '/admission1': typeof Admission1Route
   '/auth': typeof AuthRoute
   '/certificate-check': typeof CertificateCheckRoute
   '/certification': typeof CertificationRoute
@@ -363,6 +371,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/about': typeof AboutRoute
   '/admission': typeof AdmissionRoute
+  '/admission1': typeof Admission1Route
   '/auth': typeof AuthRoute
   '/certificate-check': typeof CertificateCheckRoute
   '/certification': typeof CertificationRoute
@@ -407,6 +416,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/admission'
+    | '/admission1'
     | '/auth'
     | '/certificate-check'
     | '/certification'
@@ -449,6 +459,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/admission'
+    | '/admission1'
     | '/auth'
     | '/certificate-check'
     | '/certification'
@@ -491,6 +502,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/about'
     | '/admission'
+    | '/admission1'
     | '/auth'
     | '/certificate-check'
     | '/certification'
@@ -535,6 +547,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AboutRoute: typeof AboutRoute
   AdmissionRoute: typeof AdmissionRoute
+  Admission1Route: typeof Admission1Route
   AuthRoute: typeof AuthRoute
   CertificateCheckRoute: typeof CertificateCheckRoute
   CertificationRoute: typeof CertificationRoute
@@ -580,6 +593,13 @@ declare module '@tanstack/react-router' {
       path: '/admission'
       fullPath: '/admission'
       preLoaderRoute: typeof AdmissionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admission1': {
+      id: '/admission1'
+      path: '/admission1'
+      fullPath: '/admission1'
+      preLoaderRoute: typeof Admission1RouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -940,6 +960,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AboutRoute: AboutRoute,
   AdmissionRoute: AdmissionRoute,
+  Admission1Route: Admission1Route,
   AuthRoute: AuthRoute,
   CertificateCheckRoute: CertificateCheckRoute,
   CertificationRoute: CertificationRoute,
