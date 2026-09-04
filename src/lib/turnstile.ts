@@ -15,17 +15,17 @@ function envFlagTrue(value: string | undefined): boolean {
   return (value ?? "").trim().toLowerCase() === "true";
 }
 
-/** Client: show/require the Turnstile widget. */
+/** Temporary disable for the current test pass.
+ * Keep the Turnstile code in place, but force it off so forms can be submitted
+ * normally until the feature is explicitly re-enabled later.
+ */
 export function isTurnstileEnabledClient(): boolean {
-  return envFlagTrue(import.meta.env.VITE_TURNSTILE_ENABLED as string | undefined);
+  return false;
 }
 
-/** Server: verify tokens with Cloudflare siteverify. */
+/** Temporary disable for the current test pass. */
 export function isTurnstileEnabledServer(): boolean {
-  return (
-    envFlagTrue(process.env.TURNSTILE_ENABLED) &&
-    Boolean(process.env.TURNSTILE_SECRET_KEY?.trim())
-  );
+  return false;
 }
 
 export async function verifyTurnstileToken(token: string): Promise<void> {

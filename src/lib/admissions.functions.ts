@@ -146,6 +146,13 @@ const submitSchema = z.object({
   applicantMessage: z.string().trim().max(2000).optional().or(z.literal("")),
   website: z.string().max(0).optional().or(z.literal("")),
   captchaToken: z.string().trim().min(10).max(4000),
+
+  // NEW FIELDS FOR PAYMENT ROUTING
+  admissionType: z.enum(["request", "payment"]).optional().default("request"),
+  paymentMethod: z.string().max(50).optional(),
+  mobileNumber: z.string().max(50).optional(),
+  transactionId: z.string().max(100).optional(),
+  cashSerialNumber: z.string().max(100).optional(),
 });
 
 export const submitAdmissionApplication = createServerFn({ method: "POST" })
@@ -184,34 +191,67 @@ export const submitAdmissionApplication = createServerFn({ method: "POST" })
         if (recent.length > 0) return { ok: true };
       }
 
-      const message = data.applicantMessage?.trim() || "";
-      await dbQuery(
-        "submitAdmission.insert",
-        `INSERT INTO admission_applications (
-           full_name, email, phone, qualification, medical_college, bmdc_number,
-           preferred_branch, course_id, course_slug, course_name, preferred_batch,
-           address, how_did_you_find_us, applicant_message, message, status, submitted_at
-         ) VALUES (
-           $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,'new'::admission_status, now()
-         )`,
-        [
-          data.fullName,
-          data.email || "",
-          data.phone,
-          data.qualification,
-          data.medicalCollege || "",
-          data.bmdcNumber,
-          data.preferredBranch,
-          course.id,
-          course.slug,
-          course.name,
-          data.preferredBatch || "",
-          data.address || "",
-          data.howDidYouFindUs || "",
-          message || null,
-          message,
-        ],
-      );
+const message = data.applicantMessage?.trim() || "";
+
+      if (data.admissionType === "payment") {
+        await dbQuery(
+          "submitAdmission.insertPayment",
+          `INSERT INTO payment_admissions (
+             full_name, email, phone, qualification, medical_college, bmdc_number,
+             preferred_branch, course_slug, preferred_batch, address, how_did_you_find_us,
+             applicant_message, payment_method, mobile_number, transaction_id, cash_serial_number,
+             status, submitted_at
+           ) VALUES (
+             $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,'new'::admission_status, now()
+           )`,
+          [
+            data.fullName,
+            data.email || "",
+            data.phone,
+            data.qualification,
+            data.medicalCollege || "",
+            data.bmdcNumber,
+            data.preferredBranch,
+            course.slug,
+            data.preferredBatch || "",
+            data.address || "",
+            data.howDidYouFindUs || "",
+            message || null,
+            data.paymentMethod || "unknown",
+            data.mobileNumber || null,
+            data.transactionId || null,
+            data.cashSerialNumber || null,
+          ]
+        );
+      } else {
+        await dbQuery(
+          "submitAdmission.insert",
+          `INSERT INTO admission_applications (
+             full_name, email, phone, qualification, medical_college, bmdc_number,
+             preferred_branch, course_id, course_slug, course_name, preferred_batch,
+             address, how_did_you_find_us, applicant_message, message, status, submitted_at
+           ) VALUES (
+             $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,'new'::admission_status, now()
+           )`,
+          [
+            data.fullName,
+            data.email || "",
+            data.phone,
+            data.qualification,
+            data.medicalCollege || "",
+            data.bmdcNumber,
+            data.preferredBranch,
+            course.id,
+            course.slug,
+            course.name,
+            data.preferredBatch || "",
+            data.address || "",
+            data.howDidYouFindUs || "",
+            message || null,
+            message,
+          ]
+        );
+      }
       return { ok: true };
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Submission failed";

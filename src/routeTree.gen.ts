@@ -26,6 +26,9 @@ import { Route as NoticesRouteImport } from './routes/notices'
 import { Route as TestimonialsRouteImport } from './routes/testimonials'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
+import { Route as AdmissionIndexRouteImport } from './routes/admission.index'
+import { Route as AdmissionApplyRouteImport } from './routes/admission.apply'
+import { Route as AdmissionRegistrationRouteImport } from './routes/admission.registration'
 import { Route as CoursesIndexRouteImport } from './routes/courses.index'
 import { Route as CoursesSlugRouteImport } from './routes/courses.$slug'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
@@ -135,6 +138,21 @@ const AdminLoginRoute = AdminLoginRouteImport.update({
   id: '/admin/login',
   path: '/admin/login',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdmissionIndexRoute = AdmissionIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdmissionRoute,
+} as any)
+const AdmissionApplyRoute = AdmissionApplyRouteImport.update({
+  id: '/apply',
+  path: '/apply',
+  getParentRoute: () => AdmissionRoute,
+} as any)
+const AdmissionRegistrationRoute = AdmissionRegistrationRouteImport.update({
+  id: '/registration',
+  path: '/registration',
+  getParentRoute: () => AdmissionRoute,
 } as any)
 const CoursesIndexRoute = CoursesIndexRouteImport.update({
   id: '/courses/',
@@ -283,7 +301,7 @@ const AuthenticatedAdminFacultyIdEditRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/admission': typeof AdmissionRoute
+  '/admission': typeof AdmissionRouteWithChildren
   '/admission1': typeof Admission1Route
   '/auth': typeof AuthRoute
   '/certificate-check': typeof CertificateCheckRoute
@@ -297,7 +315,10 @@ export interface FileRoutesByFullPath {
   '/testimonials': typeof TestimonialsRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/admin/login': typeof AdminLoginRoute
+  '/admission/apply': typeof AdmissionApplyRoute
+  '/admission/registration': typeof AdmissionRegistrationRoute
   '/courses/$slug': typeof CoursesSlugRoute
+  '/admission/': typeof AdmissionIndexRoute
   '/courses/': typeof CoursesIndexRoute
   '/admin/admissions': typeof AuthenticatedAdminAdmissionsRoute
   '/admin/certificate-check': typeof AuthenticatedAdminCertificateCheckRoute
@@ -326,7 +347,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/admission': typeof AdmissionRoute
   '/admission1': typeof Admission1Route
   '/auth': typeof AuthRoute
   '/certificate-check': typeof CertificateCheckRoute
@@ -339,7 +359,10 @@ export interface FileRoutesByTo {
   '/notices': typeof NoticesRoute
   '/testimonials': typeof TestimonialsRoute
   '/admin/login': typeof AdminLoginRoute
+  '/admission/apply': typeof AdmissionApplyRoute
+  '/admission/registration': typeof AdmissionRegistrationRoute
   '/courses/$slug': typeof CoursesSlugRoute
+  '/admission': typeof AdmissionIndexRoute
   '/courses': typeof CoursesIndexRoute
   '/admin/admissions': typeof AuthenticatedAdminAdmissionsRoute
   '/admin/certificate-check': typeof AuthenticatedAdminCertificateCheckRoute
@@ -370,7 +393,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/about': typeof AboutRoute
-  '/admission': typeof AdmissionRoute
+  '/admission': typeof AdmissionRouteWithChildren
   '/admission1': typeof Admission1Route
   '/auth': typeof AuthRoute
   '/certificate-check': typeof CertificateCheckRoute
@@ -384,7 +407,10 @@ export interface FileRoutesById {
   '/testimonials': typeof TestimonialsRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/admin/login': typeof AdminLoginRoute
+  '/admission/apply': typeof AdmissionApplyRoute
+  '/admission/registration': typeof AdmissionRegistrationRoute
   '/courses/$slug': typeof CoursesSlugRoute
+  '/admission/': typeof AdmissionIndexRoute
   '/courses/': typeof CoursesIndexRoute
   '/_authenticated/admin/admissions': typeof AuthenticatedAdminAdmissionsRoute
   '/_authenticated/admin/certificate-check': typeof AuthenticatedAdminCertificateCheckRoute
@@ -429,7 +455,10 @@ export interface FileRouteTypes {
     | '/testimonials'
     | '/admin'
     | '/admin/login'
+    | '/admission/apply'
+    | '/admission/registration'
     | '/courses/$slug'
+    | '/admission/'
     | '/courses/'
     | '/admin/admissions'
     | '/admin/certificate-check'
@@ -458,7 +487,6 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/about'
-    | '/admission'
     | '/admission1'
     | '/auth'
     | '/certificate-check'
@@ -471,7 +499,10 @@ export interface FileRouteTypes {
     | '/notices'
     | '/testimonials'
     | '/admin/login'
+    | '/admission/apply'
+    | '/admission/registration'
     | '/courses/$slug'
+    | '/admission'
     | '/courses'
     | '/admin/admissions'
     | '/admin/certificate-check'
@@ -515,7 +546,10 @@ export interface FileRouteTypes {
     | '/testimonials'
     | '/_authenticated/admin'
     | '/admin/login'
+    | '/admission/apply'
+    | '/admission/registration'
     | '/courses/$slug'
+    | '/admission/'
     | '/courses/'
     | '/_authenticated/admin/admissions'
     | '/_authenticated/admin/certificate-check'
@@ -546,7 +580,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AboutRoute: typeof AboutRoute
-  AdmissionRoute: typeof AdmissionRoute
+  AdmissionRoute: typeof AdmissionRouteWithChildren
   Admission1Route: typeof Admission1Route
   AuthRoute: typeof AuthRoute
   CertificateCheckRoute: typeof CertificateCheckRoute
@@ -685,6 +719,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/login'
       preLoaderRoute: typeof AdminLoginRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admission/': {
+      id: '/admission/'
+      path: '/'
+      fullPath: '/admission/'
+      preLoaderRoute: typeof AdmissionIndexRouteImport
+      parentRoute: typeof AdmissionRoute
+    }
+    '/admission/apply': {
+      id: '/admission/apply'
+      path: '/apply'
+      fullPath: '/admission/apply'
+      preLoaderRoute: typeof AdmissionApplyRouteImport
+      parentRoute: typeof AdmissionRoute
+    }
+    '/admission/registration': {
+      id: '/admission/registration'
+      path: '/registration'
+      fullPath: '/admission/registration'
+      preLoaderRoute: typeof AdmissionRegistrationRouteImport
+      parentRoute: typeof AdmissionRoute
     }
     '/courses/': {
       id: '/courses/'
@@ -955,11 +1010,27 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface AdmissionRouteChildren {
+  AdmissionApplyRoute: typeof AdmissionApplyRoute
+  AdmissionRegistrationRoute: typeof AdmissionRegistrationRoute
+  AdmissionIndexRoute: typeof AdmissionIndexRoute
+}
+
+const AdmissionRouteChildren: AdmissionRouteChildren = {
+  AdmissionApplyRoute: AdmissionApplyRoute,
+  AdmissionRegistrationRoute: AdmissionRegistrationRoute,
+  AdmissionIndexRoute: AdmissionIndexRoute,
+}
+
+const AdmissionRouteWithChildren = AdmissionRoute._addFileChildren(
+  AdmissionRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AboutRoute: AboutRoute,
-  AdmissionRoute: AdmissionRoute,
+  AdmissionRoute: AdmissionRouteWithChildren,
   Admission1Route: Admission1Route,
   AuthRoute: AuthRoute,
   CertificateCheckRoute: CertificateCheckRoute,

@@ -85,13 +85,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "CMUD — College of Medical Ultrasound & Doppler" },
+      { title: "CMUD — Center for Medical Ultrasound & Doppler" },
       {
         name: "description",
         content:
           "CMUD offers hands-on professional training in medical ultrasound and Doppler imaging for doctors, sonographers, and medical students.",
       },
-      { property: "og:title", content: "CMUD — College of Medical Ultrasound & Doppler" },
+      { property: "og:title", content: "CMUD — Center for Medical Ultrasound & Doppler" },
       {
         property: "og:description",
         content: "Hands-on professional training in medical ultrasound and Doppler imaging.",
