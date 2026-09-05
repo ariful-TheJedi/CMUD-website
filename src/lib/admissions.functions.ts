@@ -11,6 +11,7 @@ import { asIso, dbQuery } from "@/lib/db-helpers";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 
 export type AdmissionStatus = "new" | "contacted" | "admitted" | "rejected";
+export type PaymentAdmissionStatus = "pending" | "verified" | "not_verified";
 
 export type AdmissionApplicationListItem = {
   id: string;
@@ -23,6 +24,34 @@ export type AdmissionApplicationListItem = {
   preferredBranch: string;
   submittedAt: string;
   status: AdmissionStatus;
+};
+
+export type PaymentAdmissionListItem = {
+  id: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  bmdcNumber: string;
+  courseName: string;
+  courseSlug: string;
+  preferredBranch: string;
+  submittedAt: string;
+  status: PaymentAdmissionStatus;
+  paymentMethod: string;
+  mobileNumber: string | null;
+  transactionId: string | null;
+  cashSerialNumber: string | null;
+  accountNumber: string | null;
+  accountName: string | null;
+};
+
+export type PaymentAdmissionDetail = PaymentAdmissionListItem & {
+  qualification: string;
+  medicalCollege: string;
+  address: string;
+  preferredBatch: string;
+  howDidYouFindUs: string;
+  applicantMessage: string | null;
 };
 
 export type AdmissionApplicationDetail = AdmissionApplicationListItem & {
@@ -59,6 +88,7 @@ export type AdmissionFilters = {
 
 const BRANCHES = ["Panthapath", "Uttara"] as const;
 const statusEnum = z.enum(["new", "contacted", "admitted", "rejected"]);
+const paymentStatusEnum = z.enum(["pending", "verified", "not_verified"]);
 
 type AdmissionRow = {
   id: string;
@@ -83,6 +113,35 @@ type AdmissionRow = {
   reviewed_by?: string | null;
 };
 
+export type PaymentAdmissionFilters = Omit<AdmissionFilters, "status"> & {
+  status?: PaymentAdmissionStatus | "all";
+};
+
+type PaymentAdmissionRow = {
+  id: string;
+  full_name: string;
+  email: string;
+  phone: string;
+  bmdc_number: string;
+  course_name: string;
+  course_slug: string;
+  preferred_branch: string;
+  submitted_at: string | Date;
+  status: string;
+  qualification?: string;
+  medical_college?: string;
+  address?: string;
+  preferred_batch?: string;
+  how_did_you_find_us?: string;
+  applicant_message?: string | null;
+  payment_method: string;
+  mobile_number: string | null;
+  transaction_id: string | null;
+  cash_serial_number: string | null;
+  account_number: string | null;
+  account_name: string | null;
+};
+
 function toListItem(r: AdmissionRow): AdmissionApplicationListItem {
   return {
     id: r.id,
@@ -95,6 +154,39 @@ function toListItem(r: AdmissionRow): AdmissionApplicationListItem {
     preferredBranch: r.preferred_branch ?? "",
     submittedAt: asIso(r.submitted_at),
     status: r.status as AdmissionStatus,
+  };
+}
+
+function toPaymentListItem(r: PaymentAdmissionRow): PaymentAdmissionListItem {
+  return {
+    id: r.id,
+    fullName: r.full_name,
+    email: r.email,
+    phone: r.phone,
+    bmdcNumber: r.bmdc_number ?? "",
+    courseName: r.course_name,
+    courseSlug: r.course_slug ?? "",
+    preferredBranch: r.preferred_branch ?? "",
+    submittedAt: asIso(r.submitted_at),
+    status: r.status as PaymentAdmissionStatus,
+    paymentMethod: r.payment_method,
+    mobileNumber: r.mobile_number ?? null,
+    transactionId: r.transaction_id ?? null,
+    cashSerialNumber: r.cash_serial_number ?? null,
+    accountNumber: r.account_number ?? null,
+    accountName: r.account_name ?? null,
+  };
+}
+
+function toPaymentDetail(r: PaymentAdmissionRow): PaymentAdmissionDetail {
+  return {
+    ...toPaymentListItem(r),
+    qualification: r.qualification ?? "",
+    medicalCollege: r.medical_college ?? "",
+    address: r.address ?? "",
+    preferredBatch: r.preferred_batch ?? "",
+    howDidYouFindUs: r.how_did_you_find_us ?? "",
+    applicantMessage: r.applicant_message ?? null,
   };
 }
 
@@ -153,6 +245,8 @@ const submitSchema = z.object({
   mobileNumber: z.string().max(50).optional(),
   transactionId: z.string().max(100).optional(),
   cashSerialNumber: z.string().max(100).optional(),
+  accountNumber: z.string().max(100).optional(),
+  accountName: z.string().max(255).optional(),
 });
 
 export const submitAdmissionApplication = createServerFn({ method: "POST" })
@@ -200,9 +294,10 @@ const message = data.applicantMessage?.trim() || "";
              full_name, email, phone, qualification, medical_college, bmdc_number,
              preferred_branch, course_slug, preferred_batch, address, how_did_you_find_us,
              applicant_message, payment_method, mobile_number, transaction_id, cash_serial_number,
+             account_number, account_name,
              status, submitted_at
            ) VALUES (
-             $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,'new'::admission_status, now()
+             $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,'pending'::payment_admission_status, now()
            )`,
           [
             data.fullName,
@@ -221,6 +316,8 @@ const message = data.applicantMessage?.trim() || "";
             data.mobileNumber || null,
             data.transactionId || null,
             data.cashSerialNumber || null,
+            data.accountNumber || null,
+            data.accountName || null,
           ]
         );
       } else {
@@ -333,6 +430,205 @@ export const listAdmissionApplications = createServerFn({ method: "POST" })
       return { items: rows.map(toListItem), total };
     },
   );
+
+// ---------- admin: payment registrations ----------
+export const listPaymentAdmissions = createServerFn({ method: "POST" })
+  .middleware([requireAuth])
+  .inputValidator((d: PaymentAdmissionFilters) => d ?? {})
+  .handler(
+    async ({
+      data,
+      context,
+    }): Promise<{ items: PaymentAdmissionListItem[]; total: number }> => {
+      await assertAdmissionsRead(context);
+      const pageSize = Math.min(Math.max(data.pageSize ?? 25, 1), 100);
+      const page = Math.max(data.page ?? 1, 1);
+      const offset = (page - 1) * pageSize;
+
+      const where: string[] = [];
+      const params: unknown[] = [];
+      let i = 1;
+
+      if (data.status && data.status !== "all") {
+        where.push(`p.status = $${i++}::payment_admission_status`);
+        params.push(data.status);
+      }
+
+      if (data.courseSlug && data.courseSlug !== "all") {
+        where.push(`p.course_slug = $${i++}`);
+        params.push(data.courseSlug);
+      }
+      if (data.branch && data.branch !== "all") {
+        where.push(`p.preferred_branch = $${i++}`);
+        params.push(data.branch);
+      }
+      if (data.fromDate) {
+        where.push(`p.submitted_at >= $${i++}`);
+        params.push(data.fromDate);
+      }
+      if (data.toDate) {
+        where.push(`p.submitted_at <= $${i++}`);
+        params.push(data.toDate);
+      }
+      if (data.search?.trim()) {
+        const s = `%${data.search.trim().replace(/[%,]/g, "")}%`;
+        where.push(
+          `(p.full_name ILIKE $${i} OR p.email ILIKE $${i} OR p.phone ILIKE $${i} OR p.bmdc_number ILIKE $${i} OR p.transaction_id ILIKE $${i} OR p.account_number ILIKE $${i} OR p.account_name ILIKE $${i})`,
+        );
+        params.push(s);
+        i += 1;
+      }
+
+      const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
+      const countRes = await dbQuery<{ count: string }>(
+        "listPaymentAdmissions.count",
+        `SELECT COUNT(*)::text AS count FROM payment_admissions p ${whereSql}`,
+        params,
+      );
+      const total = Number(countRes.rows[0]?.count ?? 0);
+
+      const listParams = [...params, pageSize, offset];
+      const { rows } = await dbQuery<PaymentAdmissionRow>(
+        "listPaymentAdmissions.list",
+        `SELECT p.id, p.full_name, p.email, p.phone, p.bmdc_number,
+                COALESCE(c.name, p.course_slug) AS course_name, p.course_slug,
+                p.preferred_branch, p.submitted_at, p.status::text AS status,
+                p.payment_method, p.mobile_number, p.transaction_id, p.cash_serial_number,
+                p.account_number, p.account_name
+         FROM payment_admissions p
+         LEFT JOIN courses c ON c.slug = p.course_slug
+         ${whereSql}
+         ORDER BY p.submitted_at DESC
+         LIMIT $${i++} OFFSET $${i++}`,
+        listParams,
+      );
+
+      return { items: rows.map(toPaymentListItem), total };
+    },
+  );
+
+export const getPaymentAdmission = createServerFn({ method: "POST" })
+  .middleware([requireAuth])
+  .inputValidator((d: { id: string }) => ({ id: z.string().uuid().parse(d.id) }))
+  .handler(async ({ data, context }): Promise<PaymentAdmissionDetail | null> => {
+    await assertAdmissionsRead(context);
+    const { rows } = await dbQuery<PaymentAdmissionRow>(
+      "getPaymentAdmission",
+      `SELECT p.id, p.full_name, p.email, p.phone, p.bmdc_number,
+              COALESCE(c.name, p.course_slug) AS course_name, p.course_slug,
+              p.preferred_branch, p.submitted_at, p.status::text AS status,
+              p.qualification, p.medical_college, p.address, p.preferred_batch,
+              p.how_did_you_find_us, p.applicant_message,
+              p.payment_method, p.mobile_number, p.transaction_id, p.cash_serial_number,
+              p.account_number, p.account_name
+       FROM payment_admissions p
+       LEFT JOIN courses c ON c.slug = p.course_slug
+       WHERE p.id = $1`,
+      [data.id],
+    );
+    return rows[0] ? toPaymentDetail(rows[0]) : null;
+  });
+
+export const updatePaymentAdmissionStatus = createServerFn({ method: "POST" })
+  .middleware([requireAuth])
+  .inputValidator((d: { id: string; status: PaymentAdmissionStatus }) => ({
+    id: z.string().uuid().parse(d.id),
+    status: paymentStatusEnum.parse(d.status),
+  }))
+  .handler(async ({ data, context }) => {
+    await assertAdmissionsUpdate(context);
+    await dbQuery(
+      "updatePaymentAdmissionStatus",
+      `UPDATE payment_admissions
+       SET status = $1::payment_admission_status
+       WHERE id = $2`,
+      [data.status, data.id],
+    );
+    await writeAuditLog(context, {
+      action: "payment_admission.status_changed",
+      contentType: "payment_admission",
+      contentId: data.id,
+      summary: `Payment status updated to ${data.status}`,
+      newValues: { status: data.status },
+    });
+    return { ok: true };
+  });
+
+const paymentEditSchema = z.object({
+  id: z.string().uuid(),
+  fullName: z.string().trim().min(2).max(120),
+  email: z.union([z.literal(""), z.string().trim().toLowerCase().email().max(255)]),
+  phone: z.string().trim().min(7).max(50),
+  qualification: z.string().trim().max(255).optional().or(z.literal("")),
+  medicalCollege: z.string().trim().max(255).optional().or(z.literal("")),
+  bmdcNumber: z.string().trim().max(100).optional().or(z.literal("")),
+  preferredBranch: z.enum(BRANCHES),
+  preferredBatch: z.string().trim().max(100).optional().or(z.literal("")),
+  address: z.string().trim().max(2000).optional().or(z.literal("")),
+  howDidYouFindUs: z.string().trim().max(255).optional().or(z.literal("")),
+  applicantMessage: z.string().trim().max(2000).nullable().optional(),
+  paymentMethod: z.string().trim().min(1).max(50),
+  mobileNumber: z.string().trim().max(50).nullable().optional(),
+  transactionId: z.string().trim().max(100).nullable().optional(),
+  cashSerialNumber: z.string().trim().max(100).nullable().optional(),
+  accountNumber: z.string().trim().max(100).nullable().optional(),
+  accountName: z.string().trim().max(255).nullable().optional(),
+});
+
+export const updatePaymentAdmission = createServerFn({ method: "POST" })
+  .middleware([requireAuth])
+  .inputValidator((d: z.input<typeof paymentEditSchema>) => paymentEditSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmissionsUpdate(context);
+    await dbQuery(
+      "updatePaymentAdmission",
+      `UPDATE payment_admissions SET
+         full_name = $1, email = $2, phone = $3, qualification = $4,
+         medical_college = $5, bmdc_number = $6, preferred_branch = $7,
+         preferred_batch = $8, address = $9, how_did_you_find_us = $10,
+         applicant_message = $11, payment_method = $12, mobile_number = $13,
+         transaction_id = $14, cash_serial_number = $15, account_number = $16,
+         account_name = $17
+       WHERE id = $18`,
+      [
+        data.fullName, data.email, data.phone, data.qualification || "", data.medicalCollege || "",
+        data.bmdcNumber || "", data.preferredBranch, data.preferredBatch || "", data.address || "",
+        data.howDidYouFindUs || "", data.applicantMessage?.trim() || null, data.paymentMethod,
+        data.mobileNumber?.trim() || null, data.transactionId?.trim() || null,
+        data.cashSerialNumber?.trim() || null, data.accountNumber?.trim() || null,
+        data.accountName?.trim() || null, data.id,
+      ],
+    );
+    await writeAuditLog(context, {
+      action: "payment_admission.updated",
+      contentType: "payment_admission",
+      contentId: data.id,
+      summary: `Payment registration updated for ${data.fullName}`,
+      newValues: { name: data.fullName },
+    });
+    return { ok: true };
+  });
+
+export const deletePaymentAdmission = createServerFn({ method: "POST" })
+  .middleware([requireAuth])
+  .inputValidator((d: { id: string }) => ({ id: z.string().uuid().parse(d.id) }))
+  .handler(async ({ data, context }) => {
+    await assertAdmissionsUpdate(context);
+    const { rows } = await dbQuery<{ full_name: string }>(
+      "deletePaymentAdmission.previous",
+      `SELECT full_name FROM payment_admissions WHERE id = $1`,
+      [data.id],
+    );
+    await dbQuery("deletePaymentAdmission.delete", `DELETE FROM payment_admissions WHERE id = $1`, [data.id]);
+    await writeAuditLog(context, {
+      action: "payment_admission.deleted",
+      contentType: "payment_admission",
+      contentId: data.id,
+      summary: `Payment registration deleted${rows[0]?.full_name ? ` for ${rows[0].full_name}` : ""}`,
+      oldValues: rows[0] ? { name: rows[0].full_name } : null,
+    });
+    return { ok: true };
+  });
 
 // ---------- admin: detail ----------
 export const getAdmissionApplication = createServerFn({ method: "POST" })

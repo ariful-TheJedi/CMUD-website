@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node \"C:\\\\Users\\\\UseR\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\e--MedLearHub\\\\92c81d2a-467e-4169-9d81-9c1f3326cf36\\\\scratchpad\\\\verify.mjs\")",
+      "Bash(node _verify_tmp.mjs)",
+      "Bash(node -e ' *)"
+    ]
+  }
+}

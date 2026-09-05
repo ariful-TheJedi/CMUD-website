@@ -70,7 +70,6 @@ const baseSchemaFields = {
   preferredBranch: z.string().min(1, "Select a preferred branch"),
   course: z.string().min(1, "Select a course"),
   batch: z.string().optional().or(z.literal("")),
-  address: z.string().optional().or(z.literal("")),
   howDidYouFindUs: z.string().optional().or(z.literal("")),
   message: z.string().optional(),
 };
@@ -90,6 +89,8 @@ const paymentSchema = z.object({
   mobileNumber: z.string().optional().or(z.literal("")),
   transactionId: z.string().optional().or(z.literal("")),
   cashSerialNumber: z.string().optional().or(z.literal("")),
+  accountNumber: z.string().optional().or(z.literal("")),
+  accountName: z.string().optional().or(z.literal("")),
 }).superRefine((values, context) => {
   if (values.paymentMethod === "bKash") {
     if (!values.mobileNumber?.trim()) {
@@ -101,6 +102,14 @@ const paymentSchema = z.object({
   }
   if (values.paymentMethod === "cash" && !values.cashSerialNumber?.trim()) {
     context.addIssue({ code: "custom", path: ["cashSerialNumber"], message: "Enter cash S/N number" });
+  }
+  if (values.paymentMethod === "bank_transfer") {
+    if (!values.accountNumber?.trim()) {
+      context.addIssue({ code: "custom", path: ["accountNumber"], message: "Enter account number" });
+    }
+    if (!values.accountName?.trim()) {
+      context.addIssue({ code: "custom", path: ["accountName"], message: "Enter account name" });
+    }
   }
 });
 
@@ -222,7 +231,7 @@ export function SharedAdmissionFields({
         <FormItem><FormLabel>{labels.medicalCollege}</FormLabel><FormControl><Input placeholder={placeholders.medicalCollege} {...field} /></FormControl><FormMessage /></FormItem>
       )}/>
       <FormField control={control} name="bmdcNumber" render={({ field }) => (
-        <FormItem><FormLabel>{labels.bmdcNumber} <RequiredMark /></FormLabel><FormControl><Input placeholder={placeholders.bmdcNumber} {...field} /></FormControl><FormMessage /></FormItem>
+        <FormItem><FormLabel>{labels.bmdcNumber}</FormLabel><FormControl><Input placeholder={placeholders.bmdcNumber} {...field} /></FormControl><FormMessage /></FormItem>
       )}/>
       <FormField control={control} name="preferredBranch" render={({ field }) => (
         <FormItem>
@@ -288,7 +297,7 @@ export function ApplyAdmissionForm({ formData, initialCourse, courses }: { formD
     defaultValues: {
       fullName: "", email: "", phone: "", qualification: "", medicalCollege: "",
       bmdcNumber: "", preferredBranch: "", course: initialCourse ?? "",
-      batch: "", address: "", howDidYouFindUs: "", message: "",
+      batch: "", howDidYouFindUs: "", message: "",
     },
   });
 
@@ -306,20 +315,19 @@ async function onSubmit(values: RequestFormValues) {
           medicalCollege: values.medicalCollege,
           bmdcNumber: values.bmdcNumber || "Not provided", 
           preferredBranch: values.preferredBranch as any,
-          courseSlug: values.course, 
-          preferredBatch: values.batch, 
-          address: values.address,
-          howDidYouFindUs: values.howDidYouFindUs, 
+          courseSlug: values.course,
+          preferredBatch: values.batch,
+          howDidYouFindUs: values.howDidYouFindUs,
           applicantMessage: values.message ?? "",
-          website: "", 
+          website: "",
           captchaToken,
-          
+
           // STRICTLY ROUTE TO GENERAL TABLE
           admissionType: "request",
         },
       });
       setSubmitted(true);
-      toast.success(admissionPage.success.toastTitle, { description: admissionPage.success.toastDescription });
+      toast.success(admissionPage.success.toastTitle);
       form.reset();
       setCaptchaToken(isTurnstileEnabledClient() ? "" : TURNSTILE_BYPASS_TOKEN);
       if (isTurnstileEnabledClient()) window.turnstile?.reset();
@@ -338,9 +346,6 @@ async function onSubmit(values: RequestFormValues) {
         {/* Inject Shared Fields */}
         <SharedAdmissionFields control={form.control} formCopy={formData} courses={courses} />
 
-        <FormField control={form.control} name="address" render={({ field }) => (
-          <FormItem className="md:col-span-2"><FormLabel>{labels.address}</FormLabel><FormControl><Input placeholder={placeholders.address} {...field} /></FormControl><FormMessage /></FormItem>
-        )}/>
         <FormField control={form.control} name="message" render={({ field }) => (
           <FormItem className="md:col-span-2"><FormLabel>{labels.message}</FormLabel><FormControl><Textarea placeholder={placeholders.message} rows={4} {...field} /></FormControl><FormMessage /></FormItem>
         )}/>
@@ -373,7 +378,8 @@ export function RegistrationAdmissionForm({ formData, initialCourse, courses }: 
       fullName: "", email: "", phone: "", qualification: "", medicalCollege: "",
       bmdcNumber: "", preferredBranch: "", course: initialCourse ?? "",
       batch: "", findUsOptions: "", paymentMethod: "", mobileNumber: "", transactionId: "", cashSerialNumber: "",
-      address: "", howDidYouFindUs: "", message: "",
+      accountNumber: "", accountName: "",
+      howDidYouFindUs: "", message: "",
     },
   });
 
@@ -391,10 +397,9 @@ async function onSubmit(values: PaymentFormValues) {
           medicalCollege: values.medicalCollege,
           bmdcNumber: values.bmdcNumber || "Not provided", 
           preferredBranch: values.preferredBranch as any,
-          courseSlug: values.course, 
-          preferredBatch: values.batch, 
-          address: values.address,
-          howDidYouFindUs: values.findUsOptions, 
+          courseSlug: values.course,
+          preferredBatch: values.batch,
+          howDidYouFindUs: values.findUsOptions,
           applicantMessage: values.message ?? "",
           website: "", 
           captchaToken,
@@ -405,10 +410,12 @@ async function onSubmit(values: PaymentFormValues) {
           mobileNumber: values.mobileNumber,
           transactionId: values.transactionId,
           cashSerialNumber: values.cashSerialNumber,
+          accountNumber: values.accountNumber,
+          accountName: values.accountName,
         },
       });
       setSubmitted(true);
-      toast.success(admissionPage.success.toastTitle, { description: admissionPage.success.toastDescription });
+      toast.success(admissionPage.success.toastTitle);
       form.reset();
       setCaptchaToken(isTurnstileEnabledClient() ? "" : TURNSTILE_BYPASS_TOKEN);
       if (isTurnstileEnabledClient()) window.turnstile?.reset();
@@ -474,12 +481,27 @@ async function onSubmit(values: PaymentFormValues) {
                 </FormItem>
               )}/>
             )}
+            {selectedPaymentMethod === "bank_transfer" && (
+              <>
+                <FormField control={form.control} name="accountNumber" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{fields.accountNumber.label} <RequiredMark /></FormLabel>
+                    <FormControl><Input placeholder={fields.accountNumber.placeholder} {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}/>
+                <FormField control={form.control} name="accountName" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{fields.accountName.label} <RequiredMark /></FormLabel>
+                    <FormControl><Input placeholder={fields.accountName.placeholder} {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}/>
+              </>
+            )}
           </div>
         </div>
 
-        <FormField control={form.control} name="address" render={({ field }) => (
-          <FormItem className="md:col-span-2"><FormLabel>{labels.address}</FormLabel><FormControl><Input placeholder={placeholders.address} {...field} /></FormControl><FormMessage /></FormItem>
-        )}/>
         <FormField control={form.control} name="message" render={({ field }) => (
           <FormItem className="md:col-span-2"><FormLabel>{labels.message}</FormLabel><FormControl><Textarea placeholder={placeholders.message} rows={4} {...field} /></FormControl><FormMessage /></FormItem>
         )}/>

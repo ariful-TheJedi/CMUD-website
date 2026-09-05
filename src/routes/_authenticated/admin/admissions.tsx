@@ -10,6 +10,11 @@ import { useCanWrite } from "@/hooks/use-can-write";
 
 import {
   listAdmissionApplications,
+  listPaymentAdmissions,
+  getPaymentAdmission,
+  updatePaymentAdmissionStatus,
+  updatePaymentAdmission,
+  deletePaymentAdmission,
   getAdmissionApplication,
   updateAdmissionStatus,
   updateAdmissionApplication,
@@ -19,6 +24,9 @@ import {
   type AdmissionStatus,
   type AdmissionApplicationListItem,
   type AdmissionApplicationDetail,
+  type PaymentAdmissionListItem,
+  type PaymentAdmissionDetail,
+  type PaymentAdmissionStatus,
   type AdmissionNote,
 } from "@/lib/admissions.functions";
 import { listPublicCourses } from "@/lib/courses.functions";
@@ -62,6 +70,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/_authenticated/admin/admissions")({
   ssr: false,
@@ -99,6 +108,25 @@ function StatusBadge({ status }: { status: AdmissionStatus }) {
   );
 }
 
+const PAYMENT_STATUS_LABEL: Record<PaymentAdmissionStatus, string> = {
+  pending: "Pending",
+  verified: "Verified",
+  not_verified: "Not Verified",
+};
+
+function PaymentStatusBadge({ status }: { status: PaymentAdmissionStatus }) {
+  const cls: Record<PaymentAdmissionStatus, string> = {
+    pending: "bg-amber-100 text-amber-900 border-amber-200",
+    verified: "bg-emerald-100 text-emerald-800 border-emerald-200",
+    not_verified: "bg-red-100 text-red-800 border-red-200",
+  };
+  return (
+    <Badge variant="outline" className={cls[status]}>
+      {PAYMENT_STATUS_LABEL[status] ?? status}
+    </Badge>
+  );
+}
+
 function formatSubmittedAt(iso: string) {
   try {
     return new Date(iso).toLocaleString(undefined, {
@@ -115,8 +143,10 @@ function formatSubmittedAt(iso: string) {
 
 function AdmissionsPage() {
   const qc = useQueryClient();
+  const [activeTab, setActiveTab] = useState<"general" | "payment">("general");
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<AdmissionStatus | "all">("all");
+  const [paymentStatus, setPaymentStatus] = useState<PaymentAdmissionStatus | "all">("all");
   const [courseSlug, setCourseSlug] = useState<string>("all");
   const [branch, setBranch] = useState<string>("all");
   const [fromDate, setFromDate] = useState("");
@@ -126,11 +156,16 @@ function AdmissionsPage() {
   const [openId, setOpenId] = useState<string | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<AdmissionApplicationListItem | null>(null);
+  const [paymentOpenId, setPaymentOpenId] = useState<string | null>(null);
+  const [paymentEditId, setPaymentEditId] = useState<string | null>(null);
+  const [paymentDeleteTarget, setPaymentDeleteTarget] = useState<PaymentAdmissionListItem | null>(null);
   const canWrite = useCanWrite("admissions");
 
   const listFn = useServerFn(listAdmissionApplications);
+  const paymentListFn = useServerFn(listPaymentAdmissions);
   const coursesFn = useServerFn(listPublicCourses);
   const deleteFn = useServerFn(deleteAdmissionApplication);
+  const deletePaymentFn = useServerFn(deletePaymentAdmission);
 
   const deleteMut = useMutation({
     mutationFn: (id: string) => deleteFn({ data: { id } }),
@@ -157,9 +192,38 @@ function AdmissionsPage() {
     [search, status, courseSlug, branch, fromDate, toDate, page],
   );
 
+  const paymentFilters = useMemo(
+    () => ({
+      search,
+      status: paymentStatus,
+      courseSlug,
+      branch,
+      fromDate: fromDate || null,
+      toDate: toDate || null,
+      page,
+      pageSize,
+    }),
+    [search, paymentStatus, courseSlug, branch, fromDate, toDate, page],
+  );
+
   const listQ = useQuery({
     queryKey: ["admissions", filters],
     queryFn: () => listFn({ data: filters }),
+    enabled: activeTab === "general",
+  });
+  const deletePaymentMut = useMutation({
+    mutationFn: (id: string) => deletePaymentFn({ data: { id } }),
+    onSuccess: () => {
+      toast.success("Payment registration deleted");
+      setPaymentDeleteTarget(null);
+      qc.invalidateQueries({ queryKey: ["payment-admissions"] });
+    },
+    onError: () => toast.error("Could not delete payment registration"),
+  });
+  const paymentListQ = useQuery({
+    queryKey: ["payment-admissions", paymentFilters],
+    queryFn: () => paymentListFn({ data: paymentFilters }),
+    enabled: activeTab === "payment",
   });
   const coursesQ = useQuery({
     queryKey: ["public-courses-admin"],
@@ -167,9 +231,14 @@ function AdmissionsPage() {
     staleTime: 60_000,
   });
 
-  const refresh = () => qc.invalidateQueries({ queryKey: ["admissions"] });
+  const isPaymentTab = activeTab === "payment";
+  const activeListQ = isPaymentTab ? paymentListQ : listQ;
+  const refresh = () =>
+    qc.invalidateQueries({ queryKey: isPaymentTab ? ["payment-admissions"] : ["admissions"] });
 
-  const totalPages = listQ.data ? Math.max(1, Math.ceil(listQ.data.total / pageSize)) : 1;
+  const totalPages = activeListQ.data
+    ? Math.max(1, Math.ceil(activeListQ.data.total / pageSize))
+    : 1;
 
   return (
     <div className="space-y-4">
@@ -180,11 +249,24 @@ function AdmissionsPage() {
             Manage admission applications submitted from the public form.
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={refresh} disabled={listQ.isFetching}>
-          <RefreshCw className={`h-4 w-4 ${listQ.isFetching ? "animate-spin" : ""}`} />
+        <Button variant="outline" size="sm" onClick={refresh} disabled={activeListQ.isFetching}>
+          <RefreshCw className={`h-4 w-4 ${activeListQ.isFetching ? "animate-spin" : ""}`} />
           Refresh
         </Button>
       </header>
+
+      <Tabs
+        value={activeTab}
+        onValueChange={(value) => {
+          setActiveTab(value as "general" | "payment");
+          setPage(1);
+        }}
+      >
+        <TabsList>
+          <TabsTrigger value="general">General Applications</TabsTrigger>
+          <TabsTrigger value="payment">Payment Registrations</TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       <Card>
         <CardHeader className="pb-3">
@@ -196,7 +278,11 @@ function AdmissionsPage() {
               <div className="relative">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search name, email, phone, BMDC"
+                  placeholder={
+                    isPaymentTab
+                      ? "Search name, email, phone, BMDC, transaction ID, account number"
+                      : "Search name, email, phone, BMDC"
+                  }
                   className="pl-8"
                   value={search}
                   onChange={(e) => {
@@ -206,24 +292,44 @@ function AdmissionsPage() {
                 />
               </div>
             </div>
-            <Select
-              value={status}
-              onValueChange={(v) => {
-                setPage(1);
-                setStatus(v as AdmissionStatus | "all");
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All statuses</SelectItem>
-                <SelectItem value="new">New</SelectItem>
-                <SelectItem value="contacted">Contacted</SelectItem>
-                <SelectItem value="admitted">Admitted</SelectItem>
-                <SelectItem value="rejected">Rejected</SelectItem>
-              </SelectContent>
-            </Select>
+            {!isPaymentTab ? (
+              <Select
+                value={status}
+                onValueChange={(v) => {
+                  setPage(1);
+                  setStatus(v as AdmissionStatus | "all");
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All statuses</SelectItem>
+                  <SelectItem value="new">New</SelectItem>
+                  <SelectItem value="contacted">Contacted</SelectItem>
+                  <SelectItem value="admitted">Admitted</SelectItem>
+                  <SelectItem value="rejected">Rejected</SelectItem>
+                </SelectContent>
+              </Select>
+            ) : (
+              <Select
+                value={paymentStatus}
+                onValueChange={(v) => {
+                  setPage(1);
+                  setPaymentStatus(v as PaymentAdmissionStatus | "all");
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All statuses</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="verified">Verified</SelectItem>
+                  <SelectItem value="not_verified">Not Verified</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
             <Select
               value={courseSlug}
               onValueChange={(v) => {
@@ -289,16 +395,18 @@ function AdmissionsPage() {
                 <TableRow>
                   <TableHead>Applicant</TableHead>
                   <TableHead>Phone</TableHead>
-                  <TableHead>Email</TableHead>
+                  {!isPaymentTab ? <TableHead>Email</TableHead> : null}
                   <TableHead>Course</TableHead>
-                  <TableHead>Branch</TableHead>
+                  {!isPaymentTab ? <TableHead>Branch</TableHead> : null}
+                  {isPaymentTab ? <TableHead>Payment</TableHead> : null}
+                  {isPaymentTab ? <TableHead>Payment Reference</TableHead> : null}
                   <TableHead>Status</TableHead>
                   <TableHead>Submitted</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {listQ.isLoading ? (
+                {activeListQ.isLoading ? (
                   Array.from({ length: 6 }).map((_, i) => (
                     <TableRow key={i}>
                       {Array.from({ length: 8 }).map((__, j) => (
@@ -308,33 +416,36 @@ function AdmissionsPage() {
                       ))}
                     </TableRow>
                   ))
-                ) : listQ.isError ? (
+                ) : activeListQ.isError ? (
                   <TableRow>
                     <TableCell colSpan={8} className="p-8 text-center">
-                      <div className="text-sm text-destructive">Failed to load applications.</div>
+                      <div className="text-sm text-destructive">
+                        Failed to load {isPaymentTab ? "payment registrations" : "applications"}.
+                      </div>
                       <Button size="sm" variant="outline" className="mt-3" onClick={refresh}>
                         Retry
                       </Button>
                     </TableCell>
                   </TableRow>
-                ) : (listQ.data?.items.length ?? 0) === 0 ? (
+                ) : (activeListQ.data?.items.length ?? 0) === 0 ? (
                   <TableRow>
                     <TableCell
                       colSpan={8}
                       className="p-8 text-center text-sm text-muted-foreground"
                     >
                       {search ||
-                      status !== "all" ||
+                      (!isPaymentTab && status !== "all") ||
+                      (isPaymentTab && paymentStatus !== "all") ||
                       courseSlug !== "all" ||
                       branch !== "all" ||
                       fromDate ||
                       toDate
-                        ? "No applications match the selected filters."
-                        : "No admission applications found."}
+                        ? `No ${isPaymentTab ? "payment registrations" : "applications"} match the selected filters.`
+                        : `No ${isPaymentTab ? "payment registrations" : "admission applications"} found.`}
                     </TableCell>
                   </TableRow>
                 ) : (
-                  listQ.data!.items.map((r: AdmissionApplicationListItem) => (
+                  activeListQ.data!.items.map((r) => (
                     <TableRow key={r.id}>
                       <TableCell className="font-medium">{r.fullName}</TableCell>
                       <TableCell>
@@ -342,45 +453,99 @@ function AdmissionsPage() {
                           {r.phone}
                         </a>
                       </TableCell>
-                      <TableCell>
-                        <a href={`mailto:${r.email}`} className="hover:underline">
-                          {r.email}
-                        </a>
-                      </TableCell>
+                      {!isPaymentTab ? (
+                        <TableCell>
+                          <a href={`mailto:${r.email}`} className="hover:underline">
+                            {r.email}
+                          </a>
+                        </TableCell>
+                      ) : null}
                       <TableCell className="max-w-[200px] truncate" title={r.courseName}>
                         {r.courseName}
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {r.preferredBranch || "—"}
-                      </TableCell>
+                      {!isPaymentTab ? (
+                        <TableCell className="text-sm text-muted-foreground">
+                          {r.preferredBranch || "—"}
+                        </TableCell>
+                      ) : null}
+                      {isPaymentTab ? (
+                        <>
+                          <TableCell className="text-sm">
+                            {(r as PaymentAdmissionListItem).paymentMethod}
+                          </TableCell>
+                          <TableCell
+                            className="max-w-[180px] truncate font-mono text-sm"
+                            title={
+                              (r as PaymentAdmissionListItem).transactionId ??
+                              (r as PaymentAdmissionListItem).cashSerialNumber ??
+                              (r as PaymentAdmissionListItem).accountNumber ??
+                              undefined
+                            }
+                          >
+                            {(r as PaymentAdmissionListItem).transactionId ||
+                              (r as PaymentAdmissionListItem).cashSerialNumber ||
+                              (r as PaymentAdmissionListItem).accountNumber ||
+                              "—"}
+                          </TableCell>
+                        </>
+                      ) : null}
                       <TableCell>
-                        <StatusBadge status={r.status} />
+                        {isPaymentTab ? (
+                          <PaymentStatusBadge status={(r as PaymentAdmissionListItem).status} />
+                        ) : (
+                          <StatusBadge status={(r as AdmissionApplicationListItem).status} />
+                        )}
                       </TableCell>
                       <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
                         {formatSubmittedAt(r.submittedAt)}
                       </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button size="sm" variant="outline" onClick={() => setOpenId(r.id)}>
-                            <Eye className="h-4 w-4" /> View
-                          </Button>
-                          {canWrite ? (
-                            <>
-                              <Button size="sm" variant="outline" onClick={() => setEditId(r.id)}>
-                                <Pencil className="h-4 w-4" /> Update
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="text-destructive hover:text-destructive"
-                                onClick={() => setDeleteTarget(r)}
-                              >
-                                <Trash2 className="h-4 w-4" /> Delete
-                              </Button>
-                            </>
-                          ) : null}
-                        </div>
-                      </TableCell>
+                      {!isPaymentTab ? (
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button size="sm" variant="outline" onClick={() => setOpenId(r.id)}>
+                              <Eye className="h-4 w-4" /> View
+                            </Button>
+                            {canWrite ? (
+                              <>
+                                <Button size="sm" variant="outline" onClick={() => setEditId(r.id)}>
+                                  <Pencil className="h-4 w-4" /> Update
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-destructive hover:text-destructive"
+                                  onClick={() => setDeleteTarget(r as AdmissionApplicationListItem)}
+                                >
+                                  <Trash2 className="h-4 w-4" /> Delete
+                                </Button>
+                              </>
+                            ) : null}
+                          </div>
+                        </TableCell>
+                      ) : (
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button size="sm" variant="outline" onClick={() => setPaymentOpenId(r.id)}>
+                              <Eye className="h-4 w-4" /> View
+                            </Button>
+                            {canWrite ? (
+                              <>
+                                <Button size="sm" variant="outline" onClick={() => setPaymentEditId(r.id)}>
+                                  <Pencil className="h-4 w-4" /> Update
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-destructive hover:text-destructive"
+                                  onClick={() => setPaymentDeleteTarget(r as PaymentAdmissionListItem)}
+                                >
+                                  <Trash2 className="h-4 w-4" /> Delete
+                                </Button>
+                              </>
+                            ) : null}
+                          </div>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))
                 )}
@@ -392,7 +557,7 @@ function AdmissionsPage() {
       </Card>
 
       <div className="flex items-center justify-between text-sm text-muted-foreground">
-        <div>{listQ.data ? `${listQ.data.total} total` : ""}</div>
+        <div>{activeListQ.data ? `${activeListQ.data.total} total` : ""}</div>
         <div className="flex items-center gap-2">
           <Button
             size="sm"
@@ -418,6 +583,12 @@ function AdmissionsPage() {
 
       {openId ? <AdmissionDetailsDialog id={openId} onClose={() => setOpenId(null)} /> : null}
       {editId ? <AdmissionEditDialog id={editId} onClose={() => setEditId(null)} /> : null}
+      {paymentOpenId ? (
+        <PaymentAdmissionDetailsDialog id={paymentOpenId} onClose={() => setPaymentOpenId(null)} />
+      ) : null}
+      {paymentEditId ? (
+        <PaymentAdmissionEditDialog id={paymentEditId} onClose={() => setPaymentEditId(null)} />
+      ) : null}
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(v) => !v && setDeleteTarget(null)}>
         <AlertDialogContent>
@@ -440,6 +611,35 @@ function AdmissionsPage() {
               }}
             >
               {deleteMut.isPending ? "Deleting…" : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={!!paymentDeleteTarget}
+        onOpenChange={(v) => !v && setPaymentDeleteTarget(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this payment registration?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {paymentDeleteTarget
+                ? `The payment registration from ${paymentDeleteTarget.fullName} will be permanently deleted. This cannot be undone.`
+                : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletePaymentMut.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deletePaymentMut.isPending}
+              onClick={(e) => {
+                e.preventDefault();
+                if (paymentDeleteTarget) deletePaymentMut.mutate(paymentDeleteTarget.id);
+              }}
+            >
+              {deletePaymentMut.isPending ? "Deleting…" : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -832,6 +1032,206 @@ function AdmissionEditDialog({ id, onClose }: { id: string; onClose: () => void 
             {saveMut.isPending ? "Saving…" : "Save changes"}
           </Button>
         </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function PaymentAdmissionDetailsDialog({ id, onClose }: { id: string; onClose: () => void }) {
+  const qc = useQueryClient();
+  const getFn = useServerFn(getPaymentAdmission);
+  const updateStatusFn = useServerFn(updatePaymentAdmissionStatus);
+  const detailQ = useQuery({
+    queryKey: ["payment-admission", id],
+    queryFn: () => getFn({ data: { id } }),
+  });
+  const d: PaymentAdmissionDetail | null | undefined = detailQ.data;
+
+  const [pendingStatus, setPendingStatus] = useState<PaymentAdmissionStatus | null>(null);
+
+  const statusMut = useMutation({
+    mutationFn: (s: PaymentAdmissionStatus) => updateStatusFn({ data: { id, status: s } }),
+    onSuccess: () => {
+      toast.success("Status updated");
+      qc.invalidateQueries({ queryKey: ["payment-admission", id] });
+      qc.invalidateQueries({ queryKey: ["payment-admissions"] });
+      setPendingStatus(null);
+    },
+    onError: (e: unknown) =>
+      toast.error(e instanceof Error ? e.message : "Could not update status"),
+  });
+
+  const handleStatusChange = (s: PaymentAdmissionStatus) => {
+    if (s === "verified" || s === "not_verified") setPendingStatus(s);
+    else statusMut.mutate(s);
+  };
+
+  return (
+    <>
+      <Dialog open onOpenChange={(v) => !v && onClose()}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Payment registration</DialogTitle>
+            <DialogDescription>Full application and payment details.</DialogDescription>
+          </DialogHeader>
+          {detailQ.isLoading || !d ? (
+            <div className="space-y-2">
+              <Skeleton className="h-6 w-1/2" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+            </div>
+          ) : (
+            <div className="space-y-6">
+              <section className="grid gap-3 md:grid-cols-2">
+                <Field label="Full name" value={d.fullName} />
+                <Field label="Email" value={d.email || "—"} />
+                <Field label="Phone" value={d.phone} />
+                <Field label="BMDC" value={d.bmdcNumber || "—"} />
+                <Field label="Qualification" value={d.qualification || "—"} />
+                <Field label="Medical college" value={d.medicalCollege || "—"} />
+                <Field label="Course" value={d.courseName} />
+                <Field label="Branch" value={d.preferredBranch} />
+                <Field label="Preferred batch" value={d.preferredBatch || "—"} />
+                <Field label="Address" value={d.address || "—"} />
+                <Field label="Payment method" value={d.paymentMethod} />
+                <Field label="Bkash phone no" value={d.mobileNumber || "—"} />
+                <Field label="Transaction ID" value={d.transactionId || "—"} />
+                <Field label="Cash serial number" value={d.cashSerialNumber || "—"} />
+                <Field label="Account number" value={d.accountNumber || "—"} />
+                <Field label="Account name" value={d.accountName || "—"} />
+                <Field label="Submitted" value={formatSubmittedAt(d.submittedAt)} />
+                <Field label="Status">
+                  <PaymentStatusBadge status={d.status} />
+                </Field>
+              </section>
+              {d.applicantMessage ? (
+                <section>
+                  <div className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">Applicant message</div>
+                  <p className="whitespace-pre-wrap rounded-md border bg-muted/30 p-3 text-sm">{d.applicantMessage}</p>
+                </section>
+              ) : null}
+
+              <section>
+                <div className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Change status
+                </div>
+                <Select
+                  value={d.status}
+                  onValueChange={(v) => handleStatusChange(v as PaymentAdmissionStatus)}
+                >
+                  <SelectTrigger className="w-full md:w-64">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="verified">Verified</SelectItem>
+                    <SelectItem value="not_verified">Not Verified</SelectItem>
+                  </SelectContent>
+                </Select>
+              </section>
+            </div>
+          )}
+          <DialogFooter><Button variant="outline" onClick={onClose}>Close</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={!!pendingStatus} onOpenChange={(v) => !v && setPendingStatus(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {pendingStatus === "verified"
+                ? "Mark this payment as verified?"
+                : "Mark this payment as not verified?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This will update the payment status and be recorded in the audit log.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => pendingStatus && statusMut.mutate(pendingStatus)}>
+              Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+}
+
+function PaymentAdmissionEditDialog({ id, onClose }: { id: string; onClose: () => void }) {
+  const qc = useQueryClient();
+  const getFn = useServerFn(getPaymentAdmission);
+  const saveFn = useServerFn(updatePaymentAdmission);
+  const detailQ = useQuery({ queryKey: ["payment-admission", id], queryFn: () => getFn({ data: { id } }) });
+  const [form, setForm] = useState<Record<string, string> | null>(null);
+  const d = detailQ.data;
+  const values = form ?? (d ? {
+    fullName: d.fullName, email: d.email, phone: d.phone, qualification: d.qualification,
+    medicalCollege: d.medicalCollege, bmdcNumber: d.bmdcNumber, preferredBranch: d.preferredBranch,
+    preferredBatch: d.preferredBatch, address: d.address, howDidYouFindUs: d.howDidYouFindUs,
+    applicantMessage: d.applicantMessage ?? "", paymentMethod: d.paymentMethod,
+    mobileNumber: d.mobileNumber ?? "", transactionId: d.transactionId ?? "", cashSerialNumber: d.cashSerialNumber ?? "",
+    accountNumber: d.accountNumber ?? "", accountName: d.accountName ?? "",
+  } : null);
+  const set = (key: string, value: string) => setForm({ ...(values ?? {}), [key]: value });
+  const saveMut = useMutation({
+    mutationFn: () =>
+      saveFn({
+        data: {
+          id,
+          fullName: values!.fullName,
+          email: values!.email,
+          phone: values!.phone,
+          qualification: values!.qualification,
+          medicalCollege: values!.medicalCollege,
+          bmdcNumber: values!.bmdcNumber,
+          preferredBranch: values!.preferredBranch as "Panthapath" | "Uttara",
+          preferredBatch: values!.preferredBatch,
+          address: values!.address,
+          howDidYouFindUs: values!.howDidYouFindUs,
+          applicantMessage: values!.applicantMessage,
+          paymentMethod: values!.paymentMethod,
+          mobileNumber: values!.mobileNumber,
+          transactionId: values!.transactionId,
+          cashSerialNumber: values!.cashSerialNumber,
+          accountNumber: values!.accountNumber,
+          accountName: values!.accountName,
+        },
+      }),
+    onSuccess: () => {
+      toast.success("Payment registration updated");
+      qc.invalidateQueries({ queryKey: ["payment-admission", id] });
+      qc.invalidateQueries({ queryKey: ["payment-admissions"] });
+      onClose();
+    },
+    onError: () => toast.error("Could not update payment registration"),
+  });
+  return (
+    <Dialog open onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>Update payment registration</DialogTitle><DialogDescription>Edit the application and payment details.</DialogDescription></DialogHeader>
+        {!values ? <Skeleton className="h-48 w-full" /> : (
+          <div className="grid gap-3 md:grid-cols-2">
+            <LabeledInput label="Full name" value={values.fullName} onChange={(v) => set("fullName", v)} />
+            <LabeledInput label="Email" value={values.email} onChange={(v) => set("email", v)} />
+            <LabeledInput label="Phone" value={values.phone} onChange={(v) => set("phone", v)} />
+            <LabeledInput label="BMDC number" value={values.bmdcNumber} onChange={(v) => set("bmdcNumber", v)} />
+            <LabeledInput label="Qualification" value={values.qualification} onChange={(v) => set("qualification", v)} />
+            <LabeledInput label="Medical college" value={values.medicalCollege} onChange={(v) => set("medicalCollege", v)} />
+            <LabeledInput label="Payment method" value={values.paymentMethod} onChange={(v) => set("paymentMethod", v)} />
+            <LabeledInput label="Mobile number" value={values.mobileNumber} onChange={(v) => set("mobileNumber", v)} />
+            <LabeledInput label="Transaction ID" value={values.transactionId} onChange={(v) => set("transactionId", v)} />
+            <LabeledInput label="Cash serial number" value={values.cashSerialNumber} onChange={(v) => set("cashSerialNumber", v)} />
+            <LabeledInput label="Account number" value={values.accountNumber} onChange={(v) => set("accountNumber", v)} />
+            <LabeledInput label="Account name" value={values.accountName} onChange={(v) => set("accountName", v)} />
+            <LabeledInput label="Preferred batch" value={values.preferredBatch} onChange={(v) => set("preferredBatch", v)} />
+            <div><div className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">Preferred branch</div><Select value={values.preferredBranch} onValueChange={(v) => set("preferredBranch", v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Panthapath">Panthapath</SelectItem><SelectItem value="Uttara">Uttara</SelectItem></SelectContent></Select></div>
+            <div className="md:col-span-2"><div className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">Address</div><Textarea rows={2} value={values.address} onChange={(e) => set("address", e.target.value)} /></div>
+            <div className="md:col-span-2"><div className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">Applicant message</div><Textarea rows={3} value={values.applicantMessage} onChange={(e) => set("applicantMessage", e.target.value)} /></div>
+          </div>
+        )}
+        <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button onClick={() => saveMut.mutate()} disabled={!values || saveMut.isPending}>{saveMut.isPending ? "Saving…" : "Save changes"}</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   );

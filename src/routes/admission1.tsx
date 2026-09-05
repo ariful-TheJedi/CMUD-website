@@ -129,9 +129,7 @@ function AdmissionPage() {
         },
       });
       setSubmitted(true);
-      toast.success(admissionPage.success.toastTitle, {
-        description: admissionPage.success.toastDescription,
-      });
+      toast.success(admissionPage.success.toastTitle);
       form.reset();
       setCaptchaToken(isTurnstileEnabledClient() ? "" : TURNSTILE_BYPASS_TOKEN);
       if (isTurnstileEnabledClient()) window.turnstile?.reset();

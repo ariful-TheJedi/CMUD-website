@@ -25,7 +25,6 @@ export const admissionPage = {
         "preferredBranch",
         "course",
         "batch",
-        "address",
         "message",
       ],
       fields: {
@@ -35,8 +34,7 @@ export const admissionPage = {
         preferredBranch: { label: "Preferred Branch", placeholder: "Select preferred branch" },
         course: { label: "Course", placeholder: "Choose a course" },
         batch: { label: "Preferred batch", placeholder: "Choose batch" },
-        address: { label: "Address", placeholder: "City, country" },
-        message: { label: "Message", placeholder: "Tell us about your background and goals" },
+        message: { label: "Message(Comment)", placeholder: "Write any notes or comments" },
       },
       branches: [
         { value: "Panthapath", label: "Panthapath" },
@@ -44,9 +42,9 @@ export const admissionPage = {
       ],
       batches: [
         { value: "Sept-2026", label: "September 2026" },
-        { value: "nov-2026", label: "November 2026" },
-        { value: "jan-2027", label: "January 2027" },
-        { value: "may-2027", label: "May 2027" },
+        { value: "nov-2026", label: "November 2026 (special)" },
+        // { value: "jan-2027", label: "January 2027" },
+        // { value: "may-2027", label: "May 2027" },
         { value: "cmu", label: "CMU batch" },
       ],
     },
@@ -67,7 +65,8 @@ export const admissionPage = {
         "mobileNumber",
         "transactionId",
         "cashSerialNumber",
-        "address",
+        "accountNumber",
+        "accountName",
         "message",
       ],
       fields: {
@@ -82,12 +81,14 @@ export const admissionPage = {
         mobileNumber: { label: "bKash mobile number", placeholder: "Enter bKash mobile number" },
         transactionId: { label: "bKash transaction ID", placeholder: "Enter bKash transaction ID" },
         cashSerialNumber: { label: "Cash S/N number", placeholder: "Enter cash S/N number" },
-        address: { label: "Student address", placeholder: "City, country" },
+        accountNumber: { label: "Account number", placeholder: "Enter bank account number" },
+        accountName: { label: "Account name", placeholder: "Enter bank account holder name" },
         message: { label: "Payment or admission note", placeholder: "Add payment or admission details" },
       },
       paymentMethodOptions: [
         { value: "bKash", label: "bKash" },
         { value: "cash", label: "Cash" },
+        { value: "bank_transfer", label: "Bank Transfer" },
       ],
       paymentSection: {
         title: "Payment details",
@@ -98,10 +99,10 @@ export const admissionPage = {
         { value: "Uttara", label: "Uttara" },
       ],
       batches: [
-        { value: "Sept-2026", label: "September 2026" },
-        { value: "nov-2026", label: "November 2026" },
-        { value: "jan-2027", label: "January 2027" },
-        { value: "may-2027", label: "May 2027" },
+         { value: "Sept-2026", label: "September 2026" },
+         { value: "nov-2026", label: "November 2026 (special)" },
+        // { value: "jan-2027", label: "January 2027" },
+        // { value: "may-2027", label: "May 2027" },
         { value: "cmu", label: "CMU batch" },
       ],
       findUsOptions: [
@@ -110,6 +111,7 @@ export const admissionPage = {
           value: "Social media (Facebook, Instagram, YouTube etc.)",
           label: "Social media (Facebook, Instagram, YouTube etc.)",
         },
+        { value: "cmud office", label: "CMUD Office" },
         { value: "Md. Hridoy Ali", label: "Md. Hridoy Ali" },
         { value: "Shawon Mahmud", label: "Shawon Mahmud" },
         { value: "Md. Sumon", label: "Md. Sumon" },
@@ -123,7 +125,7 @@ export const admissionPage = {
     phone: "Phone",
     qualification: "Qualification",
     medicalCollege: "Medical College",
-    bmdcNumber: "BMDC number",
+    bmdcNumber: "BMDC number (if have)",
     preferredBranch: "Preferred branch",
     course: "Course",
     preferredBatch: "Preferred batch",
@@ -173,9 +175,7 @@ export const admissionPage = {
   },
   success: {
     toastTitle: "Application received",
-    toastDescription: "Our admissions team will contact you within one business day.",
-    banner:
-      "Application received. Our admissions team will contact you within one business day.",
+    banner: "Application received.",
   },
   errors: {
     captcha: "Please complete the security check",

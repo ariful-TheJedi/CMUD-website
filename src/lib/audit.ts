@@ -41,6 +41,9 @@ export type AuditAction =
   | "admission.updated"
   | "admission.deleted"
   | "admission.note_added"
+  | "payment_admission.status_changed"
+  | "payment_admission.updated"
+  | "payment_admission.deleted"
   | "page.updated";
 
 export type AuditContentType =
@@ -53,6 +56,7 @@ export type AuditContentType =
   | "faq"
   | "certificate"
   | "admission_application"
+  | "payment_admission"
   | "page";
 
 export type WriteAuditInput = {
