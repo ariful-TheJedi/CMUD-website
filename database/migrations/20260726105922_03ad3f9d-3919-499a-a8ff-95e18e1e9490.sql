@@ -1,0 +1,12 @@
+CREATE POLICY "Viewers can read all courses" ON public.courses FOR SELECT TO authenticated USING (public.has_role(auth.uid(), 'viewer'::public.app_role));
+CREATE POLICY "Viewers can read all faculty" ON public.faculty FOR SELECT TO authenticated USING (public.has_role(auth.uid(), 'viewer'::public.app_role));
+CREATE POLICY "Viewers can read all faqs" ON public.faqs FOR SELECT TO authenticated USING (public.has_role(auth.uid(), 'viewer'::public.app_role));
+CREATE POLICY "Viewers can read all notices" ON public.notices FOR SELECT TO authenticated USING (public.has_role(auth.uid(), 'viewer'::public.app_role));
+CREATE POLICY "Viewers can read all notice attachments" ON public.notice_attachments FOR SELECT TO authenticated USING (public.has_role(auth.uid(), 'viewer'::public.app_role));
+CREATE POLICY "Viewers can read all notice categories" ON public.notice_categories FOR SELECT TO authenticated USING (public.has_role(auth.uid(), 'viewer'::public.app_role));
+CREATE POLICY "Viewers can read all albums" ON public.gallery_albums FOR SELECT TO authenticated USING (public.has_role(auth.uid(), 'viewer'::public.app_role));
+CREATE POLICY "Viewers can read all gallery images" ON public.gallery_images FOR SELECT TO authenticated USING (public.has_role(auth.uid(), 'viewer'::public.app_role));
+CREATE POLICY "Viewers can read all education aid sections" ON public.education_aid_sections FOR SELECT TO authenticated USING (public.has_role(auth.uid(), 'viewer'::public.app_role));
+CREATE POLICY "Viewers can read all education aid slides" ON public.education_aid_slides FOR SELECT TO authenticated USING (public.has_role(auth.uid(), 'viewer'::public.app_role));
+CREATE POLICY "Viewers can read all testimonials" ON public.testimonials FOR SELECT TO authenticated USING (public.has_role(auth.uid(), 'viewer'::public.app_role));
+CREATE POLICY "Viewers can read certificates" ON public.certificates FOR SELECT TO authenticated USING (public.has_role(auth.uid(), 'viewer'::public.app_role));

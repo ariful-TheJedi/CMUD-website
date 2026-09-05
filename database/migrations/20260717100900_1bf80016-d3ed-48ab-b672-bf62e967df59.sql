@@ -1,0 +1,3 @@
+ALTER TABLE public.gallery_albums ADD COLUMN IF NOT EXISTS category TEXT NOT NULL DEFAULT '';
+ALTER TABLE public.gallery_images ADD COLUMN IF NOT EXISTS caption TEXT NOT NULL DEFAULT '';
+ALTER TABLE public.gallery_images ADD COLUMN IF NOT EXISTS alt_text TEXT NOT NULL DEFAULT '';
