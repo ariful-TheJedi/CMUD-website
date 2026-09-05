@@ -33,7 +33,7 @@ export const contactPage = {
       icon: "phone" as const,
       title: "Call us",
       lines: [
-        { label: "Admissions", value: "+880 1826-306254", href: "tel:+8801826306254" },
+        { label: "Admissions", value: "+880 1944333666", href: "tel:+8801944333666" },
         { label: "Admissions", value: "+880 1974-557777", href: "tel:+8801974557777" },
       ],
       note: "Office lines for Uttara and Panthapath available on request.",
