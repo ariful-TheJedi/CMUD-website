@@ -15,17 +15,12 @@ function envFlagTrue(value: string | undefined): boolean {
   return (value ?? "").trim().toLowerCase() === "true";
 }
 
-/** Temporary disable for the current test pass.
- * Keep the Turnstile code in place, but force it off so forms can be submitted
- * normally until the feature is explicitly re-enabled later.
- */
 export function isTurnstileEnabledClient(): boolean {
-  return false;
+  return envFlagTrue(import.meta.env.VITE_TURNSTILE_ENABLED);
 }
 
-/** Temporary disable for the current test pass. */
 export function isTurnstileEnabledServer(): boolean {
-  return false;
+  return envFlagTrue(process.env.TURNSTILE_ENABLED);
 }
 
 export async function verifyTurnstileToken(token: string): Promise<void> {

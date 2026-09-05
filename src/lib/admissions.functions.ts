@@ -43,6 +43,7 @@ export type PaymentAdmissionListItem = {
   cashSerialNumber: string | null;
   accountNumber: string | null;
   accountName: string | null;
+  amount: number | null;
 };
 
 export type PaymentAdmissionDetail = PaymentAdmissionListItem & {
@@ -140,6 +141,7 @@ type PaymentAdmissionRow = {
   cash_serial_number: string | null;
   account_number: string | null;
   account_name: string | null;
+  amount: number | null;
 };
 
 function toListItem(r: AdmissionRow): AdmissionApplicationListItem {
@@ -175,6 +177,7 @@ function toPaymentListItem(r: PaymentAdmissionRow): PaymentAdmissionListItem {
     cashSerialNumber: r.cash_serial_number ?? null,
     accountNumber: r.account_number ?? null,
     accountName: r.account_name ?? null,
+    amount: r.amount ?? null,
   };
 }
 
@@ -247,6 +250,7 @@ const submitSchema = z.object({
   cashSerialNumber: z.string().max(100).optional(),
   accountNumber: z.string().max(100).optional(),
   accountName: z.string().max(255).optional(),
+  amount: z.number().int().positive().max(100_000_000).optional(),
 });
 
 export const submitAdmissionApplication = createServerFn({ method: "POST" })
@@ -294,10 +298,10 @@ const message = data.applicantMessage?.trim() || "";
              full_name, email, phone, qualification, medical_college, bmdc_number,
              preferred_branch, course_slug, preferred_batch, address, how_did_you_find_us,
              applicant_message, payment_method, mobile_number, transaction_id, cash_serial_number,
-             account_number, account_name,
+             account_number, account_name, amount,
              status, submitted_at
            ) VALUES (
-             $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,'pending'::payment_admission_status, now()
+             $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,'pending'::payment_admission_status, now()
            )`,
           [
             data.fullName,
@@ -318,6 +322,7 @@ const message = data.applicantMessage?.trim() || "";
             data.cashSerialNumber || null,
             data.accountNumber || null,
             data.accountName || null,
+            data.amount ?? null,
           ]
         );
       } else {
@@ -494,7 +499,7 @@ export const listPaymentAdmissions = createServerFn({ method: "POST" })
                 COALESCE(c.name, p.course_slug) AS course_name, p.course_slug,
                 p.preferred_branch, p.submitted_at, p.status::text AS status,
                 p.payment_method, p.mobile_number, p.transaction_id, p.cash_serial_number,
-                p.account_number, p.account_name
+                p.account_number, p.account_name, p.amount
          FROM payment_admissions p
          LEFT JOIN courses c ON c.slug = p.course_slug
          ${whereSql}
@@ -520,7 +525,7 @@ export const getPaymentAdmission = createServerFn({ method: "POST" })
               p.qualification, p.medical_college, p.address, p.preferred_batch,
               p.how_did_you_find_us, p.applicant_message,
               p.payment_method, p.mobile_number, p.transaction_id, p.cash_serial_number,
-              p.account_number, p.account_name
+              p.account_number, p.account_name, p.amount
        FROM payment_admissions p
        LEFT JOIN courses c ON c.slug = p.course_slug
        WHERE p.id = $1`,
@@ -573,6 +578,7 @@ const paymentEditSchema = z.object({
   cashSerialNumber: z.string().trim().max(100).nullable().optional(),
   accountNumber: z.string().trim().max(100).nullable().optional(),
   accountName: z.string().trim().max(255).nullable().optional(),
+  amount: z.number().int().positive().nullable().optional(),
 });
 
 export const updatePaymentAdmission = createServerFn({ method: "POST" })
@@ -588,15 +594,15 @@ export const updatePaymentAdmission = createServerFn({ method: "POST" })
          preferred_batch = $8, address = $9, how_did_you_find_us = $10,
          applicant_message = $11, payment_method = $12, mobile_number = $13,
          transaction_id = $14, cash_serial_number = $15, account_number = $16,
-         account_name = $17
-       WHERE id = $18`,
+         account_name = $17, amount = $18
+       WHERE id = $19`,
       [
         data.fullName, data.email, data.phone, data.qualification || "", data.medicalCollege || "",
         data.bmdcNumber || "", data.preferredBranch, data.preferredBatch || "", data.address || "",
         data.howDidYouFindUs || "", data.applicantMessage?.trim() || null, data.paymentMethod,
         data.mobileNumber?.trim() || null, data.transactionId?.trim() || null,
         data.cashSerialNumber?.trim() || null, data.accountNumber?.trim() || null,
-        data.accountName?.trim() || null, data.id,
+        data.accountName?.trim() || null, data.amount ?? null, data.id,
       ],
     );
     await writeAuditLog(context, {

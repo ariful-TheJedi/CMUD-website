@@ -127,6 +127,10 @@ function PaymentStatusBadge({ status }: { status: PaymentAdmissionStatus }) {
   );
 }
 
+function formatAmount(amount: number | null | undefined) {
+  return amount != null ? `৳ ${amount.toLocaleString()}` : "—";
+}
+
 function formatSubmittedAt(iso: string) {
   try {
     return new Date(iso).toLocaleString(undefined, {
@@ -399,6 +403,7 @@ function AdmissionsPage() {
                   <TableHead>Course</TableHead>
                   {!isPaymentTab ? <TableHead>Branch</TableHead> : null}
                   {isPaymentTab ? <TableHead>Payment</TableHead> : null}
+                  {isPaymentTab ? <TableHead>Amount</TableHead> : null}
                   {isPaymentTab ? <TableHead>Payment Reference</TableHead> : null}
                   <TableHead>Status</TableHead>
                   <TableHead>Submitted</TableHead>
@@ -409,7 +414,7 @@ function AdmissionsPage() {
                 {activeListQ.isLoading ? (
                   Array.from({ length: 6 }).map((_, i) => (
                     <TableRow key={i}>
-                      {Array.from({ length: 8 }).map((__, j) => (
+                      {Array.from({ length: isPaymentTab ? 9 : 8 }).map((__, j) => (
                         <TableCell key={j}>
                           <Skeleton className="h-4 w-full" />
                         </TableCell>
@@ -418,7 +423,7 @@ function AdmissionsPage() {
                   ))
                 ) : activeListQ.isError ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="p-8 text-center">
+                    <TableCell colSpan={isPaymentTab ? 9 : 8} className="p-8 text-center">
                       <div className="text-sm text-destructive">
                         Failed to load {isPaymentTab ? "payment registrations" : "applications"}.
                       </div>
@@ -430,7 +435,7 @@ function AdmissionsPage() {
                 ) : (activeListQ.data?.items.length ?? 0) === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={8}
+                      colSpan={isPaymentTab ? 9 : 8}
                       className="p-8 text-center text-sm text-muted-foreground"
                     >
                       {search ||
@@ -472,6 +477,9 @@ function AdmissionsPage() {
                         <>
                           <TableCell className="text-sm">
                             {(r as PaymentAdmissionListItem).paymentMethod}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap text-sm">
+                            {formatAmount((r as PaymentAdmissionListItem).amount)}
                           </TableCell>
                           <TableCell
                             className="max-w-[180px] truncate font-mono text-sm"
@@ -1094,6 +1102,7 @@ function PaymentAdmissionDetailsDialog({ id, onClose }: { id: string; onClose: (
                 <Field label="Preferred batch" value={d.preferredBatch || "—"} />
                 <Field label="Address" value={d.address || "—"} />
                 <Field label="Payment method" value={d.paymentMethod} />
+                <Field label="Amount" value={formatAmount(d.amount)} />
                 <Field label="Bkash phone no" value={d.mobileNumber || "—"} />
                 <Field label="Transaction ID" value={d.transactionId || "—"} />
                 <Field label="Cash serial number" value={d.cashSerialNumber || "—"} />
@@ -1173,6 +1182,7 @@ function PaymentAdmissionEditDialog({ id, onClose }: { id: string; onClose: () =
     applicantMessage: d.applicantMessage ?? "", paymentMethod: d.paymentMethod,
     mobileNumber: d.mobileNumber ?? "", transactionId: d.transactionId ?? "", cashSerialNumber: d.cashSerialNumber ?? "",
     accountNumber: d.accountNumber ?? "", accountName: d.accountName ?? "",
+    amount: d.amount != null ? String(d.amount) : "",
   } : null);
   const set = (key: string, value: string) => setForm({ ...(values ?? {}), [key]: value });
   const saveMut = useMutation({
@@ -1197,6 +1207,7 @@ function PaymentAdmissionEditDialog({ id, onClose }: { id: string; onClose: () =
           cashSerialNumber: values!.cashSerialNumber,
           accountNumber: values!.accountNumber,
           accountName: values!.accountName,
+          amount: values!.amount.trim() ? Number(values!.amount) : null,
         },
       }),
     onSuccess: () => {
@@ -1220,6 +1231,7 @@ function PaymentAdmissionEditDialog({ id, onClose }: { id: string; onClose: () =
             <LabeledInput label="Qualification" value={values.qualification} onChange={(v) => set("qualification", v)} />
             <LabeledInput label="Medical college" value={values.medicalCollege} onChange={(v) => set("medicalCollege", v)} />
             <LabeledInput label="Payment method" value={values.paymentMethod} onChange={(v) => set("paymentMethod", v)} />
+            <LabeledInput label="Amount (BDT)" type="number" value={values.amount} onChange={(v) => set("amount", v)} />
             <LabeledInput label="Mobile number" value={values.mobileNumber} onChange={(v) => set("mobileNumber", v)} />
             <LabeledInput label="Transaction ID" value={values.transactionId} onChange={(v) => set("transactionId", v)} />
             <LabeledInput label="Cash serial number" value={values.cashSerialNumber} onChange={(v) => set("cashSerialNumber", v)} />
@@ -1241,17 +1253,19 @@ function LabeledInput({
   label,
   value,
   onChange,
+  type = "text",
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
+  type?: string;
 }) {
   return (
     <div>
       <div className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
         {label}
       </div>
-      <Input value={value} onChange={(e) => onChange(e.target.value)} />
+      <Input type={type} value={value} onChange={(e) => onChange(e.target.value)} />
     </div>
   );
 }

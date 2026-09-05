@@ -86,6 +86,11 @@ const paymentSchema = z.object({
   bmdcNumber: z.string().optional().or(z.literal("")),
   findUsOptions: z.string().optional().or(z.literal("")),
   paymentMethod: z.string().min(1, "Select a payment method"),
+  amount: z
+    .string()
+    .trim()
+    .min(1, "Enter the payment amount")
+    .regex(/^\d+$/, "Enter a valid amount"),
   mobileNumber: z.string().optional().or(z.literal("")),
   transactionId: z.string().optional().or(z.literal("")),
   cashSerialNumber: z.string().optional().or(z.literal("")),
@@ -377,7 +382,7 @@ export function RegistrationAdmissionForm({ formData, initialCourse, courses }: 
     defaultValues: {
       fullName: "", email: "", phone: "", qualification: "", medicalCollege: "",
       bmdcNumber: "", preferredBranch: "", course: initialCourse ?? "",
-      batch: "", findUsOptions: "", paymentMethod: "", mobileNumber: "", transactionId: "", cashSerialNumber: "",
+      batch: "", findUsOptions: "", paymentMethod: "", amount: "", mobileNumber: "", transactionId: "", cashSerialNumber: "",
       accountNumber: "", accountName: "",
       howDidYouFindUs: "", message: "",
     },
@@ -407,6 +412,7 @@ async function onSubmit(values: PaymentFormValues) {
           // STRICTLY ROUTE TO PAYMENT TABLE
           admissionType: "payment",
           paymentMethod: values.paymentMethod,
+          amount: Number(values.amount),
           mobileNumber: values.mobileNumber,
           transactionId: values.transactionId,
           cashSerialNumber: values.cashSerialNumber,
@@ -451,6 +457,13 @@ async function onSubmit(values: PaymentFormValues) {
                     <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
                   ))}</SelectContent>
                 </Select>
+                <FormMessage />
+              </FormItem>
+            )}/>
+            <FormField control={form.control} name="amount" render={({ field }) => (
+              <FormItem>
+                <FormLabel>{fields.amount.label} <RequiredMark /></FormLabel>
+                <FormControl><Input type="number" min="1" placeholder={fields.amount.placeholder} {...field} /></FormControl>
                 <FormMessage />
               </FormItem>
             )}/>

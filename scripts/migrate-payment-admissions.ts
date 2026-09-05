@@ -9,7 +9,7 @@ const { Pool } = pg;
 //   (e.g. status still using the old admission_status enum/text values):
 //   converts it in place, mapping legacy values to the new enum.
 // - Table already exists and is missing the bank-transfer columns
-//   (account_number / account_name): adds them.
+//   (account_number / account_name) or the amount column: adds them.
 // All statements run in a single transaction, so a failure rolls back
 // cleanly instead of leaving the schema half-migrated.
 async function runMigration() {
@@ -54,6 +54,7 @@ async function runMigration() {
         cash_serial_number VARCHAR(100),
         account_number VARCHAR(100),
         account_name VARCHAR(255),
+        amount INTEGER,
         address TEXT,
         applicant_message TEXT,
         status payment_admission_status NOT NULL DEFAULT 'pending',
@@ -79,10 +80,11 @@ async function runMigration() {
         ALTER COLUMN status SET NOT NULL;
       ALTER TABLE payment_admissions ADD COLUMN IF NOT EXISTS account_number VARCHAR(100);
       ALTER TABLE payment_admissions ADD COLUMN IF NOT EXISTS account_name VARCHAR(255);
+      ALTER TABLE payment_admissions ADD COLUMN IF NOT EXISTS amount INTEGER;
     `);
 
     await client.query("COMMIT");
-    console.log("✅ payment_admissions is up to date (table, status enum, bank-transfer columns).");
+    console.log("✅ payment_admissions is up to date (table, status enum, bank-transfer columns, amount).");
   } catch (error) {
     await client.query("ROLLBACK");
     console.error("❌ Migration failed, all changes rolled back:", error);
