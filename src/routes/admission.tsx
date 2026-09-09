@@ -338,6 +338,8 @@ async function onSubmit(values: RequestFormValues) {
       if (isTurnstileEnabledClient()) window.turnstile?.reset();
     } catch (err) {
       toast.error(admissionPage.errors.submitTitle, { description: err instanceof Error ? err.message : admissionPage.errors.submitDescription });
+      setCaptchaToken(isTurnstileEnabledClient() ? "" : TURNSTILE_BYPASS_TOKEN);
+      if (isTurnstileEnabledClient()) window.turnstile?.reset();
     } finally {
       setSubmitting(false);
     }
@@ -347,7 +349,7 @@ async function onSubmit(values: RequestFormValues) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-5 md:grid-cols-2 animate-in fade-in duration-500">
-        
+
         {/* Inject Shared Fields */}
         <SharedAdmissionFields control={form.control} formCopy={formData} courses={courses} />
 
@@ -427,6 +429,8 @@ async function onSubmit(values: PaymentFormValues) {
       if (isTurnstileEnabledClient()) window.turnstile?.reset();
     } catch (err) {
       toast.error(admissionPage.errors.submitTitle, { description: err instanceof Error ? err.message : admissionPage.errors.submitDescription });
+      setCaptchaToken(isTurnstileEnabledClient() ? "" : TURNSTILE_BYPASS_TOKEN);
+      if (isTurnstileEnabledClient()) window.turnstile?.reset();
     } finally {
       setSubmitting(false);
     }
