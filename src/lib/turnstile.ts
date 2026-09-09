@@ -34,6 +34,11 @@ export async function verifyTurnstileToken(token: string): Promise<void> {
   const trimmed = (token ?? "").trim();
   if (trimmed.length < 10) throw new Error("Captcha verification failed");
   if (trimmed === TURNSTILE_BYPASS_TOKEN) {
+    console.error(
+      "[turnstile] Received bypass token while TURNSTILE_ENABLED=true on the server. " +
+        "This means the client bundle was built without VITE_TURNSTILE_ENABLED=true — " +
+        "set it in .env and run `npm run build` again, then restart the server.",
+    );
     throw new Error("Captcha verification failed");
   }
 

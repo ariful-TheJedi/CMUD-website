@@ -10,7 +10,7 @@ export const aboutPage = {
     eyebrow: "About CMUD",
     title: "A institute built by doctors for doctors.",
     description:
-      "Since 2008, CMUD has trained over 3400 doctors of MBBS and higher Degrees, in diagnostic ultrasound and Doppler imaging — combining rigorous theory with daily, supervised scanning.",
+      "Since 2008, CMUD has trained over 3400+ doctors of MBBS and higher Degrees, in diagnostic ultrasound and Doppler imaging — combining rigorous theory with daily, supervised scanning.",
   },
   story: {
     eyebrow: "Our Story",
