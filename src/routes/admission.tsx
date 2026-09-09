@@ -337,9 +337,15 @@ async function onSubmit(values: RequestFormValues) {
       setCaptchaToken(isTurnstileEnabledClient() ? "" : TURNSTILE_BYPASS_TOKEN);
       if (isTurnstileEnabledClient()) window.turnstile?.reset();
     } catch (err) {
-      toast.error(admissionPage.errors.submitTitle, { description: err instanceof Error ? err.message : admissionPage.errors.submitDescription });
-      setCaptchaToken(isTurnstileEnabledClient() ? "" : TURNSTILE_BYPASS_TOKEN);
-      if (isTurnstileEnabledClient()) window.turnstile?.reset();
+      const message = err instanceof Error ? err.message : admissionPage.errors.submitDescription;
+      toast.error(admissionPage.errors.submitTitle, { description: message });
+      // Turnstile tokens are single-use — only invalidate the solved widget when the
+      // failure is actually captcha-related. Other errors (DB, invalid course, etc.)
+      // shouldn't force the user to re-solve the challenge before they can retry.
+      if (message === "Captcha verification failed") {
+        setCaptchaToken(isTurnstileEnabledClient() ? "" : TURNSTILE_BYPASS_TOKEN);
+        if (isTurnstileEnabledClient()) window.turnstile?.reset();
+      }
     } finally {
       setSubmitting(false);
     }
@@ -428,9 +434,15 @@ async function onSubmit(values: PaymentFormValues) {
       setCaptchaToken(isTurnstileEnabledClient() ? "" : TURNSTILE_BYPASS_TOKEN);
       if (isTurnstileEnabledClient()) window.turnstile?.reset();
     } catch (err) {
-      toast.error(admissionPage.errors.submitTitle, { description: err instanceof Error ? err.message : admissionPage.errors.submitDescription });
-      setCaptchaToken(isTurnstileEnabledClient() ? "" : TURNSTILE_BYPASS_TOKEN);
-      if (isTurnstileEnabledClient()) window.turnstile?.reset();
+      const message = err instanceof Error ? err.message : admissionPage.errors.submitDescription;
+      toast.error(admissionPage.errors.submitTitle, { description: message });
+      // Turnstile tokens are single-use — only invalidate the solved widget when the
+      // failure is actually captcha-related. Other errors (DB, invalid course, etc.)
+      // shouldn't force the user to re-solve the challenge before they can retry.
+      if (message === "Captcha verification failed") {
+        setCaptchaToken(isTurnstileEnabledClient() ? "" : TURNSTILE_BYPASS_TOKEN);
+        if (isTurnstileEnabledClient()) window.turnstile?.reset();
+      }
     } finally {
       setSubmitting(false);
     }
