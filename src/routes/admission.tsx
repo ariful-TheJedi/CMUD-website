@@ -339,13 +339,12 @@ async function onSubmit(values: RequestFormValues) {
     } catch (err) {
       const message = err instanceof Error ? err.message : admissionPage.errors.submitDescription;
       toast.error(admissionPage.errors.submitTitle, { description: message });
-      // Turnstile tokens are single-use — only invalidate the solved widget when the
-      // failure is actually captcha-related. Other errors (DB, invalid course, etc.)
-      // shouldn't force the user to re-solve the challenge before they can retry.
-      if (message === "Captcha verification failed") {
-        setCaptchaToken(isTurnstileEnabledClient() ? "" : TURNSTILE_BYPASS_TOKEN);
-        if (isTurnstileEnabledClient()) window.turnstile?.reset();
-      }
+      // Turnstile tokens are single-use: verifyTurnstileToken() already consumed
+      // this one on the server before any of these errors could be thrown (course,
+      // duplicate, or otherwise), so the solved widget must always be reset here —
+      // resubmitting the same token would only fail again on Cloudflare's side.
+      setCaptchaToken(isTurnstileEnabledClient() ? "" : TURNSTILE_BYPASS_TOKEN);
+      if (isTurnstileEnabledClient()) window.turnstile?.reset();
     } finally {
       setSubmitting(false);
     }
@@ -436,13 +435,12 @@ async function onSubmit(values: PaymentFormValues) {
     } catch (err) {
       const message = err instanceof Error ? err.message : admissionPage.errors.submitDescription;
       toast.error(admissionPage.errors.submitTitle, { description: message });
-      // Turnstile tokens are single-use — only invalidate the solved widget when the
-      // failure is actually captcha-related. Other errors (DB, invalid course, etc.)
-      // shouldn't force the user to re-solve the challenge before they can retry.
-      if (message === "Captcha verification failed") {
-        setCaptchaToken(isTurnstileEnabledClient() ? "" : TURNSTILE_BYPASS_TOKEN);
-        if (isTurnstileEnabledClient()) window.turnstile?.reset();
-      }
+      // Turnstile tokens are single-use: verifyTurnstileToken() already consumed
+      // this one on the server before any of these errors could be thrown (course,
+      // duplicate, or otherwise), so the solved widget must always be reset here —
+      // resubmitting the same token would only fail again on Cloudflare's side.
+      setCaptchaToken(isTurnstileEnabledClient() ? "" : TURNSTILE_BYPASS_TOKEN);
+      if (isTurnstileEnabledClient()) window.turnstile?.reset();
     } finally {
       setSubmitting(false);
     }
