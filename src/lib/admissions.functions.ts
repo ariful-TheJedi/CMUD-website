@@ -277,19 +277,30 @@ export const submitAdmissionApplication = createServerFn({ method: "POST" })
         throw new Error("Invalid course selection");
       }
 
-      const sixtyAgo = new Date(Date.now() - 60_000).toISOString();
-      if (data.email) {
-        const { rows: recent } = await dbQuery<{ id: string }>(
-          "submitAdmission.dup",
-          `SELECT id FROM admission_applications
-           WHERE email = $1 AND course_slug = $2 AND submitted_at >= $3
-           LIMIT 1`,
-          [data.email, data.courseSlug, sixtyAgo],
-        );
-        if (recent.length > 0) return { ok: true };
+      // Duplicate guard: same phone or same BMDC number can't submit twice.
+      // Each form has its own table, so the check (and the policy) is scoped
+      // per-form — a phone/BMDC used on /admission/apply doesn't block
+      // /admission/registration and vice versa.
+      const dupTable = data.admissionType === "payment" ? "payment_admissions" : "admission_applications";
+      const bmdcNumber = data.bmdcNumber?.trim() || "";
+      const hasBmdc = bmdcNumber.length > 0 && bmdcNumber.toLowerCase() !== "not provided";
+
+      const dupConditions = ["phone = $1"];
+      const dupParams: unknown[] = [data.phone];
+      if (hasBmdc) {
+        dupParams.push(bmdcNumber);
+        dupConditions.push(`bmdc_number = $${dupParams.length}`);
+      }
+      const { rows: duplicates } = await dbQuery<{ id: string }>(
+        "submitAdmission.dup",
+        `SELECT id FROM ${dupTable} WHERE ${dupConditions.join(" OR ")} LIMIT 1`,
+        dupParams,
+      );
+      if (duplicates.length > 0) {
+        throw new Error("You have already submitted this form with this phone number or BMDC number.");
       }
 
-const message = data.applicantMessage?.trim() || "";
+      const message = data.applicantMessage?.trim() || "";
 
       if (data.admissionType === "payment") {
         await dbQuery(
@@ -357,7 +368,11 @@ const message = data.applicantMessage?.trim() || "";
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Submission failed";
       console.error("[admissions] submit failed:", err);
-      if (msg === "Invalid course selection" || msg === "Captcha verification failed") {
+      if (
+        msg === "Invalid course selection" ||
+        msg === "Captcha verification failed" ||
+        msg === "You have already submitted this form with this phone number or BMDC number."
+      ) {
         throw new Error(msg);
       }
       throw new Error("Submission failed. Please try again.");

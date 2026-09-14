@@ -83,6 +83,12 @@ async function runMigration() {
       ALTER TABLE payment_admissions ADD COLUMN IF NOT EXISTS amount INTEGER;
     `);
 
+    // Used to check for duplicate phone/BMDC submissions on every insert.
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_payment_admissions_phone ON payment_admissions(phone);
+      CREATE INDEX IF NOT EXISTS idx_payment_admissions_bmdc ON payment_admissions(bmdc_number);
+    `);
+
     await client.query("COMMIT");
     console.log("✅ payment_admissions is up to date (table, status enum, bank-transfer columns, amount).");
   } catch (error) {

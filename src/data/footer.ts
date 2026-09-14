@@ -30,9 +30,13 @@ export const footerData = {
     title: "Contact",
     panthapath: "Panthapath: Holding No. 66, Razanighanda Complex, Green Road, Dhaka – 1205",
     uttara: "Uttara: House 06, Sonargaon Jonopath Road, Sector 11, Dhaka",
-    phones: ["+880 1944000666", "+880 1974-557777"],
+    phones: ["+880 1944000666", "+880 1974557777"],
     email: "info@cmudusg.com",
   },
+  social: [
+    { icon: "facebook" as const, label: "Facebook", href: "https://facebook.com/CMUDBD" },
+    { icon: "youtube" as const, label: "YouTube", href: "https://www.youtube.com/@CMUD" },
+  ],
   bottom: {
     copyrightSuffix: "CMUD. All rights reserved.",
     tagline: "Built for medical educators and trainees.",

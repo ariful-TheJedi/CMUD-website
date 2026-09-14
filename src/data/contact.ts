@@ -33,10 +33,10 @@ export const contactPage = {
       icon: "phone" as const,
       title: "Call us",
       lines: [
-        { label: "Admissions", value: "+880 1944333666", href: "tel:+8801944333666" },
-        { label: "Admissions", value: "+880 1974-557777", href: "tel:+8801974557777" },
+        { label: "", value: "+880 1944-333666", href: "tel:+8801944333666" },
+        { label: "", value: "+880 1974-557777", href: "tel:+8801974557777" },
       ],
-      note: "Office lines for Uttara and Panthapath available on request.",
+      // note: "Office lines for Uttara and Panthapath available on request.",
     },
     {
       icon: "mail" as const,
@@ -49,8 +49,34 @@ export const contactPage = {
     {
       icon: "clock" as const,
       title: "Office hours",
-      lines: [{ label: "Open", value: "9:00 AM – 10:00 PM" }],
+      lines: [{ label: "Open", value: "10:00 AM – 06:00 PM" }],
       note: "Every day",
+    },
+  ],
+  social: [
+    {
+      icon: "whatsapp" as const,
+      label: "WhatsApp",
+      value: "+880 1826-306254",
+      href: "https://wa.me/+8801826306254",
+    },
+    {
+      icon: "facebook" as const,
+      label: "Facebook",
+      value: "/CMUDBD",
+      href: "https://facebook.com/CMUDBD",
+    },
+    {
+      icon: "linkedin" as const,
+      label: "LinkedIn",
+      value: "/company/cmud",
+      href: "https://www.linkedin.com/company/cmud",
+    },
+    {
+      icon: "youtube" as const,
+      label: "YouTube",
+      value: "@CMUD",
+      href: "https://www.youtube.com/@CMUD",
     },
   ],
   map: {
