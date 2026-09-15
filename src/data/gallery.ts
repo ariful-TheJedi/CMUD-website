@@ -20,7 +20,7 @@ export const galleryPage = {
   hero: {
     eyebrow: "Gallery",
     title: "Inside CMUD",
-    description: "Scanning labs, workshops, and the people who make CMUD what it is.",
+    description: "A glimpse into the people, learning, and milestones that shape CMUD.",
   },
   imagesComingSoon: "Images coming soon",
 };

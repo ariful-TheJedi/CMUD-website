@@ -15,6 +15,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Header } from "../components/layout/Header";
 import { Footer } from "../components/layout/Footer";
+import { RouteProgress } from "../components/layout/RouteProgress";
 import { Toaster } from "../components/ui/sonner";
 import { TrafficTracker } from "@/components/TrafficTracker";
 import { assetUrl, getAssetsPrefixBootstrap } from "@/lib/assets";
@@ -150,6 +151,7 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <RouteProgress />
       <div className="flex min-h-screen flex-col bg-background">
         {!isChromeless && <Header />}
         <main className="flex-1">

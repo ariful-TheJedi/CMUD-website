@@ -1,9 +1,12 @@
+import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { Expand } from "lucide-react";
 import { listPublicAlbums, type PublicAlbum } from "@/lib/gallery.functions";
 import { galleryPage } from "@/data/gallery";
 import { assetUrl } from "@/lib/assets";
+import { GalleryLightbox } from "@/components/GalleryLightbox";
 
 export const Route = createFileRoute("/gallery")({
   head: () => ({
@@ -28,6 +31,8 @@ export const Route = createFileRoute("/gallery")({
   component: GalleryPage,
 });
 
+type LightboxState = { images: PublicAlbum["images"]; index: number; albumTitle: string };
+
 function GalleryPage() {
   const listAlbums = useServerFn(listPublicAlbums);
   const { data: albums } = useSuspenseQuery({
@@ -35,6 +40,7 @@ function GalleryPage() {
     queryFn: () => listAlbums(),
   });
   const { hero } = galleryPage;
+  const [lightbox, setLightbox] = useState<LightboxState | null>(null);
 
   return (
     <>
@@ -54,14 +60,36 @@ function GalleryPage() {
 
       <section className="container mx-auto space-y-8 px-4 py-10">
         {albums.map((album) => (
-          <AlbumBlock key={album.id} album={album} />
+          <AlbumBlock
+            key={album.id}
+            album={album}
+            onImageClick={(index) =>
+              setLightbox({ images: album.images, index, albumTitle: album.title })
+            }
+          />
         ))}
       </section>
+
+      <GalleryLightbox
+        images={lightbox?.images ?? []}
+        index={lightbox?.index ?? 0}
+        albumTitle={lightbox?.albumTitle ?? ""}
+        open={lightbox !== null}
+        onOpenChange={(open) => {
+          if (!open) setLightbox(null);
+        }}
+      />
     </>
   );
 }
 
-function AlbumBlock({ album }: { album: PublicAlbum }) {
+function AlbumBlock({
+  album,
+  onImageClick,
+}: {
+  album: PublicAlbum;
+  onImageClick: (index: number) => void;
+}) {
   return (
     <article>
       <header className="mb-5">
@@ -80,17 +108,27 @@ function AlbumBlock({ album }: { album: PublicAlbum }) {
 
       {album.images.length > 0 ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {album.images.map((img) => (
+          {album.images.map((img, index) => (
             <figure
               key={img.id}
-              className="overflow-hidden rounded-2xl border border-border bg-surface shadow-sm"
+              className="group overflow-hidden rounded-2xl border border-border bg-surface shadow-sm transition-all hover:-translate-y-1 hover:shadow-[var(--shadow-elegant)]"
             >
-              <img
-                src={assetUrl(img.url)}
-                alt={img.altText || album.title}
-                className="aspect-[4/3] w-full object-cover"
-                loading="lazy"
-              />
+              <button
+                type="button"
+                onClick={() => onImageClick(index)}
+                className="relative block w-full cursor-pointer overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                aria-label={`View photo ${index + 1} of ${album.images.length} in ${album.title}`}
+              >
+                <img
+                  src={assetUrl(img.url)}
+                  alt={img.altText || album.title}
+                  className="aspect-[4/3] w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  loading="lazy"
+                />
+                <span className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors duration-300 group-hover:bg-black/30">
+                  <Expand className="h-6 w-6 text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                </span>
+              </button>
               {img.caption ? (
                 <figcaption className="p-3 text-xs text-muted-foreground">{img.caption}</figcaption>
               ) : null}
