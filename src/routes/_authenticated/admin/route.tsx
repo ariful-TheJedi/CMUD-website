@@ -8,9 +8,13 @@ import { authClient } from "@/lib/auth-client";
 import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { AdminSkeleton } from "@/components/layout/AdminSkeleton";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   ssr: false,
+  pendingComponent: AdminSkeleton,
+  pendingMs: 0,
+  pendingMinMs: 150,
   beforeLoad: async ({ location }) => {
     let info;
     try {
