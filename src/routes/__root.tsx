@@ -18,6 +18,7 @@ import { Footer } from "../components/layout/Footer";
 import { RouteProgress } from "../components/layout/RouteProgress";
 import { BootSplash } from "../components/layout/BootSplash";
 import { WhatsAppButton } from "../components/layout/WhatsAppButton";
+import { MessengerButton } from "../components/layout/MessengerButton";
 import { Toaster } from "../components/ui/sonner";
 import { TrafficTracker } from "@/components/TrafficTracker";
 import { assetUrl, getAssetsPrefixBootstrap } from "@/lib/assets";
@@ -165,6 +166,7 @@ function RootComponent() {
       <Toaster />
       {!isChromeless ? <TrafficTracker /> : null}
       {!isChromeless && <WhatsAppButton />}
+      {!isChromeless && <MessengerButton />}
     </QueryClientProvider>
   );
 }
