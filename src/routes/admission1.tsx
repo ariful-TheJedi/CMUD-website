@@ -47,6 +47,7 @@ export const Route = createFileRoute("/admission1")({
       { name: "description", content: admissionPage.meta.description },
       { property: "og:title", content: admissionPage.meta.ogTitle },
       { property: "og:description", content: admissionPage.meta.ogDescription },
+      { name: "robots", content: "noindex" },
     ],
   }),
   component: AdmissionPage,

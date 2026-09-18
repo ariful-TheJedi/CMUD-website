@@ -18,6 +18,7 @@ export const Route = createFileRoute("/certification")({
       { name: "description", content: certificationPage.meta.description },
       { property: "og:title", content: certificationPage.meta.ogTitle },
       { property: "og:description", content: certificationPage.meta.ogDescription },
+      { name: "robots", content: "noindex" },
     ],
   }),
   component: CertificationPage,

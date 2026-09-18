@@ -21,6 +21,7 @@ export const Route = createFileRoute("/certificate-check")({
       { name: "description", content: certificateCheckPage.meta.description },
       { property: "og:title", content: certificateCheckPage.meta.ogTitle },
       { property: "og:description", content: certificateCheckPage.meta.ogDescription },
+      { name: "robots", content: "noindex" },
     ],
   }),
   component: CertificateCheckPage,

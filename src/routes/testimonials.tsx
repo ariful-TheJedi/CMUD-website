@@ -15,6 +15,7 @@ export const Route = createFileRoute("/testimonials")({
       { name: "description", content: testimonialsPage.meta.description },
       { property: "og:title", content: testimonialsPage.meta.ogTitle },
       { property: "og:description", content: testimonialsPage.meta.ogDescription },
+      { name: "robots", content: "noindex" },
     ],
   }),
   loader: ({ context }) =>

@@ -17,6 +17,7 @@ export const Route = createFileRoute("/faq")({
       { name: "description", content: faqPage.meta.description },
       { property: "og:title", content: faqPage.meta.ogTitle },
       { property: "og:description", content: faqPage.meta.ogDescription },
+      { name: "robots", content: "noindex" },
     ],
   }),
   loader: ({ context }) =>

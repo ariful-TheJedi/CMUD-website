@@ -8,6 +8,7 @@ const admissionSearchSchema = z.object({
 
 export const Route = createFileRoute("/admission/registration")({
   validateSearch: (search) => admissionSearchSchema.parse(search),
+  head: () => ({ meta: [{ name: "robots", content: "noindex" }] }),
   component: AdmissionPage,
   loader: ({ context }) => context.queryClient.ensureQueryData(coursesQueryOptions),
 });
