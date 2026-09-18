@@ -24,7 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CourseCard } from "@/components/CourseCard";
-import { FacultyPortrait } from "@/components/FacultyPortrait";
+import { FacultySlider } from "@/components/FacultySlider";
 import { SectionHeading } from "@/components/SectionHeading";
 import { courseCategories } from "@/data/courses";
 import { homePage } from "@/data/home";
@@ -303,25 +303,8 @@ function HomePage() {
             </Link>
           </Button>
         </div>
-        <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {faculty.slice(0, facultyPreview.limit).map((f) => (
-            <Card key={f.id} className="border-border/70">
-              <CardContent className="flex gap-4 p-6">
-                <FacultyPortrait
-                  name={f.name}
-                  initials={f.initials}
-                  photo={f.photoUrl || f.photo}
-                  className="h-24"
-                />
-
-                <div>
-                  <h3 className="font-serif text-lg font-bold leading-tight">{f.name}</h3>
-                  <p className="text-xs uppercase tracking-wider text-secondary">{f.title}</p>
-                  <p className="mt-2 text-sm text-muted-foreground">{f.credentials}</p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+        <div className="mt-6">
+          <FacultySlider faculty={faculty.slice(0, facultyPreview.limit)} />
         </div>
       </section>
 

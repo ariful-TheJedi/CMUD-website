@@ -65,7 +65,7 @@ export const homePage = {
     title: "",
     ctaLabel: "See all faculty",
     ctaTo: "/faculty" as const,
-    limit: 3,
+    limit: 8,
   },
 
   notices: {
