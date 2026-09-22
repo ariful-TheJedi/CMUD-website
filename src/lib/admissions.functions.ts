@@ -342,9 +342,9 @@ export const submitAdmissionApplication = createServerFn({ method: "POST" })
           `INSERT INTO admission_applications (
              full_name, email, phone, qualification, medical_college, bmdc_number,
              preferred_branch, course_id, course_slug, course_name, preferred_batch,
-             address, applicant_message, message, status, submitted_at
+             address, how_did_you_find_us, applicant_message, message, status, submitted_at
            ) VALUES (
-             $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,'new'::admission_status, now()
+             $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,'new'::admission_status, now()
            )`,
           [
             data.fullName,
@@ -359,6 +359,7 @@ export const submitAdmissionApplication = createServerFn({ method: "POST" })
             course.name,
             data.preferredBatch || "",
             data.address || "",
+            data.howDidYouFindUs || "",
             message || null,
             message,
           ]
@@ -661,7 +662,7 @@ export const getAdmissionApplication = createServerFn({ method: "POST" })
       `SELECT id, full_name, email, phone, bmdc_number, course_name, course_slug,
               preferred_branch, submitted_at, status::text AS status,
               qualification, medical_college, address, preferred_batch,
-              applicant_message,
+              how_did_you_find_us, applicant_message,
               status_updated_at, status_updated_by, reviewed_at, reviewed_by
        FROM admission_applications
        WHERE id = $1`,
@@ -751,9 +752,9 @@ export const updateAdmissionApplication = createServerFn({ method: "POST" })
       `UPDATE admission_applications SET
          full_name = $1, email = $2, phone = $3, qualification = $4,
          medical_college = $5, bmdc_number = $6, preferred_branch = $7,
-         preferred_batch = $8, address = $9,
-         applicant_message = $10, message = $10, updated_at = now()
-       WHERE id = $11`,
+         preferred_batch = $8, address = $9, how_did_you_find_us = $10,
+         applicant_message = $11, message = $11, updated_at = now()
+       WHERE id = $12`,
       [
         data.fullName,
         data.email,
@@ -764,6 +765,7 @@ export const updateAdmissionApplication = createServerFn({ method: "POST" })
         data.preferredBranch,
         data.preferredBatch,
         data.address,
+        data.howDidYouFindUs || "",
         message || null,
         data.id,
       ],

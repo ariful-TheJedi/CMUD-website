@@ -78,7 +78,6 @@ const requestSchema = z.object({
   ...baseSchemaFields,
   qualification: z.string().optional().or(z.literal("")),
   bmdcNumber: z.string().optional().or(z.literal("")),
-  findUsOptions: z.string().optional().or(z.literal("")),
 });
 
 const paymentSchema = z.object({
@@ -303,7 +302,7 @@ export function ApplyAdmissionForm({ formData, initialCourse, courses }: { formD
     defaultValues: {
       fullName: "", email: "", phone: "", qualification: "", medicalCollege: "",
       bmdcNumber: "", preferredBranch: "", course: initialCourse ?? "",
-      batch: "", howDidYouFindUs: "", findUsOptions: "", message: "",
+      batch: "", howDidYouFindUs: "", message: "",
     },
   });
 
@@ -323,7 +322,7 @@ async function onSubmit(values: RequestFormValues) {
           preferredBranch: values.preferredBranch as any,
           courseSlug: values.course,
           preferredBatch: values.batch,
-          howDidYouFindUs: values.findUsOptions,
+          howDidYouFindUs: values.howDidYouFindUs,
           applicantMessage: values.message ?? "",
           website: "",
           captchaToken,

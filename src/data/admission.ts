@@ -25,7 +25,6 @@ export const admissionPage = {
         "preferredBranch",
         "course",
         "batch",
-        "findUsOptions",
         "message",
       ],
       fields: {
@@ -35,7 +34,6 @@ export const admissionPage = {
         preferredBranch: { label: "Preferred Branch", placeholder: "Select preferred branch" },
         course: { label: "Course", placeholder: "Choose a course" },
         batch: { label: "Preferred batch", placeholder: "Choose batch" },
-        findUsOptions: { label: "You reference for admission", placeholder: "Select an option" },
         message: { label: "Message(Comment)", placeholder: "Write any notes or comments" },
       },
       branches: [
@@ -48,18 +46,6 @@ export const admissionPage = {
         // { value: "jan-2027", label: "January 2027" },
         // { value: "may-2027", label: "May 2027" },
         { value: "cmu", label: "CMU batch" },
-      ],
-      findUsOptions: [
-        { value: "Website search", label: "Website search" },
-        {
-          value: "Social media (Facebook, Instagram, YouTube etc.)",
-          label: "Social media (Facebook, Instagram, YouTube etc.)",
-        },
-        { value: "cmud office", label: "CMUD Office" },
-        { value: "Md. Hridoy Ali", label: "Md. Hridoy Ali" },
-        { value: "Shawon Mahmud", label: "Shawon Mahmud" },
-        { value: "Md. Sumon", label: "Md. Sumon" },
-        { value: "Abir Hossain", label: "Abir Hossain" },
       ],
     },
     registration: {

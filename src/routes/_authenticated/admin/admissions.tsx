@@ -989,26 +989,6 @@ function AdmissionEditDialog({ id, onClose }: { id: string; onClose: () => void 
               value={values.preferredBatch}
               onChange={(v) => set("preferredBatch", v)}
             />
-            <div>
-              <div className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {admissionPage.labels.howDidYouFindUs}
-              </div>
-              <Select
-                value={values.howDidYouFindUs || undefined}
-                onValueChange={(v) => set("howDidYouFindUs", v)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Optional" />
-                </SelectTrigger>
-                <SelectContent>
-                  {admissionPage.findUsOptions.map((o) => (
-                    <SelectItem key={o.value} value={o.value}>
-                      {o.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
             <div className="md:col-span-2">
               <div className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Address
