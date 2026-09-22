@@ -7,6 +7,8 @@ import { toStoragePath } from "@/lib/assets";
 
 export type HeroStat = { value: string; label: string };
 
+export type HeroSlide = { imageUrl: string; imageAlt: string };
+
 export type HeroContent = {
   badge: string;
   heading: string;
@@ -15,8 +17,7 @@ export type HeroContent = {
   primaryCtaHref: string;
   secondaryCtaLabel: string;
   secondaryCtaHref: string;
-  imageUrl: string;
-  imageAlt: string;
+  slides: HeroSlide[];
   stats: HeroStat[];
 };
 
@@ -48,8 +49,7 @@ export const defaultHomeContent: HomePageContent = {
     primaryCtaHref: "/admission",
     secondaryCtaLabel: "View Courses",
     secondaryCtaHref: "/courses",
-    imageUrl: "",
-    imageAlt: "CMUD instructor demonstrating ultrasound scanning",
+    slides: [{ imageUrl: "", imageAlt: "CMUD instructor demonstrating ultrasound scanning" }],
     stats: [
       { value: "1,200+", label: "Trainees" },
       { value: "12", label: "Years" },
@@ -100,6 +100,24 @@ export function normalizeHomeContent(raw: unknown): HomePageContent {
         .filter((s) => s.value || s.label)
     : d.hero.stats;
 
+  const parsedSlides = Array.isArray(hero.slides)
+    ? (hero.slides as unknown[])
+        .filter((s): s is Record<string, unknown> => !!s && typeof s === "object")
+        .map((s) => ({
+          imageUrl: toStoragePath(typeof s.imageUrl === "string" ? s.imageUrl : ""),
+          imageAlt: str(s.imageAlt, ""),
+        }))
+        .filter((s) => s.imageUrl)
+    : [];
+  // Back-compat: older records stored a single hero.imageUrl/imageAlt pair instead of hero.slides.
+  const legacyImageUrl = typeof hero.imageUrl === "string" ? toStoragePath(hero.imageUrl) : "";
+  const slides =
+    parsedSlides.length > 0
+      ? parsedSlides
+      : legacyImageUrl
+        ? [{ imageUrl: legacyImageUrl, imageAlt: str(hero.imageAlt, d.hero.slides[0]?.imageAlt ?? "") }]
+        : d.hero.slides;
+
   const bullets = Array.isArray(handsOn.bullets)
     ? (handsOn.bullets as unknown[]).filter((b): b is string => typeof b === "string" && !!b.trim())
     : d.handsOn.bullets;
@@ -113,8 +131,7 @@ export function normalizeHomeContent(raw: unknown): HomePageContent {
       primaryCtaHref: str(hero.primaryCtaHref, d.hero.primaryCtaHref),
       secondaryCtaLabel: str(hero.secondaryCtaLabel, d.hero.secondaryCtaLabel),
       secondaryCtaHref: str(hero.secondaryCtaHref, d.hero.secondaryCtaHref),
-      imageUrl: toStoragePath(typeof hero.imageUrl === "string" ? hero.imageUrl : ""),
-      imageAlt: str(hero.imageAlt, d.hero.imageAlt),
+      slides,
       stats,
     },
     handsOn: {

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Save, Trash2, Upload } from "lucide-react";
+import { ArrowDown, ArrowUp, Plus, Save, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AdminMediaImage, useObjectUrl } from "@/components/admin/AdminMediaImage";
 import { useCanWrite } from "@/hooks/use-can-write";
 import { isLocalMediaUrl, toStoragePath } from "@/lib/assets";
-import { defaultHomeContent, type HomePageContent } from "@/lib/home-content";
+import { defaultHomeContent, type HeroSlide, type HomePageContent } from "@/lib/home-content";
 import { media } from "@/lib/media";
 import {
   getPageContentAdmin,
@@ -189,6 +189,175 @@ function ImageField({
   );
 }
 
+function HeroSlidesField({
+  slides,
+  onChange,
+  disabled,
+}: {
+  slides: HeroSlide[];
+  onChange: (slides: HeroSlide[]) => void;
+  disabled?: boolean;
+}) {
+  const uploadFn = useServerFn(uploadHomePageImage);
+  const deleteFn = useServerFn(deleteHomePageImage);
+  const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
+
+  const isLocalMedia = (url: string) => isLocalMediaUrl(url, "home");
+
+  const updateSlide = (i: number, patch: Partial<HeroSlide>) =>
+    onChange(slides.map((s, j) => (j === i ? { ...s, ...patch } : s)));
+
+  const handleFile = async (i: number, file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please choose an image file");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be under 5MB");
+      return;
+    }
+    setUploadingIndex(i);
+    try {
+      const buffer = await file.arrayBuffer();
+      const bytes = new Uint8Array(buffer);
+      let binary = "";
+      const chunk = 0x8000;
+      for (let k = 0; k < bytes.length; k += chunk) {
+        binary += String.fromCharCode(...bytes.subarray(k, k + chunk));
+      }
+      const base64 = btoa(binary);
+      const previousUrl = slides[i]?.imageUrl ?? "";
+      const result = await uploadFn({
+        data: {
+          slot: "hero",
+          fileName: file.name,
+          contentType: file.type || "image/jpeg",
+          base64,
+          previousUrl: isLocalMedia(previousUrl) ? toStoragePath(previousUrl) : undefined,
+        },
+      });
+      updateSlide(i, { imageUrl: toStoragePath(result.url) });
+      toast.success("Slide image saved");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Upload failed");
+    } finally {
+      setUploadingIndex(null);
+    }
+  };
+
+  const removeSlide = async (i: number) => {
+    const url = slides[i]?.imageUrl ?? "";
+    if (isLocalMedia(url)) {
+      try {
+        await deleteFn({ data: { url: toStoragePath(url) } });
+      } catch {
+        // best-effort cleanup; keep removing the slide even if the file delete fails
+      }
+    }
+    onChange(slides.filter((_, j) => j !== i));
+  };
+
+  const moveSlide = (i: number, dir: -1 | 1) => {
+    const j = i + dir;
+    if (j < 0 || j >= slides.length) return;
+    const next = [...slides];
+    [next[i], next[j]] = [next[j], next[i]];
+    onChange(next);
+  };
+
+  return (
+    <div className="space-y-3">
+      {slides.map((s, i) => (
+        <div key={i} className="rounded-md border border-border p-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-muted-foreground">Slide {i + 1}</span>
+            <div className="flex items-center gap-1">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                disabled={disabled || i === 0}
+                onClick={() => moveSlide(i, -1)}
+                aria-label="Move slide up"
+              >
+                <ArrowUp className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                disabled={disabled || i === slides.length - 1}
+                onClick={() => moveSlide(i, 1)}
+                aria-label="Move slide down"
+              >
+                <ArrowDown className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                disabled={disabled}
+                onClick={() => void removeSlide(i)}
+                aria-label="Remove slide"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            id={`hero-slide-upload-${i}`}
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void handleFile(i, f);
+              e.target.value = "";
+            }}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={disabled || uploadingIndex === i}
+            onClick={() => document.getElementById(`hero-slide-upload-${i}`)?.click()}
+          >
+            <Upload className="h-4 w-4" />
+            {uploadingIndex === i ? "Uploading…" : "Upload image"}
+          </Button>
+
+          {s.imageUrl ? (
+            <AdminMediaImage
+              src={s.imageUrl}
+              alt={s.imageAlt || `Slide ${i + 1}`}
+              className="h-32 w-auto rounded-md border border-border object-cover"
+            />
+          ) : (
+            <p className="text-xs text-muted-foreground">No image uploaded yet</p>
+          )}
+
+          <Input
+            placeholder="Alt text (describes the image for accessibility)"
+            value={s.imageAlt}
+            disabled={disabled}
+            onChange={(e) => updateSlide(i, { imageAlt: e.target.value })}
+          />
+        </div>
+      ))}
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        disabled={disabled}
+        onClick={() => onChange([...slides, { imageUrl: "", imageAlt: "" }])}
+      >
+        <Plus className="h-4 w-4" /> Add slide
+      </Button>
+    </div>
+  );
+}
+
 function HomePageContentAdmin() {
   const canWrite = useCanWrite("home_page");
   const qc = useQueryClient();
@@ -317,14 +486,6 @@ function HomePageContentAdmin() {
               onChange={(e) => setHero("badge", e.target.value)}
             />
           </Field>
-          <ImageField
-            label="Hero image"
-            value={hero.imageUrl}
-            disabled={ro}
-            onChange={(url) => setHero("imageUrl", url)}
-            fallbackSrc={media.home.hero}
-            slot="hero"
-          />
           <div className="md:col-span-2">
             <Field label="Heading">
               <Textarea
@@ -345,14 +506,18 @@ function HomePageContentAdmin() {
               />
             </Field>
           </div>
-          <Field label="Hero image alt text">
-            <Input
-              value={hero.imageAlt}
+          <div className="md:col-span-2">
+            <Label className="text-sm">Hero slider images</Label>
+            <p className="mb-2 mt-1 text-xs text-muted-foreground">
+              Add one or more images for the home page hero. With 2+ images, they auto-rotate as a
+              smooth slider; with just one, it displays as a static photo.
+            </p>
+            <HeroSlidesField
+              slides={hero.slides}
               disabled={ro}
-              onChange={(e) => setHero("imageAlt", e.target.value)}
+              onChange={(slides) => setHero("slides", slides)}
             />
-          </Field>
-          <div />
+          </div>
           <Field label="Primary button label">
             <Input
               value={hero.primaryCtaLabel}
