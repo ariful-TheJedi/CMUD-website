@@ -135,8 +135,8 @@ function HomePage() {
   return (
     <>
       {/* Hero — CMS */}
-      <section className="relative overflow-hidden bg-surface text-foreground">
-        <div className="absolute inset-0 opacity-10 mix-blend-overlay">
+      <section className="relative overflow-hidden bg-surface text-foreground lg:h-[calc(100vh-64px)] lg:flex lg:items-center">
+        {/* <div className="absolute inset-0 opacity-10 mix-blend-overlay order-0">
           <img
             src={heroImg}
             alt=""
@@ -144,10 +144,10 @@ function HomePage() {
             width={1600}
             height={1024}
           />
-        </div>
+        </div> */}
         <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-surface/60 to-transparent" />
         <div className="container relative mx-auto grid gap-8 px-4 py-10 lg:grid-cols-12 lg:gap-10">
-          <div className="lg:col-span-7">
+          <div className="order-2 lg:order-1 lg:col-span-7">
             <Badge className="border-0 bg-primary text-primary-foreground hover:bg-primary/90">
               <Activity className="mr-1 h-3 w-3" /> {hero.badge}
             </Badge>
@@ -181,7 +181,7 @@ function HomePage() {
             </dl>
           </div>
 
-          <div className="lg:col-span-5">
+          <div className="order-1 lg:order-2 lg:col-span-5">
             <div className="rounded-2xl border border-border/60 bg-card/50 p-2 shadow-[var(--shadow-elegant)]">
               <HeroSlider slides={hero.slides} fallbackSrc={heroImg} />
             </div>
@@ -190,7 +190,7 @@ function HomePage() {
       </section>
 
       {/* Featured courses */}
-      <section className="bg-background">
+      <section className="relative overflow-hidden bg-background">
         <div className="container mx-auto px-4 py-10">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <SectionHeading
