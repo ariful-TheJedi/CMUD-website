@@ -247,10 +247,10 @@ function HomePage() {
                 w-full
                 overflow-hidden
                 rounded-2xl
+                bg-card/50
                 border
                 border-border/60
-                bg-card/50
-                p-2
+                p-1.5
                 shadow-[var(--shadow-elegant)]
               "
             >
