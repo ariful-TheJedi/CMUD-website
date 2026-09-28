@@ -134,46 +134,105 @@ function HomePage() {
 
   return (
     <>
-      {/* Hero — CMS */}
-      <section className="relative overflow-hidden bg-surface text-foreground lg:h-[calc(100vh-64px)] lg:flex lg:items-center">
-        {/* <div className="absolute inset-0 opacity-10 mix-blend-overlay order-0">
-          <img
-            src={heroImg}
-            alt=""
-            className="h-full w-full object-cover"
-            width={1600}
-            height={1024}
-          />
-        </div> */}
-        <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-surface/60 to-transparent" />
-        <div className="container relative mx-auto grid gap-8 px-4 py-10 lg:grid-cols-12 lg:gap-10">
-          <div className="order-2 lg:order-1 lg:col-span-7">
+{/* Hero — CMS new */}
+    <section className="relative overflow-hidden bg-surface text-foreground">
+      <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-surface/60 to-transparent" />
+
+      <div
+        className="
+          container relative mx-auto
+          px-4 sm:px-6 lg:px-8
+          py-10 sm:py-12 lg:py-16
+          min-h-[calc(100svh-64px)]
+          flex items-center
+        "
+      >
+        <div
+          className="
+            w-full
+            grid
+            gap-8 sm:gap-10
+            lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]
+            lg:items-center
+            xl:gap-14
+          "
+        >
+          {/* Content */}
+          <div className="order-2 lg:order-1 min-w-0">
             <Badge className="border-0 bg-primary text-primary-foreground hover:bg-primary/90">
-              <Activity className="mr-1 h-3 w-3" /> {hero.badge}
+              <Activity className="mr-1 h-3 w-3" />
+              {hero.badge}
             </Badge>
-            <h1 className="mt-3 font-serif text-3xl font-bold leading-[1.05] tracking-tight md:text-4xl lg:text-5xl">
+
+            <h1
+              className="
+                mt-3
+                max-w-3xl
+                font-serif
+                font-bold
+                tracking-tight
+                leading-[1.05]
+                text-[clamp(1.9rem,4vw,3.5rem)]
+              "
+            >
               {hero.heading}
             </h1>
-            <p className="mt-3 max-w-xl text-base text-muted-foreground md:text-lg">
+
+            <p
+              className="
+                mt-4
+                max-w-2xl
+                text-[clamp(0.95rem,1.5vw,1.125rem)]
+                leading-relaxed
+                text-muted-foreground
+              "
+            >
               {hero.description}
             </p>
 
             <div className="mt-5 flex flex-wrap gap-3">
               <Button asChild size="lg">
                 <a href={hero.primaryCtaHref}>
-                  {hero.primaryCtaLabel} <ArrowRight className="h-4 w-4" />
+                  {hero.primaryCtaLabel}
+                  <ArrowRight className="h-4 w-4" />
                 </a>
               </Button>
+
               <Button asChild size="lg" variant="outline">
-                <a href={hero.secondaryCtaHref}>{hero.secondaryCtaLabel}</a>
+                <a href={hero.secondaryCtaHref}>
+                  {hero.secondaryCtaLabel}
+                </a>
               </Button>
             </div>
 
-            <dl className="mt-6 grid max-w-lg grid-cols-3 gap-6 border-t border-border/60 pt-5">
+            <dl
+              className="
+                mt-6
+                grid
+                max-w-xl
+                grid-cols-3
+                gap-4 sm:gap-6
+                border-t
+                border-border/60
+                pt-5
+              "
+            >
               {hero.stats.map((s) => (
-                <div key={s.label}>
-                  <dt className="font-serif text-2xl font-bold">{s.value}</dt>
-                  <dd className="text-xs uppercase tracking-wider text-muted-foreground">
+                <div key={s.label} className="min-w-0">
+                  <dt className="font-serif text-xl sm:text-2xl font-bold">
+                    {s.value}
+                  </dt>
+
+                  <dd
+                    className="
+                      mt-1
+                      text-[10px] sm:text-xs
+                      uppercase
+                      tracking-[0.12em]
+                      text-muted-foreground
+                      break-words
+                    "
+                  >
                     {s.label}
                   </dd>
                 </div>
@@ -181,13 +240,31 @@ function HomePage() {
             </dl>
           </div>
 
-          <div className="order-1 lg:order-2 lg:col-span-5">
-            <div className="rounded-2xl border border-border/60 bg-card/50 p-2 shadow-[var(--shadow-elegant)]">
-              <HeroSlider slides={hero.slides} fallbackSrc={heroImg} />
+          {/* Hero image */}
+          <div className="order-1 lg:order-2 min-w-0">
+            <div
+              className="
+                w-full
+                overflow-hidden
+                rounded-2xl
+                border
+                border-border/60
+                bg-card/50
+                p-2
+                shadow-[var(--shadow-elegant)]
+              "
+            >
+              <HeroSlider
+                slides={hero.slides}
+                fallbackSrc={heroImg}
+              />
             </div>
           </div>
         </div>
-      </section>
+      </div>
+    </section>
+
+
 
       {/* Featured courses */}
       <section className="relative overflow-hidden bg-background">
