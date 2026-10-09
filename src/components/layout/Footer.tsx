@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Mail, Phone, MapPin } from "lucide-react";
+import { Mail, Phone, MapPin, ArrowRight } from "lucide-react";
 import { footerData } from "@/data/footer";
 import { assetUrl } from "@/lib/assets";
 
@@ -14,107 +14,140 @@ export function Footer() {
   const { logo, logoAlt, blurb, programs, institute, contact, social, bottom } = footerData;
 
   return (
-    <footer className="mt-24 border-t border-border bg-primary text-primary-foreground">
-      <div className="container mx-auto grid gap-10 px-4 py-14 md:grid-cols-2 lg:grid-cols-4">
-        <div>
-          <div className="flex items-center gap-2 font-serif text-xl font-bold">
-            <img
-              src={assetUrl(logo)}
-              alt={logoAlt}
-              className="h-[100px] w-auto object-contain"
-              width="300"
-              height="100"
-            />
+    <footer className="mt-24 border-t border-primary-foreground/10 bg-primary text-primary-foreground">
+      <div className="container mx-auto px-4 py-16 lg:px-8">
+        <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-4 lg:gap-8">
+          
+          {/* Column 1: Brand & Social */}
+          <div className="flex flex-col items-start pr-4">
+            <Link to="/" className="mb-6 inline-block">
+              <img
+                src={assetUrl(logo)}
+                alt={logoAlt}
+                className="h-16 w-auto object-contain drop-shadow-sm"
+                width="240"
+                height="64"
+              />
+            </Link>
+            <p className="text-base leading-relaxed text-primary-foreground/75">
+              {blurb}
+            </p>
+            <div className="mt-6 flex items-center gap-3">
+              {social.map((item) => (
+                <a
+                  key={item.label}
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={item.label}
+                  className="group flex h-10 w-10 items-center justify-center rounded-full bg-primary-foreground/5 text-primary-foreground/80 transition-all duration-300 hover:bg-primary-foreground/20 hover:text-primary-foreground hover:-translate-y-1"
+                >
+                  <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
+                    <path d={socialIconPaths[item.icon as keyof typeof socialIconPaths]} />
+                  </svg>
+                </a>
+              ))}
+            </div>
           </div>
-          <p className="mt-3 text-base text-primary-foreground/70 md:text-lg">{blurb}</p>
-          <div className="mt-4 flex items-center gap-3">
-            {social.map((item) => (
-              <a
-                key={item.label}
-                href={item.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={item.label}
-                className="text-primary-foreground/70 transition-colors hover:text-primary-foreground"
-              >
-                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
-                  <path d={socialIconPaths[item.icon]} />
-                </svg>
-              </a>
-            ))}
-          </div>
-        </div>
 
-        <div>
-          <h3 className="font-serif text-base font-bold uppercase tracking-wider md:text-lg">
-            {programs.title}
-          </h3>
-          <ul className="mt-4 space-y-2 text-base text-primary-foreground/80 md:text-lg">
-            {programs.links.map((link) => (
-              <li key={link.to}>
-                {"search" in link && link.search != null ? (
+          {/* Column 2: Programs */}
+          <div>
+            <h3 className="font-sans text-base font-semibold uppercase tracking-wider text-primary-foreground/90 md:text-lg">
+              {programs.title}
+            </h3>
+            <ul className="mt-6 flex flex-col space-y-4">
+              {programs.links.map((link) => (
+                <li key={link.to}>
                   <Link
                     to={link.to}
-                    search={link.search}
-                    className="hover:text-primary-foreground"
+                    search={"search" in link && link.search != null ? link.search : undefined}
+                    className="group flex items-center text-base text-primary-foreground/75 transition-colors hover:text-primary-foreground"
                   >
-                    {link.label}
+                    <ArrowRight className="mr-2 h-4 w-4 -translate-x-3 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100" />
+                    <span className="-translate-x-6 transition-all duration-300 group-hover:translate-x-0">
+                      {link.label}
+                    </span>
                   </Link>
-                ) : (
-                  <Link to={link.to} className="hover:text-primary-foreground">
-                    {link.label}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Column 3: Institute */}
+          <div>
+            <h3 className="font-sans text-base font-semibold uppercase tracking-wider text-primary-foreground/90 md:text-lg">
+              {institute.title}
+            </h3>
+            <ul className="mt-6 flex flex-col space-y-4">
+              {institute.links.map((link) => (
+                <li key={link.to}>
+                  <Link
+                    to={link.to}
+                    className="group flex items-center text-base text-primary-foreground/75 transition-colors hover:text-primary-foreground"
+                  >
+                    <ArrowRight className="mr-2 h-4 w-4 -translate-x-3 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100" />
+                    <span className="-translate-x-6 transition-all duration-300 group-hover:translate-x-0">
+                      {link.label}
+                    </span>
                   </Link>
-                )}
-              </li>
-            ))}
-          </ul>
-        </div>
+                </li>
+              ))}
+            </ul>
+          </div>
 
-        <div>
-          <h3 className="font-serif text-base font-bold uppercase tracking-wider md:text-lg">
-            {institute.title}
-          </h3>
-          <ul className="mt-4 space-y-2 text-base text-primary-foreground/80 md:text-lg">
-            {institute.links.map((link) => (
-              <li key={link.to}>
-                <Link to={link.to} className="hover:text-primary-foreground">
-                  {link.label}
-                </Link>
+          {/* Column 4: Contact */}
+          <div>
+            <h3 className="font-sans text-base font-semibold uppercase tracking-wider text-primary-foreground/90 md:text-lg">
+              {contact.title}
+            </h3>
+            <ul className="mt-6 flex flex-col space-y-4 text-base text-primary-foreground/75">
+              <li className="flex items-start gap-3 transition-colors hover:text-primary-foreground">
+                <MapPin className="mt-1 h-4 w-4 shrink-0 opacity-80" />
+                <span className="leading-relaxed">{contact.panthapath}</span>
               </li>
-            ))}
-          </ul>
-        </div>
+              <li className="flex items-start gap-3 transition-colors hover:text-primary-foreground">
+                <MapPin className="mt-1 h-4 w-4 shrink-0 opacity-80" />
+                <span className="leading-relaxed">{contact.uttara}</span>
+              </li>
+              
+              <div className="flex flex-col gap-4 pt-1">
+                {contact.phones.map((phone) => (
+                  <li key={phone}>
+                    <a
+                      href={`tel:${phone.replace(/\s+/g, "")}`}
+                      className="group flex items-center gap-3 transition-colors hover:text-primary-foreground"
+                    >
+                      <Phone className="h-4 w-4 shrink-0 opacity-80 transition-opacity group-hover:opacity-100" />
+                      {phone}
+                    </a>
+                  </li>
+                ))}
+              </div>
+              
+              <li className="pt-1">
+                <a
+                  href={`mailto:${contact.email}`}
+                  className="group flex items-center gap-3 transition-colors hover:text-primary-foreground"
+                >
+                  <Mail className="h-4 w-4 shrink-0 opacity-80 transition-opacity group-hover:opacity-100" />
+                  {contact.email}
+                </a>
+              </li>
+            </ul>
+          </div>
 
-        <div>
-          <h3 className="font-serif text-base font-bold uppercase tracking-wider md:text-lg">
-            {contact.title}
-          </h3>
-          <ul className="mt-4 space-y-3 text-base text-primary-foreground/80 md:text-lg">
-            <li className="flex items-start gap-2">
-              <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
-              {contact.panthapath}
-            </li>
-            <li className="flex items-start gap-2">
-              <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
-              {contact.uttara}
-            </li>
-            {contact.phones.map((phone) => (
-              <li key={phone} className="flex items-center gap-2">
-                <Phone className="h-4 w-4 shrink-0" /> {phone}
-              </li>
-            ))}
-            <li className="flex items-center gap-2">
-              <Mail className="h-4 w-4 shrink-0" /> {contact.email}
-            </li>
-          </ul>
         </div>
       </div>
-      <div className="border-t border-primary-foreground/10">
-        <div className="container mx-auto flex flex-col items-center justify-between gap-2 px-4 py-5 text-xs text-primary-foreground/60 sm:flex-row">
-          <span>
+
+      {/* Bottom Legal Bar */}
+      <div className="border-t border-primary-foreground/10 bg-primary-foreground/5">
+        <div className="container mx-auto flex flex-col items-center justify-between gap-4 px-4 py-6 sm:flex-row lg:px-8">
+          <p className="text-sm text-primary-foreground/70">
             © {new Date().getFullYear()} {bottom.copyrightSuffix}
-          </span>
-          <span>{bottom.tagline}</span>
+          </p>
+          <p className="text-sm font-medium text-primary-foreground/70">
+            {bottom.tagline}
+          </p>
         </div>
       </div>
     </footer>

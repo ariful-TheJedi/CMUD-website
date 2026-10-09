@@ -8,22 +8,24 @@ export const footerData = {
   blurb:
     "College of Medical Ultrasound & Doppler — hands-on professional training in diagnostic imaging since 2008.",
   programs: {
-    title: "Programs",
+    title: "Quick Links",
     links: [
       { label: "All Courses", to: "/courses" as const },
-      { label: "Certification", to: "/certification" as const },
+      { label: "Education Aides", to: "/education-aides" as const },
       { label: "Admission", to: "/admission" as const, search: {} as const },
+      { label: "Faculty", to: "/faculty" as const },
       { label: "FAQ", to: "/faq" as const },
-      { label: "Certificate Check", to: "/certificate-check" as const },
+      // { label: "Certificate Check", to: "/certificate-check" as const },
     ],
   },
   institute: {
-    title: "Institute",
+    title: "Curses",
     links: [
-      { label: "About CMUD", to: "/about" as const },
-      { label: "Faculty", to: "/faculty" as const },
-      { label: "Gallery", to: "/gallery" as const },
-      { label: "Testimonials", to: "/testimonials" as const },
+      { label: "CMU", to: "/courses/basic-ultrasound" as const },
+      { label: "DMU", to: "/courses/dmu" as const },
+      { label: "ADMU", to: "/courses/admu" as const },
+      { label: "Advanced Doppler Imaging", to: "/courses/advanced-doppler" as const },
+      { label: "MSK", to: "/courses/msk-certificate" as const },
     ],
   },
   contact: {
