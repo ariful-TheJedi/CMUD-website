@@ -33,8 +33,8 @@ export const contactPage = {
       icon: "phone" as const,
       title: "Call us",
       lines: [
-        { label: "", value: "+880 1944-333666", href: "tel:+8801944333666" },
-        { label: "", value: "+880 1974-557777", href: "tel:+8801974557777" },
+        { label: "", value: "+880 01944000666", href: "tel:+8801944000666" },
+        { label: "", value: "+880 01974-557777", href: "tel:+8801974557777" },
       ],
       // note: "Office lines for Uttara and Panthapath available on request.",
     },
@@ -58,7 +58,7 @@ export const contactPage = {
       icon: "whatsapp" as const,
       label: "WhatsApp",
       value: "+880 1826-306254",
-      href: "https://wa.me/+8801826306254",
+      href: "https://wa.me/+8801974557777",
     },
     {
       icon: "facebook" as const,
