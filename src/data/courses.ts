@@ -23,6 +23,9 @@ export type Course = {
   eligibility: string;
   shortDescription: string;
   description: string;
+  /** Optional search metadata managed with the course in the CMS. */
+  seoTitle?: string;
+  seoDescription?: string;
   /** Flat module list (used when syllabusMode is "flat"). */
   syllabus: string[];
   /** "flat" = syllabus only; "semester" = syllabusSemesters with dropdown on detail page. */

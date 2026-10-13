@@ -72,21 +72,51 @@ function stripModulePrefix(text: string): string {
 
 export const Route = createFileRoute("/courses/$slug")({
   loader: async ({ params }) => {
-    const course = await getPublicCourseBySlug({ data: { slug: params.slug } });
+    const lookupSlug =
+      params.slug === "diploma-in-medical-ultrasound" ? "dmu" : params.slug;
+    const course = await getPublicCourseBySlug({ data: { slug: lookupSlug } });
     if (!course) throw notFound();
-    return { course };
+    return { course, canonicalSlug: params.slug };
   },
   head: ({ loaderData }) => {
     const c = loaderData?.course;
-    const title = c ? `${c.name} — CMUD` : "Course — CMUD";
-    const desc = c?.shortDescription ?? "Ultrasound training course at CMUD.";
+    const canonicalSlug = loaderData?.canonicalSlug;
+    const isIndexableDmu = canonicalSlug === "diploma-in-medical-ultrasound";
+    const title = c?.seoTitle?.trim() || (c ? `${c.name} — CMUD` : "Course — CMUD");
+    const descriptionSource = [
+      c?.seoDescription,
+      c?.shortDescription,
+      c?.description,
+    ]
+      .map((value) =>
+        (value ?? "")
+          .replace(/<[^>]*>/g, " ")
+          .replace(/&nbsp;/gi, " ")
+          .replace(/\s+/g, " ")
+          .trim(),
+      )
+      .find(Boolean);
+    const fullDescription =
+      descriptionSource ||
+      (c
+        ? `${c.name} is a ${c.duration} ${c.category} ultrasound training program at CMUD.`
+        : "Explore professional ultrasound and Doppler training at CMUD.");
+    const desc =
+      fullDescription.length <= 160
+        ? fullDescription
+        : `${fullDescription.slice(0, 157).replace(/\s+\S*$/, "").trimEnd()}...`;
     return {
       meta: [
         { title },
+        { name: "robots", content: c && isIndexableDmu ? "index, follow" : "noindex, nofollow" },
         { name: "description", content: desc },
         { property: "og:title", content: title },
         { property: "og:description", content: desc },
+        { name: "twitter:card", content: "summary" },
+        { name: "twitter:title", content: title },
+        { name: "twitter:description", content: desc },
       ],
+      links: c && canonicalSlug ? [{ rel: "canonical", href: `https://www.cmudusg.com/courses/${canonicalSlug}` }] : [],
     };
   },
   notFoundComponent: () => (
@@ -97,15 +127,18 @@ export const Route = createFileRoute("/courses/$slug")({
       </Button>
     </div>
   ),
-  errorComponent: ({ error }) => (
+  errorComponent: () => (
     <div className="container mx-auto px-4 py-24 text-center">
       <h1 className="font-serif text-3xl font-bold">{courseDetailPage.error.title}</h1>
-      <p className="mt-3 text-sm text-muted-foreground">{error.message}</p>
       <Button asChild className="mt-6">
         <Link to="/courses">{courseDetailPage.error.cta}</Link>
       </Button>
     </div>
   ),
+  headers: ({ loaderData }) =>
+    loaderData?.course && loaderData.canonicalSlug === "diploma-in-medical-ultrasound"
+      ? {}
+      : { "X-Robots-Tag": "noindex, nofollow" },
   component: CourseDetailPage,
 });
 

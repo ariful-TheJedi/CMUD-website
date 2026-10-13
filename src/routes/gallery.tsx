@@ -12,6 +12,7 @@ export const Route = createFileRoute("/gallery")({
   head: () => ({
     meta: [
       { title: galleryPage.meta.title },
+      { name: "robots", content: "index, follow" },
       { name: "description", content: galleryPage.meta.description },
       { property: "og:title", content: galleryPage.meta.ogTitle },
       { property: "og:description", content: galleryPage.meta.ogDescription },

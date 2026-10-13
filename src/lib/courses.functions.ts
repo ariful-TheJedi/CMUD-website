@@ -152,6 +152,8 @@ function toPublic(r: AdminCourseRow): Course {
     eligibility: r.eligibility,
     shortDescription: r.shortDescription,
     description: r.description,
+    seoTitle: r.seoTitle,
+    seoDescription: r.seoDescription,
     fee: r.fee,
     discountFee: r.discountFee,
     admissionFee: r.admissionFee,

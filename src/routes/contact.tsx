@@ -25,6 +25,7 @@ export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
       { title: contactPage.meta.title },
+      { name: "robots", content: "index, follow" },
       { name: "description", content: contactPage.meta.description },
       { property: "og:title", content: contactPage.meta.ogTitle },
       { property: "og:description", content: contactPage.meta.ogDescription },

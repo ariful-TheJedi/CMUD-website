@@ -16,6 +16,7 @@ export const Route = createFileRoute("/education-aides")({
   head: () => ({
     meta: [
       { title: educationAidesPage.meta.title },
+      { name: "robots", content: "index, follow" },
       { name: "description", content: educationAidesPage.meta.description },
       { property: "og:title", content: educationAidesPage.meta.ogTitle },
       { property: "og:description", content: educationAidesPage.meta.ogDescription },

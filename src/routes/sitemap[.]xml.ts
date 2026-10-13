@@ -2,22 +2,27 @@ import { createFileRoute } from "@tanstack/react-router";
 import { listPublicCourses } from "@/lib/courses.functions";
 import { courseCategories } from "@/data/courses";
 
-const SITE_URL = "https://cmudusg.com";
+const SITE_URL = "https://www.cmudusg.com";
 
 const STATIC_PATHS = [
   "/",
   "/about",
   "/courses",
   "/faculty",
-  "/education-aides",
-  "/notices",
+  "/courses/diploma-in-medical-ultrasound",
   "/gallery",
   "/contact",
   "/admission",
+  "/education-aides",
 ];
 
 function xmlEscape(value: string) {
-  return value.replace(/&/g, "&amp;");
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
 }
 
 function urlEntry(path: string) {
@@ -30,11 +35,18 @@ export const Route = createFileRoute("/sitemap.xml")({
       GET: async () => {
         const courses = await listPublicCourses();
 
-        const urls = [
-          ...STATIC_PATHS.map(urlEntry),
-          ...courseCategories.map((c) => urlEntry(`/courses/category/${c.slug}`)),
-          ...courses.map((c) => urlEntry(`/courses/${c.slug}`)),
+        const paths = [
+          ...STATIC_PATHS,
+          ...courseCategories.map((c) => `/courses/category/${c.slug}`),
+          ...courses
+            .filter(
+              (c) =>
+                c.slug !== "dmu" &&
+                c.slug !== "diploma-in-medical-ultrasound",
+            )
+            .map((c) => `/courses/${c.slug}`),
         ];
+        const urls = [...new Set(paths)].map(urlEntry);
 
         const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join("\n")}\n</urlset>\n`;
 

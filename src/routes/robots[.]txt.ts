@@ -4,7 +4,7 @@ const BODY = `User-agent: *
 Allow: /
 Disallow: /admin
 
-Sitemap: https://cmudusg.com/sitemap.xml
+Sitemap: https://www.cmudusg.com/sitemap.xml
 `;
 
 export const Route = createFileRoute("/robots.txt")({
