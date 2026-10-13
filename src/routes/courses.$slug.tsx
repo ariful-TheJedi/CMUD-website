@@ -72,16 +72,12 @@ function stripModulePrefix(text: string): string {
 
 export const Route = createFileRoute("/courses/$slug")({
   loader: async ({ params }) => {
-    const lookupSlug =
-      params.slug === "diploma-in-medical-ultrasound" ? "dmu" : params.slug;
-    const course = await getPublicCourseBySlug({ data: { slug: lookupSlug } });
+    const course = await getPublicCourseBySlug({ data: { slug: params.slug } });
     if (!course) throw notFound();
-    return { course, canonicalSlug: params.slug };
+    return { course };
   },
   head: ({ loaderData }) => {
     const c = loaderData?.course;
-    const canonicalSlug = loaderData?.canonicalSlug;
-    const isIndexableDmu = canonicalSlug === "diploma-in-medical-ultrasound";
     const title = c?.seoTitle?.trim() || (c ? `${c.name} — CMUD` : "Course — CMUD");
     const descriptionSource = [
       c?.seoDescription,
@@ -108,7 +104,7 @@ export const Route = createFileRoute("/courses/$slug")({
     return {
       meta: [
         { title },
-        { name: "robots", content: c && isIndexableDmu ? "index, follow" : "noindex, nofollow" },
+        { name: "robots", content: c ? "index, follow" : "noindex, nofollow" },
         { name: "description", content: desc },
         { property: "og:title", content: title },
         { property: "og:description", content: desc },
@@ -116,7 +112,7 @@ export const Route = createFileRoute("/courses/$slug")({
         { name: "twitter:title", content: title },
         { name: "twitter:description", content: desc },
       ],
-      links: c && canonicalSlug ? [{ rel: "canonical", href: `https://www.cmudusg.com/courses/${canonicalSlug}` }] : [],
+      links: c ? [{ rel: "canonical", href: `https://www.cmudusg.com/courses/${c.slug}` }] : [],
     };
   },
   notFoundComponent: () => (
@@ -136,9 +132,7 @@ export const Route = createFileRoute("/courses/$slug")({
     </div>
   ),
   headers: ({ loaderData }) =>
-    loaderData?.course && loaderData.canonicalSlug === "diploma-in-medical-ultrasound"
-      ? {}
-      : { "X-Robots-Tag": "noindex, nofollow" },
+    loaderData?.course ? {} : { "X-Robots-Tag": "noindex, nofollow" },
   component: CourseDetailPage,
 });
 

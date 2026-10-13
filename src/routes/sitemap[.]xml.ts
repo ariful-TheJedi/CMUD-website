@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { listPublicCourses } from "@/lib/courses.functions";
-import { courseCategories } from "@/data/courses";
 
 const SITE_URL = "https://www.cmudusg.com";
 
@@ -9,7 +8,6 @@ const STATIC_PATHS = [
   "/about",
   "/courses",
   "/faculty",
-  "/courses/diploma-in-medical-ultrasound",
   "/gallery",
   "/contact",
   "/admission",
@@ -37,14 +35,7 @@ export const Route = createFileRoute("/sitemap.xml")({
 
         const paths = [
           ...STATIC_PATHS,
-          ...courseCategories.map((c) => `/courses/category/${c.slug}`),
-          ...courses
-            .filter(
-              (c) =>
-                c.slug !== "dmu" &&
-                c.slug !== "diploma-in-medical-ultrasound",
-            )
-            .map((c) => `/courses/${c.slug}`),
+          ...courses.map((c) => `/courses/${c.slug}`),
         ];
         const urls = [...new Set(paths)].map(urlEntry);
 
