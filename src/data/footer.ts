@@ -22,10 +22,10 @@ export const footerData = {
     title: "Curses",
     links: [
       { label: "CMU", to: "/courses/basic-ultrasound" as const },
-      { label: "DMU", to: "/courses/dmu" as const },
+      { label: "DMU", to: "/courses/diploma-in-medical-ultrasound" as const },
       { label: "ADMU", to: "/courses/admu" as const },
       { label: "Advanced Doppler Imaging", to: "/courses/advanced-doppler" as const },
-      { label: "MSK", to: "/courses/msk-certificate" as const },
+      { label: "MSK", to: "/courses/certificate-in-musculo-skeletal-ultrasound-general" as const },
     ],
   },
   contact: {
