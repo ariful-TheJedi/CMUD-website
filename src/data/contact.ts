@@ -57,7 +57,7 @@ export const contactPage = {
     {
       icon: "whatsapp" as const,
       label: "WhatsApp",
-      value: "+880 1826-306254",
+      value: "+880 1974557777",
       href: "https://wa.me/+8801974557777",
     },
     {

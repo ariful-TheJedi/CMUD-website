@@ -92,7 +92,7 @@ export const homePage = {
     secondaryCtaTo: "/contact" as const,
     location: "Panthapath & Uttara, Dhaka",
     hours: "10:00 AM – 06:00 PM · Every day",
-    whatsapp: "+880 1995389335",
+    whatsapp: "+8801974557777",
     facebook: { label: "/cmudusg", href: "https://facebook.com/CMUDBD" },
     youtube: { label: "/cmudusg", href: "https://www.youtube.com/@CMUD" },
     // phoneEmail: "+880 1826-306254 · info@cmudusg.com",
