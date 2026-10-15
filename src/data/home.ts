@@ -73,7 +73,7 @@ export const homePage = {
     title: "Latest updates & routines",
     ctaLabel: "All notices",
     ctaTo: "/notices" as const,
-    limit: 3,
+    limit: 4,
   },
 
   testimonials: {
@@ -98,3 +98,4 @@ export const homePage = {
     // phoneEmail: "+880 1826-306254 · info@cmudusg.com",
   },
 };
+
