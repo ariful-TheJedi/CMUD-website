@@ -14,9 +14,9 @@ export function Footer() {
   const { logo, logoAlt, blurb, programs, institute, contact, social, bottom } = footerData;
 
   return (
-    <footer className="mt-24 border-t border-primary-foreground/10 bg-primary text-primary-foreground">
-      <div className="container mx-auto px-4 py-16 lg:px-8">
-        <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-4 lg:gap-8">
+    <footer className="mt-16 border-t border-primary-foreground/10 bg-primary text-primary-foreground lg:mt-20">
+      <div className="container mx-auto px-4 py-12 sm:py-14 lg:px-8 lg:py-16">
+        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
           
           {/* Column 1: Brand & Social */}
           <div className="flex flex-col items-start pr-4">
@@ -61,10 +61,10 @@ export function Footer() {
                   <Link
                     to={link.to}
                     search={"search" in link && link.search != null ? link.search : undefined}
-                    className="group flex items-center text-base text-primary-foreground/75 transition-colors hover:text-primary-foreground"
+                    className="group flex items-center text-sm text-primary-foreground/75 transition-colors hover:text-primary-foreground"
                   >
-                    <ArrowRight className="mr-2 h-4 w-4 -translate-x-3 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100" />
-                    <span className="-translate-x-6 transition-all duration-300 group-hover:translate-x-0">
+                    <ArrowRight className="mr-2 h-4 w-4 shrink-0 opacity-60 transition-all duration-200 group-hover:translate-x-1 group-hover:opacity-100" />
+                    <span>
                       {link.label}
                     </span>
                   </Link>
@@ -83,10 +83,10 @@ export function Footer() {
                 <li key={link.to}>
                   <Link
                     to={link.to}
-                    className="group flex items-center text-base text-primary-foreground/75 transition-colors hover:text-primary-foreground"
+                    className="group flex items-center text-sm text-primary-foreground/75 transition-colors hover:text-primary-foreground"
                   >
-                    <ArrowRight className="mr-2 h-4 w-4 -translate-x-3 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100" />
-                    <span className="-translate-x-6 transition-all duration-300 group-hover:translate-x-0">
+                    <ArrowRight className="mr-2 h-4 w-4 shrink-0 opacity-60 transition-all duration-200 group-hover:translate-x-1 group-hover:opacity-100" />
+                    <span>
                       {link.label}
                     </span>
                   </Link>

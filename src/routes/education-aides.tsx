@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { ImageIcon } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { PageIntro } from "@/components/PageIntro";
 import {
   listPublicAidSections,
   type AidSlide,
@@ -222,38 +223,29 @@ function EducationAidesPage() {
 
   return (
     <>
-      <section className="bg-[var(--gradient-hero)] text-primary-foreground">
-        <div className="container mx-auto px-4 py-10">
-          <p className="font-sans text-xs font-semibold uppercase tracking-[0.22em] text-secondary">
-            {hero.eyebrow}
-          </p>
-          <h1 className="mt-3 font-serif text-3xl font-bold leading-tight tracking-tight text-foreground md:text-4xl">
-            {hero.title}
-          </h1>
-          <p className="mt-3 max-w-2xl text-base text-muted-foreground md:text-lg">
-            {hero.description}
-          </p>
-        </div>
-      </section>
+      <PageIntro eyebrow={hero.eyebrow} title={hero.title} description={hero.description} />
 
-      <section className="container mx-auto px-4 py-10">
+      <section className="container mx-auto px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
         {sections.length === 0 ? (
-          <p className="text-center text-sm text-muted-foreground">{emptyState}</p>
+          <div className="mx-auto flex max-w-2xl flex-col items-center rounded-2xl border border-dashed border-border bg-surface px-6 py-12 text-center">
+            <ImageIcon className="h-10 w-10 text-secondary" aria-hidden="true" />
+            <p className="mt-4 text-base font-semibold text-foreground">{emptyState}</p>
+          </div>
         ) : (
-          <div className="flex flex-col gap-8">
+          <div className="flex flex-col gap-10 lg:gap-14">
             {sections.map((s: PublicAidSection, i: number) => (
               <article
                 key={s.id}
-                className={`grid gap-8 md:grid-cols-2 md:items-center ${
+                className={`grid gap-6 rounded-2xl border border-border/70 bg-card p-4 shadow-sm sm:gap-8 sm:p-6 md:grid-cols-2 md:items-center lg:gap-10 lg:p-8 ${
                   i % 2 === 1 ? "md:[&>*:first-child]:order-2" : ""
                 }`}
               >
                 <AutoSlider slides={s.slides} offset={i * 400} />
                 <div>
-                  <h2 className="font-serif text-xl font-bold text-foreground md:text-2xl">
+                  <h2 className="font-serif text-2xl font-bold leading-tight text-foreground sm:text-3xl">
                     {s.title}
                   </h2>
-                  <p className="mt-3 whitespace-pre-line text-base text-foreground/80 md:text-lg">
+                  <p className="mt-4 whitespace-pre-line text-base leading-relaxed text-muted-foreground sm:text-lg">
                     {s.description}
                   </p>
                 </div>

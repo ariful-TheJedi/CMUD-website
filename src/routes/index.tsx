@@ -29,6 +29,7 @@ import { HeroSlider } from "@/components/HeroSlider";
 import { SectionHeading } from "@/components/SectionHeading";
 import { courseCategories } from "@/data/courses";
 import { homePage } from "@/data/home";
+import { aboutPage } from "@/data/about";
 import { assetUrl } from "@/lib/assets";
 import { listPublicCourses } from "@/lib/courses.functions";
 import { listPublicFaculty } from "@/lib/faculty.functions";
@@ -117,6 +118,7 @@ function HomePage() {
   const hands = content.handsOn;
   const heroImg = assetUrl(hero.slides[0]?.imageUrl || "/media/home/hero-ultrasound.jpg");
   const handsImg = assetUrl(hands.imageUrl || "/media/home/hands-on-training.jpg");
+  const aboutImage = assetUrl(aboutPage.story.image);
 
   // Dynamic lists from local Postgres via listPublic* server functions
   const featured = courses.filter((c) => c.featured);
@@ -141,9 +143,10 @@ function HomePage() {
       <div
         className="
           container relative mx-auto
-          px-4 sm:px-6 lg:px-8
-          py-10 sm:py-12 lg:py-16
+          px-4
+          py-8 sm:py-10 lg:py-8
           min-h-[calc(100svh-64px)]
+          lg:min-h-[calc(100svh-104px)]
           flex items-center
         "
       >
@@ -241,7 +244,7 @@ function HomePage() {
           </div>
 
           {/* Hero image */}
-          <div className="order-1 lg:order-2 min-w-0">
+          <div className="order-1 lg:order-2 min-w-0 lg:flex lg:items-center">
             <div
               className="
                 w-full
@@ -257,6 +260,7 @@ function HomePage() {
               <HeroSlider
                 slides={hero.slides}
                 fallbackSrc={heroImg}
+                className="lg:aspect-auto lg:h-[min(68svh,36rem)]"
               />
             </div>
           </div>
@@ -264,7 +268,36 @@ function HomePage() {
       </div>
     </section>
 
-
+      {/* About preview */}
+      <section className="bg-background">
+        <div className="container mx-auto grid items-center gap-8 px-4 py-12 sm:px-6 sm:py-16 lg:grid-cols-2 lg:gap-14 lg:px-8 lg:py-20">
+          <div className="relative mx-auto w-full max-w-xl pb-4 lg:mx-0">
+            <img
+              src={aboutImage}
+              alt={aboutPage.story.imageAlt}
+              loading="lazy"
+              className="relative aspect-[4/3] w-full rounded-2xl object-cover shadow-[var(--shadow-elegant)]"
+            />
+          </div>
+          <div className="pt-3 lg:pt-0">
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-secondary">{aboutPage.story.eyebrow}</p>
+            <h2 className="mt-3 max-w-2xl font-serif text-3xl font-bold leading-tight text-foreground sm:text-4xl">
+              {aboutPage.story.title}
+            </h2>
+            <p className="mt-5 max-w-2xl text-base leading-relaxed text-muted-foreground">
+              {aboutPage.story.paragraphs[0]}
+            </p>
+            <p className="mt-3 max-w-2xl text-base leading-relaxed text-muted-foreground">
+              {aboutPage.story.paragraphs[1]}
+            </p>
+            <Button asChild className="mt-7">
+              <Link to="/about">
+                Learn more about CMUD <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </section>
 
       {/* Featured courses */}
       <section className="relative overflow-hidden bg-background">

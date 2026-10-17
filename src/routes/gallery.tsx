@@ -7,6 +7,7 @@ import { listPublicAlbums, type PublicAlbum } from "@/lib/gallery.functions";
 import { galleryPage } from "@/data/gallery";
 import { assetUrl } from "@/lib/assets";
 import { GalleryLightbox } from "@/components/GalleryLightbox";
+import { PageIntro } from "@/components/PageIntro";
 
 export const Route = createFileRoute("/gallery")({
   head: () => ({
@@ -45,30 +46,27 @@ function GalleryPage() {
 
   return (
     <>
-      <section className="bg-surface text-foreground">
-        <div className="container mx-auto px-4 py-10">
-          <p className="font-sans text-xs font-semibold uppercase tracking-[0.22em] text-secondary">
-            {hero.eyebrow}
-          </p>
-          <h1 className="mt-3 font-serif text-3xl font-bold leading-tight tracking-tight md:text-4xl">
-            {hero.title}
-          </h1>
-          <p className="mt-3 max-w-2xl text-base text-muted-foreground md:text-lg">
-            {hero.description}
-          </p>
-        </div>
-      </section>
+      <PageIntro eyebrow={hero.eyebrow} title={hero.title} description={hero.description} />
 
-      <section className="container mx-auto space-y-8 px-4 py-10">
-        {albums.map((album) => (
-          <AlbumBlock
-            key={album.id}
-            album={album}
-            onImageClick={(index) =>
-              setLightbox({ images: album.images, index, albumTitle: album.title })
-            }
-          />
-        ))}
+      <section className="container mx-auto px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
+        {albums.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-border bg-surface px-6 py-14 text-center">
+            <p className="font-serif text-xl font-bold text-foreground">{galleryPage.imagesComingSoon}</p>
+            <p className="mt-2 text-sm text-muted-foreground">New photos will appear here as albums are added.</p>
+          </div>
+        ) : (
+          <div className="space-y-12 lg:space-y-16">
+            {albums.map((album) => (
+              <AlbumBlock
+                key={album.id}
+                album={album}
+                onImageClick={(index) =>
+                  setLightbox({ images: album.images, index, albumTitle: album.title })
+                }
+              />
+            ))}
+          </div>
+        )}
       </section>
 
       <GalleryLightbox
@@ -93,7 +91,7 @@ function AlbumBlock({
 }) {
   return (
     <article>
-      <header className="mb-5">
+      <header className="mb-5 border-b border-border/70 pb-4">
         <div className="flex flex-wrap items-center gap-2">
           <h2 className="font-serif text-xl font-bold md:text-2xl">{album.title}</h2>
           {album.category ? (
@@ -112,12 +110,12 @@ function AlbumBlock({
           {album.images.map((img, index) => (
             <figure
               key={img.id}
-              className="group overflow-hidden rounded-2xl border border-border bg-surface shadow-sm transition-all hover:-translate-y-1 hover:shadow-[var(--shadow-elegant)]"
+                className="group overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-[var(--shadow-elegant)]"
             >
               <button
                 type="button"
                 onClick={() => onImageClick(index)}
-                className="relative block w-full cursor-pointer overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="relative block w-full cursor-zoom-in overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
                 aria-label={`View photo ${index + 1} of ${album.images.length} in ${album.title}`}
               >
                 <img

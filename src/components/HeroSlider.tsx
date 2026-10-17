@@ -6,6 +6,7 @@ import type { HeroSlide } from "@/lib/home-content";
 type HeroSliderProps = {
   slides: HeroSlide[];
   fallbackSrc: string;
+  className?: string;
   /** Auto-advance interval in ms. Set to 0 to disable autoplay. */
   autoplayInterval?: number;
 };
@@ -16,7 +17,7 @@ type HeroSliderProps = {
  * banner better — these are unrelated full-bleed photos, not an ordered list, so
  * there's no "next/previous" motion to imply.
  */
-export function HeroSlider({ slides, fallbackSrc, autoplayInterval = 5000 }: HeroSliderProps) {
+export function HeroSlider({ slides, fallbackSrc, className, autoplayInterval = 5000 }: HeroSliderProps) {
   const items = slides.length > 0 ? slides : [{ imageUrl: "", imageAlt: "" }];
   const [active, setActive] = React.useState(0);
   const [isHovering, setIsHovering] = React.useState(false);
@@ -34,7 +35,7 @@ export function HeroSlider({ slides, fallbackSrc, autoplayInterval = 5000 }: Her
 
   return (
     <div
-      className="relative aspect-[4/5] w-full overflow-hidden rounded-xl"
+      className={cn("relative aspect-[4/5] w-full overflow-hidden rounded-xl", className)}
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
     >
