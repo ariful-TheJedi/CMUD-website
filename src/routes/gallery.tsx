@@ -46,9 +46,14 @@ function GalleryPage() {
 
   return (
     <>
-      <PageIntro eyebrow={hero.eyebrow} title={hero.title} description={hero.description} />
+      <div className="relative isolate overflow-hidden bg-[radial-gradient(ellipse_at_15%_0%,color-mix(in_oklab,var(--color-secondary)_20%,transparent),transparent_42%),radial-gradient(ellipse_at_90%_45%,color-mix(in_oklab,var(--color-primary-glow)_24%,transparent),transparent_38%)]">
+        <div aria-hidden="true" className="pointer-events-none absolute -left-28 top-10 h-72 w-72 rounded-full bg-secondary/10 blur-3xl" />
+        <PageIntro eyebrow={hero.eyebrow} title={hero.title} description={hero.description} />
+      </div>
 
-      <section className="container mx-auto px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
+      <section className="relative isolate overflow-hidden bg-[radial-gradient(ellipse_at_15%_0%,color-mix(in_oklab,var(--color-secondary)_20%,transparent),transparent_42%),radial-gradient(ellipse_at_90%_45%,color-mix(in_oklab,var(--color-primary-glow)_24%,transparent),transparent_38%)]">
+        <div aria-hidden="true" className="pointer-events-none absolute -right-32 top-24 -z-10 h-96 w-96 rounded-full bg-primary-glow/10 blur-3xl" />
+        <div className="container mx-auto px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
         {albums.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border bg-surface px-6 py-14 text-center">
             <p className="font-serif text-xl font-bold text-foreground">{galleryPage.imagesComingSoon}</p>
@@ -67,6 +72,7 @@ function GalleryPage() {
             ))}
           </div>
         )}
+        </div>
       </section>
 
       <GalleryLightbox
