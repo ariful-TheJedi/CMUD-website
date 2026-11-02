@@ -251,6 +251,36 @@ const submitSchema = z.object({
   accountNumber: z.string().max(100).optional(),
   accountName: z.string().max(255).optional(),
   amount: z.number().int().positive().max(100_000_000).optional(),
+}).superRefine((data, context) => {
+  if (data.admissionType !== "payment") return;
+
+  const paymentMethod = data.paymentMethod?.trim();
+  if (!paymentMethod || !["bKash", "cash", "bank_transfer"].includes(paymentMethod)) {
+    context.addIssue({ code: "custom", path: ["paymentMethod"], message: "Select a valid payment method" });
+    return;
+  }
+  if (data.amount == null) {
+    context.addIssue({ code: "custom", path: ["amount"], message: "Enter the payment amount" });
+  }
+  if (paymentMethod === "bKash") {
+    if (!data.mobileNumber?.trim()) {
+      context.addIssue({ code: "custom", path: ["mobileNumber"], message: "Enter bKash mobile number" });
+    }
+    if (!data.transactionId?.trim()) {
+      context.addIssue({ code: "custom", path: ["transactionId"], message: "Enter bKash transaction ID" });
+    }
+  }
+  if (paymentMethod === "cash" && !data.cashSerialNumber?.trim()) {
+    context.addIssue({ code: "custom", path: ["cashSerialNumber"], message: "Enter cash serial number" });
+  }
+  if (paymentMethod === "bank_transfer") {
+    if (!data.accountNumber?.trim()) {
+      context.addIssue({ code: "custom", path: ["accountNumber"], message: "Enter account number" });
+    }
+    if (!data.accountName?.trim()) {
+      context.addIssue({ code: "custom", path: ["accountName"], message: "Enter account name" });
+    }
+  }
 });
 
 export const submitAdmissionApplication = createServerFn({ method: "POST" })

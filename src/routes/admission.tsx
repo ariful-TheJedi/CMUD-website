@@ -62,41 +62,50 @@ export const Route = createFileRoute("/admission")({
 // --- 2. SCHEMAS ---
 
 const baseSchemaFields = {
-  fullName: z.string().min(2, "Enter your full name"),
-  email: z.union([z.literal(""), z.string().trim().email("Enter a valid email")]),
-  phone: z.string().min(7, "Enter a valid phone number"),
-  qualification: z.string().min(2, "Required"),
-  medicalCollege: z.string().optional().or(z.literal("")),
-  bmdcNumber: z.string().min(2, "Enter BMDC number"),
+  fullName: z.string().trim().min(2, "Enter your full name").max(120, "Name is too long"),
+  email: z.union([
+    z.literal(""),
+    z.string().trim().toLowerCase().email("Enter a valid email").max(255, "Email is too long"),
+  ]),
+  phone: z
+    .string()
+    .trim()
+    .min(7, "Enter a valid phone number")
+    .max(30, "Phone number is too long")
+    .regex(/^[+\d\s()-]+$/, "Enter a valid phone number"),
+  qualification: z.string().trim().min(2, "Required").max(120, "Qualification is too long"),
+  medicalCollege: z.string().trim().max(200, "Medical college name is too long").optional().or(z.literal("")),
+  bmdcNumber: z.string().trim().min(2, "Enter BMDC number").max(60, "BMDC number is too long"),
   preferredBranch: z.string().min(1, "Select a preferred branch"),
-  course: z.string().min(1, "Select a course"),
-  batch: z.string().optional().or(z.literal("")),
-  howDidYouFindUs: z.string().optional().or(z.literal("")),
-  message: z.string().optional(),
+  course: z.string().trim().min(1, "Select a course").max(120, "Course selection is invalid"),
+  batch: z.string().trim().max(60, "Batch selection is too long").optional().or(z.literal("")),
+  howDidYouFindUs: z.string().trim().max(200, "Value is too long").optional().or(z.literal("")),
+  message: z.string().trim().max(2000, "Message is too long").optional(),
 };
 
 const requestSchema = z.object({
   ...baseSchemaFields,
-  qualification: z.string().optional().or(z.literal("")),
-  bmdcNumber: z.string().optional().or(z.literal("")),
+  qualification: z.string().trim().max(120, "Qualification is too long").optional().or(z.literal("")),
+  bmdcNumber: z.string().trim().max(60, "BMDC number is too long").optional().or(z.literal("")),
 });
 
 const paymentSchema = z.object({
   ...baseSchemaFields,
-  qualification: z.string().optional().or(z.literal("")),
-  bmdcNumber: z.string().optional().or(z.literal("")),
-  findUsOptions: z.string().optional().or(z.literal("")),
-  paymentMethod: z.string().min(1, "Select a payment method"),
+  qualification: z.string().trim().max(120, "Qualification is too long").optional().or(z.literal("")),
+  bmdcNumber: z.string().trim().max(60, "BMDC number is too long").optional().or(z.literal("")),
+  findUsOptions: z.string().trim().max(200, "Value is too long").optional().or(z.literal("")),
+  paymentMethod: z.string().trim().min(1, "Select a payment method").max(50, "Payment method is invalid"),
   amount: z
     .string()
     .trim()
     .min(1, "Enter the payment amount")
-    .regex(/^\d+$/, "Enter a valid amount"),
-  mobileNumber: z.string().optional().or(z.literal("")),
-  transactionId: z.string().optional().or(z.literal("")),
-  cashSerialNumber: z.string().optional().or(z.literal("")),
-  accountNumber: z.string().optional().or(z.literal("")),
-  accountName: z.string().optional().or(z.literal("")),
+    .regex(/^\d+$/, "Enter a valid amount")
+    .refine((value) => Number.isSafeInteger(Number(value)) && Number(value) <= 100_000_000, "Enter an amount up to 100,000,000"),
+  mobileNumber: z.string().trim().max(50, "Mobile number is too long").optional().or(z.literal("")),
+  transactionId: z.string().trim().max(100, "Transaction ID is too long").optional().or(z.literal("")),
+  cashSerialNumber: z.string().trim().max(100, "Cash serial number is too long").optional().or(z.literal("")),
+  accountNumber: z.string().trim().max(100, "Account number is too long").optional().or(z.literal("")),
+  accountName: z.string().trim().max(255, "Account name is too long").optional().or(z.literal("")),
 }).superRefine((values, context) => {
   if (values.paymentMethod === "bKash") {
     if (!values.mobileNumber?.trim()) {

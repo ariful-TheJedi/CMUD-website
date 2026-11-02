@@ -22,6 +22,11 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
+DO $$ BEGIN
+  CREATE TYPE payment_admission_status AS ENUM ('pending', 'verified', 'not_verified');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
 -- ---------- faculty ----------
 CREATE TABLE IF NOT EXISTS faculty (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -268,15 +273,22 @@ CREATE TABLE IF NOT EXISTS admission_applications (
 );
 
 -- Ensure columns exist when upgrading from an older local schema
+ALTER TABLE admission_applications ADD COLUMN IF NOT EXISTS full_name TEXT NOT NULL DEFAULT '';
+ALTER TABLE admission_applications ADD COLUMN IF NOT EXISTS email TEXT NOT NULL DEFAULT '';
+ALTER TABLE admission_applications ADD COLUMN IF NOT EXISTS phone TEXT NOT NULL DEFAULT '';
 ALTER TABLE admission_applications ADD COLUMN IF NOT EXISTS qualification TEXT NOT NULL DEFAULT '';
 ALTER TABLE admission_applications ADD COLUMN IF NOT EXISTS medical_college TEXT NOT NULL DEFAULT '';
 ALTER TABLE admission_applications ADD COLUMN IF NOT EXISTS bmdc_number TEXT NOT NULL DEFAULT '';
 ALTER TABLE admission_applications ADD COLUMN IF NOT EXISTS preferred_branch TEXT NOT NULL DEFAULT '';
+ALTER TABLE admission_applications ADD COLUMN IF NOT EXISTS course_id UUID NULL REFERENCES courses(id) ON DELETE SET NULL;
 ALTER TABLE admission_applications ADD COLUMN IF NOT EXISTS course_slug TEXT NOT NULL DEFAULT '';
+ALTER TABLE admission_applications ADD COLUMN IF NOT EXISTS course_name TEXT NOT NULL DEFAULT '';
 ALTER TABLE admission_applications ADD COLUMN IF NOT EXISTS preferred_batch TEXT NOT NULL DEFAULT '';
 ALTER TABLE admission_applications ADD COLUMN IF NOT EXISTS address TEXT NOT NULL DEFAULT '';
 ALTER TABLE admission_applications ADD COLUMN IF NOT EXISTS how_did_you_find_us TEXT NOT NULL DEFAULT '';
 ALTER TABLE admission_applications ADD COLUMN IF NOT EXISTS applicant_message TEXT NULL;
+ALTER TABLE admission_applications ADD COLUMN IF NOT EXISTS message TEXT NOT NULL DEFAULT '';
+ALTER TABLE admission_applications ADD COLUMN IF NOT EXISTS status admission_status NOT NULL DEFAULT 'new';
 ALTER TABLE admission_applications ADD COLUMN IF NOT EXISTS submitted_at TIMESTAMPTZ NOT NULL DEFAULT now();
 
 CREATE TABLE IF NOT EXISTS admission_application_notes (
@@ -286,6 +298,68 @@ CREATE TABLE IF NOT EXISTS admission_application_notes (
   created_by TEXT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Payment registrations are part of the public admissions flow too. Keep this
+-- in the standard schema so a fresh/self-hosted install can submit both forms
+-- after running only `npm run db:schema`.
+CREATE TABLE IF NOT EXISTS payment_admissions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  full_name VARCHAR(255) NOT NULL,
+  email VARCHAR(255) NOT NULL DEFAULT '',
+  phone VARCHAR(50) NOT NULL,
+  qualification VARCHAR(255) NOT NULL DEFAULT '',
+  medical_college VARCHAR(255) NOT NULL DEFAULT '',
+  bmdc_number VARCHAR(100) NOT NULL DEFAULT '',
+  preferred_branch VARCHAR(100) NOT NULL,
+  course_slug VARCHAR(150) NOT NULL,
+  preferred_batch VARCHAR(100) NOT NULL DEFAULT '',
+  how_did_you_find_us VARCHAR(255) NOT NULL DEFAULT '',
+  payment_method VARCHAR(50) NOT NULL,
+  mobile_number VARCHAR(50),
+  transaction_id VARCHAR(100),
+  cash_serial_number VARCHAR(100),
+  account_number VARCHAR(100),
+  account_name VARCHAR(255),
+  amount INTEGER,
+  address TEXT NOT NULL DEFAULT '',
+  applicant_message TEXT,
+  status payment_admission_status NOT NULL DEFAULT 'pending',
+  submitted_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+ALTER TABLE payment_admissions ADD COLUMN IF NOT EXISTS email VARCHAR(255) NOT NULL DEFAULT '';
+ALTER TABLE payment_admissions ADD COLUMN IF NOT EXISTS full_name VARCHAR(255) NOT NULL DEFAULT '';
+ALTER TABLE payment_admissions ADD COLUMN IF NOT EXISTS phone VARCHAR(50) NOT NULL DEFAULT '';
+ALTER TABLE payment_admissions ADD COLUMN IF NOT EXISTS qualification VARCHAR(255) NOT NULL DEFAULT '';
+ALTER TABLE payment_admissions ADD COLUMN IF NOT EXISTS medical_college VARCHAR(255) NOT NULL DEFAULT '';
+ALTER TABLE payment_admissions ADD COLUMN IF NOT EXISTS bmdc_number VARCHAR(100) NOT NULL DEFAULT '';
+ALTER TABLE payment_admissions ADD COLUMN IF NOT EXISTS preferred_branch VARCHAR(100) NOT NULL DEFAULT '';
+ALTER TABLE payment_admissions ADD COLUMN IF NOT EXISTS course_slug VARCHAR(150) NOT NULL DEFAULT '';
+ALTER TABLE payment_admissions ADD COLUMN IF NOT EXISTS preferred_batch VARCHAR(100) NOT NULL DEFAULT '';
+ALTER TABLE payment_admissions ADD COLUMN IF NOT EXISTS how_did_you_find_us VARCHAR(255) NOT NULL DEFAULT '';
+ALTER TABLE payment_admissions ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) NOT NULL DEFAULT 'unknown';
+ALTER TABLE payment_admissions ADD COLUMN IF NOT EXISTS mobile_number VARCHAR(50);
+ALTER TABLE payment_admissions ADD COLUMN IF NOT EXISTS transaction_id VARCHAR(100);
+ALTER TABLE payment_admissions ADD COLUMN IF NOT EXISTS cash_serial_number VARCHAR(100);
+ALTER TABLE payment_admissions ADD COLUMN IF NOT EXISTS account_number VARCHAR(100);
+ALTER TABLE payment_admissions ADD COLUMN IF NOT EXISTS account_name VARCHAR(255);
+ALTER TABLE payment_admissions ADD COLUMN IF NOT EXISTS amount INTEGER;
+ALTER TABLE payment_admissions ADD COLUMN IF NOT EXISTS address TEXT NOT NULL DEFAULT '';
+ALTER TABLE payment_admissions ADD COLUMN IF NOT EXISTS applicant_message TEXT;
+ALTER TABLE payment_admissions ADD COLUMN IF NOT EXISTS submitted_at TIMESTAMPTZ NOT NULL DEFAULT now();
+ALTER TABLE payment_admissions ADD COLUMN IF NOT EXISTS status payment_admission_status;
+ALTER TABLE payment_admissions ALTER COLUMN status DROP DEFAULT;
+ALTER TABLE payment_admissions ALTER COLUMN status TYPE payment_admission_status
+  USING CASE
+    WHEN status::text IN ('admitted', 'verified', 'varified') THEN 'verified'::payment_admission_status
+    WHEN status::text IN ('rejected', 'not_verified', 'not varified') THEN 'not_verified'::payment_admission_status
+    ELSE 'pending'::payment_admission_status
+  END;
+ALTER TABLE payment_admissions ALTER COLUMN status SET DEFAULT 'pending'::payment_admission_status;
+ALTER TABLE payment_admissions ALTER COLUMN status SET NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_payment_admissions_phone ON payment_admissions(phone);
+CREATE INDEX IF NOT EXISTS idx_payment_admissions_bmdc ON payment_admissions(bmdc_number);
 
 -- ---------- audit_logs ----------
 CREATE TABLE IF NOT EXISTS audit_logs (
