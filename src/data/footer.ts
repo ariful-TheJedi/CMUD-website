@@ -6,7 +6,7 @@ export const footerData = {
   logo: "/media/shared/cmud-light-sea-green-transparent.png",
   logoAlt: "CMUD",
   blurb:
-    "College of Medical Ultrasound & Doppler — hands-on professional training in diagnostic imaging since 2008.",
+    "Center for Medical Ultrasound & Doppler — hands-on professional training in diagnostic imaging since 2008.",
   programs: {
     title: "Quick Links",
     links: [
