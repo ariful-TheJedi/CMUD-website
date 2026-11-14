@@ -22,6 +22,8 @@ export type CourseDetails = {
   admissionFee: number;
   /** Multiple installment payment option available. */
   installmentsAvailable: boolean;
+  imageUrls: string[];
+  facultyIds: string[];
 };
 
 export const EMPTY_COURSE_DETAILS: CourseDetails = {
@@ -32,6 +34,8 @@ export const EMPTY_COURSE_DETAILS: CourseDetails = {
   whatsIncluded: [],
   admissionFee: 0,
   installmentsAvailable: false,
+  imageUrls: [],
+  facultyIds: [],
 };
 
 function toMoney(value: unknown): number {
@@ -65,7 +69,9 @@ export function resolveCourseDetails(
       obj.outcomes != null ||
       obj.whatsIncluded != null ||
       obj.admissionFee != null ||
-      obj.installmentsAvailable != null);
+      obj.installmentsAvailable != null ||
+      obj.imageUrls != null ||
+      obj.facultyIds != null);
 
   if (hasDetails) {
     const mode = normalizeSyllabusMode(obj.syllabusMode);
@@ -82,6 +88,8 @@ export function resolveCourseDetails(
       whatsIncluded: parseStringArray(obj.whatsIncluded),
       admissionFee: toMoney(obj.admissionFee),
       installmentsAvailable: toBool(obj.installmentsAvailable),
+      imageUrls: parseStringArray(obj.imageUrls),
+      facultyIds: [...new Set(parseStringArray(obj.facultyIds).filter((id) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)))],
     };
   }
 
@@ -98,6 +106,8 @@ export function resolveCourseDetails(
     whatsIncluded: parseStringArray(legacy.whatsIncluded),
     admissionFee: 0,
     installmentsAvailable: false,
+    imageUrls: [],
+    facultyIds: [],
   };
 }
 
@@ -110,6 +120,8 @@ export function buildCourseDetails(input: {
   whatsIncluded?: string[];
   admissionFee?: number;
   installmentsAvailable?: boolean;
+  imageUrls?: string[];
+  facultyIds?: string[];
 }): CourseDetails {
   const mode = normalizeSyllabusMode(input.syllabusMode);
   const semesters =
@@ -127,5 +139,7 @@ export function buildCourseDetails(input: {
     whatsIncluded: parseStringArray(input.whatsIncluded),
     admissionFee: toMoney(input.admissionFee),
     installmentsAvailable: Boolean(input.installmentsAvailable),
+    imageUrls: parseStringArray(input.imageUrls),
+    facultyIds: [...new Set(parseStringArray(input.facultyIds).filter((id) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)))],
   };
 }

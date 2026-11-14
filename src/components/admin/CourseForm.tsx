@@ -2,11 +2,13 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { Upload, Plus, Trash2 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -16,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import {
   uploadCourseCover,
+  listCourseFacultyOptionsAdmin,
   type AdminCourseRow,
   type CourseInput,
   type CourseStatus,
@@ -23,7 +26,7 @@ import {
   type SyllabusSemester,
 } from "@/lib/courses.functions";
 import { DEFAULT_COURSE_WHATS_INCLUDED, eligibilityBullets, eligibilityToCmsString, normalizeCourseMode } from "@/data/courses";
-import { AdminMediaImage, useObjectUrl } from "@/components/admin/AdminMediaImage";
+import { AdminMediaImage } from "@/components/admin/AdminMediaImage";
 import { toStoragePath } from "@/lib/assets";
 
 const MODES = ["Online", "Offline", "Online/Offline/Both"] as const;
@@ -80,6 +83,8 @@ export function emptyCourseForm(): CourseInput {
     status: "draft",
     sortOrder: 0,
     imageUrl: "",
+    imageUrls: [],
+    facultyIds: [],
     seoTitle: "",
     seoDescription: "",
   };
@@ -112,6 +117,8 @@ export function courseInputFromRow(row: AdminCourseRow): CourseInput {
     status: normalizeStatus(row.status),
     sortOrder: Number(row.sortOrder) || 0,
     imageUrl: row.imageUrl ?? "",
+    imageUrls: row.imageUrls?.length ? row.imageUrls : row.imageUrl ? [row.imageUrl] : [],
+    facultyIds: row.facultyIds ?? [],
     seoTitle: row.seoTitle ?? "",
     seoDescription: row.seoDescription ?? "",
   };
@@ -133,6 +140,8 @@ export function CourseForm({
   isNew: boolean;
 }) {
   const seed = initial ?? emptyCourseForm();
+  const listFacultyFn = useServerFn(listCourseFacultyOptionsAdmin);
+  const facultyQuery = useQuery({ queryKey: ["course-faculty-options"], queryFn: () => listFacultyFn() });
   const [form, setForm] = useState<CourseInput>(() => ({
     ...seed,
     mode: normalizeMode(seed.mode),
@@ -167,8 +176,6 @@ export function CourseForm({
     eligibilityToCmsString(seed.eligibility),
   );
   const [slugTouched, setSlugTouched] = useState<boolean>(() => !!seed.slug);
-  const [pickedCover, setPickedCover] = useState<File | null>(null);
-  const coverPreview = useObjectUrl(pickedCover);
 
   const set = <K extends keyof CourseInput>(k: K, v: CourseInput[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
@@ -351,29 +358,40 @@ export function CourseForm({
         </Field>
       </div>
 
-      <Field label="Cover image">
-        <Input
-          value={form.imageUrl}
-          onChange={(e) => {
-            setPickedCover(null);
-            set("imageUrl", toStoragePath(e.target.value) || e.target.value.trim());
-          }}
-          placeholder="Paste image URL or upload below"
-        />
+      <Field label="Course page slider images">
+        <p className="text-xs text-muted-foreground">Upload one image for a static course image or several for an automatic slider. The first image is also used on course cards.</p>
         <ImageUploader
-          onUploaded={(url) => set("imageUrl", toStoragePath(url))}
-          onPickedFile={setPickedCover}
+          onUploaded={(urls) => setForm((f) => {
+            const imageUrls = [...(f.imageUrls ?? []), ...urls];
+            return { ...f, imageUrls, imageUrl: imageUrls[0] ?? "" };
+          })}
           currentSlug={form.slug}
-          previousUrl={form.imageUrl}
         />
-        {form.imageUrl || coverPreview ? (
-          <AdminMediaImage
-            src={form.imageUrl}
-            localPreviewSrc={coverPreview}
-            alt="Course cover preview"
-            className="mt-2 h-32 w-auto rounded-md border border-border object-cover"
-          />
-        ) : null}
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          {(form.imageUrls ?? []).map((url, i) => <div key={`${url}-${i}`} className="flex items-center gap-3 rounded-md border p-2">
+            <AdminMediaImage src={url} alt={`${form.name || "Course"} image ${i + 1}`} className="h-20 w-28 rounded object-cover" />
+            <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">Image {i + 1}</span>
+            <Button type="button" variant="ghost" size="icon" aria-label={`Remove image ${i + 1}`} onClick={() => setForm((f) => {
+              const imageUrls = (f.imageUrls ?? []).filter((_, j) => j !== i);
+              return { ...f, imageUrls, imageUrl: imageUrls[0] ?? "" };
+            })}><Trash2 className="h-4 w-4" /></Button>
+          </div>)}
+        </div>
+        <Input value={form.imageUrl} onChange={(e) => set("imageUrl", toStoragePath(e.target.value) || e.target.value.trim())} placeholder="Optional cover image URL" className="mt-2" />
+      </Field>
+
+      <Field label="Course faculty">
+        <p className="text-xs text-muted-foreground">Select one or more faculty members from the Faculty table. Only published faculty appear on the public course page.</p>
+        {facultyQuery.isLoading ? <p className="text-sm text-muted-foreground">Loading faculty…</p> : facultyQuery.isError ? <p className="text-sm text-destructive">Could not load faculty options.</p> : facultyQuery.data?.length ? <div className="max-h-64 space-y-2 overflow-y-auto rounded-md border p-3">
+          {facultyQuery.data.map((member) => <label key={member.id} className="flex cursor-pointer items-center gap-3 rounded-md p-2 hover:bg-muted/50">
+            <Checkbox checked={(form.facultyIds ?? []).includes(member.id)} onCheckedChange={(checked) => setForm((f) => {
+              const ids = f.facultyIds ?? [];
+              return { ...f, facultyIds: checked ? [...ids, member.id] : ids.filter((id) => id !== member.id) };
+            })} />
+            <span className="min-w-0 flex-1"><span className="block text-sm font-medium">{member.name}</span><span className="block text-xs text-muted-foreground">{[member.title, member.credentials, member.specialty].filter(Boolean).join(" · ")}</span></span>
+            {!member.isPublished && <span className="text-xs text-muted-foreground">Draft</span>}
+          </label>)}
+        </div> : <p className="text-sm text-muted-foreground">No faculty records yet. Add faculty from the Faculty section first.</p>}
       </Field>
 
       <Field label="Short description">
@@ -588,54 +606,53 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 function ImageUploader({
   onUploaded,
-  onPickedFile,
   currentSlug,
-  previousUrl,
 }: {
-  onUploaded: (url: string) => void;
-  onPickedFile?: (file: File | null) => void;
+  onUploaded: (urls: string[]) => void;
   currentSlug: string;
-  previousUrl?: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const uploadFn = useServerFn(uploadCourseCover);
 
-  const handleFile = async (file: File) => {
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please choose an image file");
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image must be under 5MB");
-      return;
-    }
-    onPickedFile?.(file);
+  const handleFiles = async (files: FileList | null) => {
+    if (!files?.length) return;
+    const uploaded: string[] = [];
     setUploading(true);
-    try {
-      const buffer = await file.arrayBuffer();
-      const bytes = new Uint8Array(buffer);
-      let binary = "";
-      for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]!);
-      const base64 = btoa(binary);
-      const { url } = await uploadFn({
-        data: {
-          fileName: file.name,
-          contentType: file.type,
-          base64,
-          currentSlug,
-          previousUrl,
-        },
-      });
-      onUploaded(url);
-      toast.success("Image uploaded");
-    } catch (e) {
-      onPickedFile?.(null);
-      toast.error(e instanceof Error ? e.message : "Upload failed");
-    } finally {
-      setUploading(false);
-      if (inputRef.current) inputRef.current.value = "";
+    for (const file of Array.from(files)) {
+      if (!file.type.startsWith("image/")) {
+        toast.error(`${file.name}: please choose an image file`);
+        continue;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error(`${file.name}: image must be under 5MB`);
+        continue;
+      }
+      try {
+        const buffer = await file.arrayBuffer();
+        const bytes = new Uint8Array(buffer);
+        let binary = "";
+        for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]!);
+        const base64 = btoa(binary);
+        const { url } = await uploadFn({
+          data: {
+            fileName: file.name,
+            contentType: file.type,
+            base64,
+            currentSlug,
+          },
+        });
+        uploaded.push(url);
+      } catch (e) {
+        toast.error(`${file.name}: ${e instanceof Error ? e.message : "Upload failed"}`);
+      }
     }
+    if (uploaded.length) {
+      onUploaded(uploaded);
+      toast.success(`${uploaded.length} image${uploaded.length === 1 ? "" : "s"} uploaded`);
+    }
+    setUploading(false);
+    if (inputRef.current) inputRef.current.value = "";
   };
 
   return (
@@ -644,10 +661,10 @@ function ImageUploader({
         ref={inputRef}
         type="file"
         accept="image/*"
+        multiple
         className="hidden"
         onChange={(e) => {
-          const f = e.target.files?.[0];
-          if (f) void handleFile(f);
+          void handleFiles(e.target.files);
         }}
       />
       <Button

@@ -1,19 +1,20 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireAuth } from "@/lib/require-auth";
-import type { Course, CourseMode } from "@/data/courses";
+import type { Course, CourseFaculty, CourseMode } from "@/data/courses";
 import { eligibilityToCmsString, normalizeCourseMode } from "@/data/courses";
 import {
   assertSectionView,
   assertSectionUpdate,
 } from "@/lib/admin-guards";
 import { writeAuditLog } from "@/lib/audit";
-import { dbQuery, parseStringArray } from "@/lib/db-helpers";
+import { dbQuery, parseJsonObject, parseStringArray } from "@/lib/db-helpers";
 import { toStoragePath } from "@/lib/assets";
 import { buildCourseDetails, resolveCourseDetails } from "@/lib/course-details";
 import type { SyllabusMode, SyllabusSemester } from "@/lib/syllabus";
 
 export type CourseStatus = "draft" | "published" | "archived";
 export type { SyllabusMode, SyllabusSemester };
+export type CourseFacultyOption = CourseFaculty & { isPublished: boolean };
 
 export type AdminCourseRow = {
   id: string;
@@ -39,6 +40,8 @@ export type AdminCourseRow = {
   status: CourseStatus;
   sortOrder: number;
   imageUrl: string;
+  imageUrls: string[];
+  facultyIds: string[];
   seoTitle: string;
   seoDescription: string;
 };
@@ -101,6 +104,20 @@ const COURSE_SELECT = `
   COALESCE(seo_description, '') AS "seoDescription"
 `;
 
+function storedCourseImages(imageUrl: unknown, details: unknown): string[] {
+  const obj = parseJsonObject<Record<string, unknown>>(details, {});
+  const extras = parseStringArray(obj.imageUrls);
+  return [...new Set([toStoragePath(typeof imageUrl === "string" ? imageUrl : ""), ...extras].filter(Boolean))];
+}
+
+async function removeUnusedCourseImages(urls: string[], keep: string[] = []) {
+  const keepSet = new Set(keep.map(toStoragePath));
+  const { deletePublicMediaFile } = await import("@/lib/local-media.server");
+  for (const url of urls.map(toStoragePath)) {
+    if (url && !keepSet.has(url)) await deletePublicMediaFile(url, COURSE_MEDIA_FOLDER, COURSE_UPLOAD_NAME);
+  }
+}
+
 function toPublicMode(mode: string): CourseMode {
   return normalizeCourseMode(mode);
 }
@@ -137,6 +154,8 @@ function normalizeCourse(r: CourseDbRow): AdminCourseRow {
     status: (r.status as CourseStatus) ?? "draft",
     sortOrder: Number(r.sortOrder) || 0,
     imageUrl: toStoragePath(r.imageUrl ?? ""),
+    imageUrls: details.imageUrls.map(toStoragePath).filter(Boolean),
+    facultyIds: details.facultyIds,
     seoTitle: r.seoTitle ?? "",
     seoDescription: r.seoDescription ?? "",
   };
@@ -165,6 +184,8 @@ function toPublic(r: AdminCourseRow): Course {
     whatsIncluded: r.whatsIncluded,
     featured: r.featured,
     imageUrl: r.imageUrl,
+    imageUrls: r.imageUrls.length ? r.imageUrls : r.imageUrl ? [r.imageUrl] : [],
+    facultyIds: r.facultyIds,
   };
 }
 
@@ -192,7 +213,38 @@ export const getPublicCourseBySlug = createServerFn({ method: "GET" })
        LIMIT 1`,
       [data.slug],
     );
-    return rows[0] ? toPublic(normalizeCourse(rows[0])) : null;
+    if (!rows[0]) return null;
+    const course = toPublic(normalizeCourse(rows[0]));
+    if (course.facultyIds?.length) {
+      const { rows: faculty } = await dbQuery<CourseFaculty>(
+        "getPublicCourseBySlug.faculty",
+        `SELECT id, name, title, credentials, COALESCE(specialty, '') AS specialty,
+                COALESCE(short_bio, '') AS "shortBio", initials,
+                COALESCE(photo_url, '') AS "photoUrl", COALESCE(alt_text, '') AS "altText"
+         FROM faculty WHERE id = ANY($1::uuid[]) AND is_published = true
+         ORDER BY array_position($1::uuid[], id), sort_order ASC, name ASC`,
+        [course.facultyIds],
+      );
+      course.faculty = faculty.map((member) => ({ ...member, photoUrl: toStoragePath(member.photoUrl) }));
+    } else {
+      course.faculty = [];
+    }
+    return course;
+  });
+
+export const listCourseFacultyOptionsAdmin = createServerFn({ method: "GET" })
+  .middleware([requireAuth])
+  .handler(async ({ context }): Promise<CourseFacultyOption[]> => {
+    await assertSectionView(context, "courses");
+    const { rows } = await dbQuery<CourseFacultyOption>(
+      "listCourseFacultyOptionsAdmin",
+      `SELECT id, name, title, credentials, COALESCE(specialty, '') AS specialty,
+              COALESCE(short_bio, '') AS "shortBio", initials,
+              COALESCE(photo_url, '') AS "photoUrl", COALESCE(alt_text, '') AS "altText",
+              is_published AS "isPublished"
+       FROM faculty ORDER BY sort_order ASC, name ASC`,
+    );
+    return rows.map((member) => ({ ...member, photoUrl: toStoragePath(member.photoUrl) }));
   });
 
 export const listAllCoursesAdmin = createServerFn({ method: "GET" })
@@ -266,7 +318,19 @@ async function upsertCourseAdminImpl(
       whatsIncluded: data.whatsIncluded,
       admissionFee: data.admissionFee,
       installmentsAvailable: data.installmentsAvailable,
+      imageUrls: data.imageUrls,
+      facultyIds: data.facultyIds,
     });
+    if (details.facultyIds.length) {
+      const { rows: selectedFaculty } = await dbQuery<{ id: string }>(
+        "upsertCourseAdmin.validateFaculty",
+        `SELECT id FROM faculty WHERE id = ANY($1::uuid[])`,
+        [details.facultyIds],
+      );
+      if (selectedFaculty.length !== details.facultyIds.length) {
+        throw new Error("One or more selected faculty members no longer exist. Refresh and choose again.");
+      }
+    }
     const fee = Number(data.fee) || 0;
     const discountFee = Number(data.discountFee) || 0;
     const sortOrder = Number(data.sortOrder) || 0;
@@ -297,6 +361,11 @@ async function upsertCourseAdminImpl(
     ];
 
     if (data.id) {
+      const { rows: previousRows } = await dbQuery<{ imageUrl: string | null; details: unknown }>(
+        "upsertCourseAdmin.previousImages",
+        `SELECT image_url AS "imageUrl", details FROM courses WHERE id = $1`,
+        [data.id],
+      );
       const { rows } = await dbQuery<CourseDbRow>(
         "upsertCourseAdmin.update",
         `UPDATE courses SET
@@ -314,6 +383,10 @@ async function upsertCourseAdminImpl(
       const row = rows[0];
       if (!row) throw new Error("Course not found");
       const normalized = normalizeCourse(row);
+      await removeUnusedCourseImages(
+        storedCourseImages(previousRows[0]?.imageUrl, previousRows[0]?.details),
+        storedCourseImages(normalized.imageUrl, { imageUrls: normalized.imageUrls }),
+      );
       await writeAuditLog(context, {
         action: "course.updated",
         contentType: "course",
@@ -375,17 +448,14 @@ export const deleteCourseAdmin = createServerFn({ method: "POST" })
   .inputValidator((input: { id: string }) => input)
   .handler(async ({ data, context }) => {
     await assertSectionUpdate(context, "courses");
-    const { rows } = await dbQuery<{ name: string; imageUrl: string | null }>(
+    const { rows } = await dbQuery<{ name: string; imageUrl: string | null; details: unknown }>(
       "deleteCourseAdmin.select",
-      `SELECT name, image_url AS "imageUrl" FROM courses WHERE id = $1`,
+      `SELECT name, image_url AS "imageUrl", details FROM courses WHERE id = $1`,
       [data.id],
     );
     const existing = rows[0];
     await dbQuery("deleteCourseAdmin.delete", `DELETE FROM courses WHERE id = $1`, [data.id]);
-    if (existing?.imageUrl) {
-      const { deletePublicMediaFile } = await import("@/lib/local-media.server");
-      await deletePublicMediaFile(existing.imageUrl, COURSE_MEDIA_FOLDER, COURSE_UPLOAD_NAME);
-    }
+    if (existing) await removeUnusedCourseImages(storedCourseImages(existing.imageUrl, existing.details));
     await writeAuditLog(context, {
       action: "course.deleted",
       contentType: "course",

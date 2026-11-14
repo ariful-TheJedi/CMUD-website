@@ -1,4 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import {
   ArrowRight,
   BadgeCheck,
@@ -9,6 +10,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { FacultyPortrait } from "@/components/FacultyPortrait";
 import {
   Accordion,
   AccordionContent,
@@ -218,17 +220,30 @@ function CourseDetailPage() {
 
       <section className="container mx-auto px-4 pt-10">
         <div className="overflow-hidden rounded-2xl border border-border bg-muted">
-          <img
-            src={assetUrl(resolveCourseCover(course.imageUrl))}
-            alt={`${course.name} cover`}
-            className="aspect-[4/3] w-full object-cover object-center sm:aspect-[16/6]"
-            loading="lazy"
+          <CourseImageSlider
+            images={course.imageUrls?.length ? course.imageUrls : [resolveCourseCover(course.imageUrl)]}
+            courseName={course.name}
           />
         </div>
       </section>
 
       <section className="container mx-auto grid gap-8 px-4 py-10 lg:grid-cols-2">
-        <SyllabusSection course={course} copy={copy} />
+        <div>
+          <SyllabusSection course={course} copy={copy} />
+          {course.faculty?.length ? <section>
+            <h2 className="mt-8 font-serif text-xl font-bold md:text-2xl">Faculty</h2>
+            <div className="mt-4 space-y-3">
+              {course.faculty.map((member) => <article key={member.id} className="flex gap-3 rounded-xl border border-border bg-card p-3">
+                <FacultyPortrait name={member.name} initials={member.initials} photo={member.photoUrl} className="h-24 w-16 aspect-auto" />
+                <div className="min-w-0 self-center">
+                  <h3 className="font-semibold">{member.name}</h3>
+                  {[member.title, member.credentials, member.specialty].filter(Boolean).map((detail) => <p key={detail} className="mt-1 text-xs text-muted-foreground">{detail}</p>)}
+                  {member.shortBio && <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">{member.shortBio}</p>}
+                </div>
+              </article>)}
+            </div>
+          </section> : null}
+        </div>
 
         <div>
           {course.outcomes.length > 0 ? (
@@ -275,8 +290,23 @@ function CourseDetailPage() {
           ) : null}
         </div>
       </section>
+
     </>
   );
+}
+
+function CourseImageSlider({ images, courseName }: { images: string[]; courseName: string }) {
+  const [active, setActive] = useState(0);
+  useEffect(() => {
+    if (images.length < 2) return;
+    const timer = window.setInterval(() => setActive((i) => (i + 1) % images.length), 5000);
+    return () => window.clearInterval(timer);
+  }, [images.length]);
+
+  return <div className="relative aspect-[4/3] overflow-hidden sm:aspect-[16/6]">
+    {images.map((image, i) => <img key={`${image}-${i}`} src={assetUrl(image)} alt={`${courseName} image ${i + 1}`} className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-1000 ${active === i ? "opacity-100" : "opacity-0"}`} loading={i === 0 ? "lazy" : "eager"} />)}
+    {images.length > 1 && <div className="absolute inset-x-0 bottom-3 flex justify-center gap-2">{images.map((_, i) => <button key={i} type="button" onClick={() => setActive(i)} aria-label={`Show ${courseName} image ${i + 1}`} aria-current={active === i} className={`h-2 rounded-full transition-all ${active === i ? "w-6 bg-white" : "w-2 bg-white/60"} shadow`} />)}</div>}
+  </div>;
 }
 
 function SyllabusSection({

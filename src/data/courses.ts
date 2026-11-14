@@ -7,6 +7,18 @@ import type { SyllabusMode, SyllabusSemester } from "@/lib/syllabus";
 export type { SyllabusMode, SyllabusSemester };
 export type CourseMode = "Online" | "Offline" | "Online/Offline/Both";
 
+export type CourseFaculty = {
+  id: string;
+  name: string;
+  title: string;
+  credentials: string;
+  specialty: string;
+  shortBio: string;
+  initials: string;
+  photoUrl: string;
+  altText: string;
+};
+
 export type Course = {
   slug: string;
   name: string;
@@ -36,6 +48,10 @@ export type Course = {
   whatsIncluded: string[];
   featured?: boolean;
   imageUrl?: string;
+  /** Images shown in the individual course detail page slider. */
+  imageUrls?: string[];
+  facultyIds?: string[];
+  faculty?: CourseFaculty[];
 };
 
 /** Fallback cover when a course has no uploaded image (under ASSETS_ROOT). */
