@@ -219,7 +219,7 @@ function CourseDetailPage() {
       </section>
 
       <section className="container mx-auto px-4 pt-10">
-        <div className="overflow-hidden rounded-2xl border border-border bg-muted">
+        <div className="mx-auto w-full max-w-4xl overflow-hidden rounded-2xl border border-border bg-muted">
           <CourseImageSlider
             images={course.imageUrls?.length ? course.imageUrls : [resolveCourseCover(course.imageUrl)]}
             courseName={course.name}
@@ -303,7 +303,7 @@ function CourseImageSlider({ images, courseName }: { images: string[]; courseNam
     return () => window.clearInterval(timer);
   }, [images.length]);
 
-  return <div className="relative aspect-[4/3] overflow-hidden sm:aspect-[16/6]">
+  return <div className="relative aspect-square overflow-hidden sm:aspect-[1024/617]">
     {images.map((image, i) => <img key={`${image}-${i}`} src={assetUrl(image)} alt={`${courseName} image ${i + 1}`} className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-1000 ${active === i ? "opacity-100" : "opacity-0"}`} loading={i === 0 ? "lazy" : "eager"} />)}
     {images.length > 1 && <div className="absolute inset-x-0 bottom-3 flex justify-center gap-2">{images.map((_, i) => <button key={i} type="button" onClick={() => setActive(i)} aria-label={`Show ${courseName} image ${i + 1}`} aria-current={active === i} className={`h-2 rounded-full transition-all ${active === i ? "w-6 bg-white" : "w-2 bg-white/60"} shadow`} />)}</div>}
   </div>;

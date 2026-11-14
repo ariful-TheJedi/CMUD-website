@@ -497,9 +497,7 @@ function HomePage() {
             {testimonials.slice(0, testimonialsSection.limit).map((t) => (
               <Card key={t.id} className="border-border/70">
                 <CardContent className="p-6">
-                  <Quote className="h-6 w-6 text-secondary" />
-                  <p className="mt-3 text-base leading-relaxed">{t.quote}</p>
-                  <div className="mt-5 flex items-center gap-3">
+                  <div className="flex items-center gap-3">
                     <Avatar className="h-10 w-10">
                       {t.photoUrl ? <AvatarImage src={assetUrl(t.photoUrl)} alt={t.name} /> : null}
                       <AvatarFallback className="bg-primary text-primary-foreground">
@@ -511,6 +509,8 @@ function HomePage() {
                       <p className="text-xs text-muted-foreground">{t.role}</p>
                     </div>
                   </div>
+                  <Quote className="mt-5 h-6 w-6 text-secondary" aria-hidden="true" />
+                  <p className="mt-3 text-base leading-relaxed">{t.quote}</p>
                 </CardContent>
               </Card>
             ))}
