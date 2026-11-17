@@ -507,7 +507,7 @@ function HomePage() {
                         {t.initials}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="w-full min-w-0 sm:flex-1">
+                    <div className="mx-auto w-full min-w-0 max-w-64 sm:mx-0">
                       <p className="w-full break-words font-serif text-sm font-bold">{t.name}</p>
                       <p className="mt-0.5 w-full whitespace-normal break-words text-xs text-muted-foreground">
                         {t.role}
