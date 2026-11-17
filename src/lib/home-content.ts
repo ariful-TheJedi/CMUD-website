@@ -34,9 +34,14 @@ export type HandsOnContent = {
   ctaHref: string;
 };
 
+export type TestimonialsContent = {
+  title: string;
+};
+
 export type HomePageContent = {
   hero: HeroContent;
   handsOn: HandsOnContent;
+  testimonials: TestimonialsContent;
 };
 
 export const defaultHomeContent: HomePageContent = {
@@ -74,6 +79,9 @@ export const defaultHomeContent: HomePageContent = {
     ctaLabel: "More about CMUD",
     ctaHref: "/about",
   },
+  testimonials: {
+    title: "A community of confident sonologists.",
+  },
 };
 
 function str(v: unknown, fallback: string): string {
@@ -92,6 +100,10 @@ export function normalizeHomeContent(raw: unknown): HomePageContent {
     string,
     unknown
   >;
+  const testimonials =
+    obj.testimonials && typeof obj.testimonials === "object"
+      ? (obj.testimonials as Record<string, unknown>)
+      : {};
 
   const stats = Array.isArray(hero.stats)
     ? (hero.stats as unknown[])
@@ -145,6 +157,9 @@ export function normalizeHomeContent(raw: unknown): HomePageContent {
       bullets,
       ctaLabel: str(handsOn.ctaLabel, d.handsOn.ctaLabel),
       ctaHref: str(handsOn.ctaHref, d.handsOn.ctaHref),
+    },
+    testimonials: {
+      title: str(testimonials.title, d.testimonials.title),
     },
   };
 }

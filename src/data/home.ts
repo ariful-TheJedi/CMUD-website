@@ -78,7 +78,6 @@ export const homePage = {
 
   testimonials: {
     eyebrow: "From our graduates",
-    title: "A community of confident sonologists.",
     limit: 4,
   },
 

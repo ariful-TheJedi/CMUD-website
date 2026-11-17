@@ -402,6 +402,18 @@ function HomePageContentAdmin() {
       pageData: { ...f.pageData, handsOn: { ...f.pageData.handsOn, [key]: value } },
     }));
 
+  const setTestimonials = <K extends keyof HomePageContent["testimonials"]>(
+    key: K,
+    value: HomePageContent["testimonials"][K],
+  ) =>
+    setForm((f) => ({
+      ...f,
+      pageData: {
+        ...f.pageData,
+        testimonials: { ...f.pageData.testimonials, [key]: value },
+      },
+    }));
+
   const save = useMutation({
     mutationFn: (input: PageContentInput) => saveFn({ data: input }),
     onSuccess: () => {
@@ -431,8 +443,8 @@ function HomePageContentAdmin() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Home Page Content</h1>
           <p className="text-sm text-muted-foreground">
-            Edit the hero section and the Hands-on Ultrasound Training section. Content is saved to
-            the local Postgres <code className="text-xs">page_content</code> table; images go to{" "}
+            Edit the hero, testimonials heading, and Hands-on Ultrasound Training sections. Content
+            is saved to the local Postgres <code className="text-xs">page_content</code> table; images go to{" "}
             <code className="text-xs">ASSETS_ROOT/media/home/</code>.
           </p>
         </div>
@@ -603,6 +615,21 @@ function HomePageContentAdmin() {
               </Button>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Testimonials section</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Field label="Section heading">
+            <Input
+              value={form.pageData.testimonials.title}
+              disabled={ro}
+              onChange={(e) => setTestimonials("title", e.target.value)}
+            />
+          </Field>
         </CardContent>
       </Card>
 

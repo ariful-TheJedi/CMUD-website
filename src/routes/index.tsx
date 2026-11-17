@@ -490,27 +490,39 @@ function HomePage() {
         <div className="container mx-auto px-4 py-10">
           <SectionHeading
             eyebrow={testimonialsSection.eyebrow}
-            title={testimonialsSection.title}
+            title={content.testimonials.title}
             align="center"
           />
-          <div className="mt-8 grid gap-6 md:grid-cols-2">
+          <div className="mt-8 grid gap-5 md:grid-cols-2">
             {testimonials.slice(0, testimonialsSection.limit).map((t) => (
-              <Card key={t.id} className="border-border/70">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-10 w-10">
+              <Card
+                key={t.id}
+                className="group h-full overflow-hidden border-border/70 bg-card shadow-sm transition-shadow hover:shadow-md"
+              >
+                <CardContent className="flex h-full flex-col p-6 sm:p-7">
+                  <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:text-left">
+                    <Avatar className="h-11 w-11 shrink-0 ring-2 ring-primary/10">
                       {t.photoUrl ? <AvatarImage src={assetUrl(t.photoUrl)} alt={t.name} /> : null}
                       <AvatarFallback className="bg-primary text-primary-foreground">
                         {t.initials}
                       </AvatarFallback>
                     </Avatar>
-                    <div>
-                      <p className="font-serif text-sm font-bold">{t.name}</p>
-                      <p className="text-xs text-muted-foreground">{t.role}</p>
+                    <div className="w-full min-w-0 sm:flex-1">
+                      <p className="w-full break-words font-serif text-sm font-bold">{t.name}</p>
+                      <p className="mt-0.5 w-full whitespace-normal break-words text-xs text-muted-foreground">
+                        {t.role}
+                      </p>
                     </div>
                   </div>
-                  <Quote className="mt-5 h-6 w-6 text-secondary" aria-hidden="true" />
-                  <p className="mt-3 text-base leading-relaxed">{t.quote}</p>
+                  <div className="relative mt-5 flex-1 rounded-xl bg-muted/40 px-5 py-4">
+                    <Quote
+                      className="absolute left-2 top-2 h-4 w-4 rotate-180 fill-secondary/15 text-secondary"
+                      aria-hidden="true"
+                    />
+                    <p className="px-2 text-base leading-relaxed text-foreground/85 italic sm:text-[1.05rem]">
+                      {t.quote}
+                    </p>
+                  </div>
                 </CardContent>
               </Card>
             ))}
